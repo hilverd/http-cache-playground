@@ -1,0 +1,18 @@
+services:
+  varnish:
+    image: varnish:6.0.13 # latest stable version at the time of writing
+    container_name: varnish
+    volumes:
+      - "./default.vcl:/etc/varnish/default.vcl:ro"
+    ports:
+      - "8080:80"
+    tmpfs:
+      - /var/lib/varnish:exec
+    environment:
+      - VARNISH_SIZE=2G
+    depends_on:
+      - "origin"
+  origin:
+    restart: on-failure
+    build: ./origin
+    container_name: origin

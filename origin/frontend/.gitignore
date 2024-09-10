@@ -1,0 +1,8 @@
+.DS_Store
+*.local
+/.pnpm-debug.log
+/dist-ssr/
+/dist/
+/elm-stuff/
+/node_modules/
+/release/
