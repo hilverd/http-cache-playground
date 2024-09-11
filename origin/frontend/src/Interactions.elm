@@ -135,8 +135,8 @@ view { scenarioIsRunning, showAllHeaders } (Interactions interactions) =
             []
             [ Extras.Html.showIf (anyVarnishToOriginRequestContainsAnUnexpectedCookie (Interactions interactions)) <|
                 p
-                    [ class "mt-8 text-red-700" ]
-                    [ text "⚠ A cookie header was found in a request to the origin. This is unexpected and needs to be cleared in the browser to prevent unexpected behaviour." ]
+                    [ class "mt-8 text-red-700 max-w-prose" ]
+                    [ text "⚠ A cookie header was found in a request to the origin. This is unexpected and needs to be cleared in the browser to prevent unexpected behaviour. It is probably helpful to open this page in a private/incognito window." ]
             , div
                 [ Html.Attributes.id "sequence-diagram" ]
                 (div
