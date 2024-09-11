@@ -9,12 +9,25 @@ const { Buffer } = require('node:buffer');
 
 const interactions = {};
 
-app.set('etag', false); // Disable automatic ETag generation
 app.disable('x-powered-by');
-
+app.set('etag', false); // Disable automatic ETag generation
 app.use(cors());
-app.use(express.static('dist', { etag: true, maxAge: '21 days' }));
 app.use(morgan('combined'));
+
+// Serve static files with 21 days cache, except for the root URL (with any query parameters)
+app.use((req, res, next) => {
+    if (req.path === '/') {
+        res.setHeader('Cache-Control', 'no-store, max-age=0');
+        express.static('dist', { etag: false })(req, res, next);
+    } else {
+        express.static('dist', { etag: true, maxAge: '21 days' })(req, res, next);
+    }
+});
+
+// Add a specific route for the root URL
+app.get('/', (req, res) => {
+    res.sendFile('dist/index.html', { root: __dirname });
+});
 
 app.get('/internal/status', (req, res) => res.json({ "status": "ok" }));
 
