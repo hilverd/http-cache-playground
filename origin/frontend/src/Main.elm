@@ -1391,7 +1391,15 @@ viewSleepForSeconds scenarioIsRunning stepIndex seconds =
 viewScenarioForm : Model -> Html Msg
 viewScenarioForm model =
     div []
-        [ div
+        [ p
+            [ class "mt-8" ]
+            [ text "Prepare a scenario for a single unique, randomly generated URL "
+            , span
+                [ class "font-mono" ]
+                [ text "/ids/:id" ]
+            , text " — then run it."
+            ]
+        , div
             [ class "mt-8 grid grid-cols-1 lg:gap-12 lg:grid-cols-2" ]
             [ div
                 [ class "space-y-8" ]
@@ -1447,9 +1455,9 @@ viewScenarioForm model =
                     ]
                 ]
             , div
-                [ class "space-y-8 mt-4 lg:mt-0" ]
+                [ class "space-y-4 mt-4 lg:mt-0" ]
                 [ h2
-                    [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" ]
+                    [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-8" ]
                     [ text "Origin" ]
                 , div
                     [ class "space-y-4" ]
@@ -1485,6 +1493,7 @@ viewScenarioForm model =
                             ]
                         ]
                     ]
+                , div [ class "divider" ] []
                 , div
                     [ class "space-y-4" ]
                     [ h2
@@ -1556,6 +1565,7 @@ viewScenarioForm model =
                             AddCustomOriginResponseHeader
                         ]
                     ]
+                , div [ class "divider" ] []
                 , div
                     [ class "text-gray-700 space-y-4" ]
                     [ h2
