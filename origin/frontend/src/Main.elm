@@ -1392,7 +1392,7 @@ viewScenarioForm : Model -> Html Msg
 viewScenarioForm model =
     div []
         [ p
-            [ class "mt-8" ]
+            [ class "mt-8 text-gray-600" ]
             [ text "Prepare a scenario for a single unique, randomly generated URL "
             , span
                 [ class "font-mono" ]
