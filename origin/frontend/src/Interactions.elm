@@ -101,21 +101,6 @@ bodyBadge colour body =
             ]
 
 
-anyVarnishToOriginRequestContainsAnUnexpectedCookie : Interactions -> Bool
-anyVarnishToOriginRequestContainsAnUnexpectedCookie (Interactions interactions) =
-    interactions
-        |> List.any
-            (\interaction ->
-                case interaction of
-                    VarnishToOrigin { headers } ->
-                        headers
-                            |> List.any (\( key, _ ) -> String.toLower key == "cookie")
-
-                    _ ->
-                        False
-            )
-
-
 view :
     { scenarioIsRunning : Bool, showAllHeaders : Bool }
     -> Interactions
@@ -133,11 +118,7 @@ view { scenarioIsRunning, showAllHeaders } (Interactions interactions) =
         in
         div
             []
-            [ Extras.Html.showIf (anyVarnishToOriginRequestContainsAnUnexpectedCookie (Interactions interactions)) <|
-                p
-                    [ class "mt-8 text-red-700 max-w-prose" ]
-                    [ text "⚠ A cookie header was found in a request to the origin. This is unexpected and needs to be cleared in the browser to prevent unexpected behaviour. It is probably helpful to open this page in a private/incognito window." ]
-            , div
+            [ div
                 [ Html.Attributes.id "sequence-diagram" ]
                 (div
                     [ class "grid grid-cols-8 text-center text-base sticky top-0 bg-white z-20 pt-8" ]
@@ -313,7 +294,7 @@ viewClientToVarnishInteraction showAllHeaders path headers =
             [ class "col-span-3 border-l-2 border-l-gray-300 border-b-2 border-b-gray-700 p-2 pt-4 relative text-gray-700" ]
             [ div
                 [ class "font-mono text-ellipsis text-nowrap overflow-hidden" ]
-                [ text <| "GET " ++ path ]
+                [ text <| "GET " ++ String.replace "/from-browser" "" path ]
             , ul
                 [ class "list-disc list-inside mt-2 space-y-1" ]
                 (viewRequestHeaders showAllHeaders headers)
@@ -532,7 +513,7 @@ viewRequestHeader ( key, value ) =
                                 [ class "ml-2" ]
                                 [ text key ]
                             ]
-                        , text <| ": [value hidden]"
+                        , text <| ": " ++ value
                         ]
                     , span
                         [ class "text-gray-500 font-sans" ]
@@ -886,7 +867,7 @@ viewResponseHeader ( key, value ) =
                                 [ class "ml-2" ]
                                 [ text key ]
                             ]
-                        , text <| ": [value hidden]"
+                        , text <| ": " ++ value
                         ]
                     , span
                         [ class "text-gray-500 font-sans" ]

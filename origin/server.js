@@ -2,6 +2,9 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const axios = require('axios');
+const url = require('url');
+
 const app = express();
 const port = process.env.PORT || 3000;
 const jsonParser = bodyParser.json();
@@ -13,6 +16,45 @@ app.disable('x-powered-by');
 app.set('etag', false); // Disable automatic ETag generation
 app.use(cors());
 app.use(morgan('combined'));
+
+const idProxy = async (req, res) => {
+    const id = req.params.id;
+    const protocol = req.protocol;
+    const host = 'varnish';
+    const query = { ...req.query };
+    delete query['headers-to-send'];
+
+    const targetUrl = url.format({
+        protocol: protocol,
+        host: host,
+        pathname: `/ids/${id}`,
+        query: query
+    });
+
+    try {
+        const headers = requestHeadersBasedOnQueryParameters(req);
+
+        const response = await axios({
+            method: 'get',
+            url: targetUrl,
+            headers: headers,
+            validateStatus: () => true, // allows axios to handle all status codes
+        });
+
+        res.status(response.status);
+
+        Object.entries(response.headers).forEach(([key, value]) => {
+            res.set(key, value);
+        });
+
+        res.send(`${response.data}`);
+    } catch (error) {
+        console.error('Proxy error:', error);
+        res.status(500).send('An error occurred while proxying the request.');
+    }
+
+    return res;
+};
 
 app.use((req, res, next) => {
     if (req.path === '/') {
@@ -28,6 +70,8 @@ app.get('/', (req, res) => {
 });
 
 app.get('/internal/status', (req, res) => res.json({ "status": "ok" }));
+
+app.use('/from-browser/ids/:id', idProxy);
 
 app.get("/ids/:id", (req, res) => {
     const unixTime = Math.floor(new Date().getTime() / 1000);
@@ -122,6 +166,28 @@ function interactionEntryForSleeping(seconds) {
         "tag": "OriginSleepingForSeconds",
         "args": [seconds]
     };
+}
+
+function requestHeadersBasedOnQueryParameters(req) {
+    let base64EncodedHeadersToSend = req.query['headers-to-send'] || [];
+
+    if (base64EncodedHeadersToSend && !Array.isArray(base64EncodedHeadersToSend)) {
+        base64EncodedHeadersToSend = [base64EncodedHeadersToSend];
+    }
+
+    const decodedHeadersToSend = base64EncodedHeadersToSend.map((base64EncodedHeaderToSend) => Buffer.from(base64EncodedHeaderToSend, 'base64').toString('ascii'));
+
+    let headersToSend = {};
+
+    decodedHeadersToSend.map(decodedHeaderToSend => {
+        const colonIndex = decodedHeaderToSend.indexOf(":");
+        const key = decodedHeaderToSend.slice(0, colonIndex);
+        const value = decodedHeaderToSend.slice(colonIndex + 1);
+
+        headersToSend[key] = value;
+    });
+
+    return headersToSend;
 }
 
 function addResponseHeadersBasedOnQueryParameters(req, res) {

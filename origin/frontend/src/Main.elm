@@ -77,7 +77,7 @@ scenarioFromForm form id =
     let
         path : String
         path =
-            "/ids/" ++ id
+            "/from-browser/ids/" ++ id
 
         clientActions : Array.Array ScenarioForm.ClientAction
         clientActions =
@@ -105,7 +105,7 @@ scenarioFromForm form id =
                                 headers
                                     |> Array.toList
                                     |> List.map (\{ key, value } -> ( key, value ))
-                                    |> List.filter (\( key, value ) -> key /= "" && String.toLower key /= "cookie" && value /= "")
+                                    |> List.filter (\( key, value ) -> key /= "" && value /= "")
                             , desiredResponseHeaders = desiredResponseHeaders
                             , respondSlowly = originWait2SecondsBeforeResponding
                             }
@@ -707,8 +707,18 @@ makeGetRequest :
     -> Cmd Msg
 makeGetRequest restOfScenario { path, headers, desiredResponseHeaders, respondSlowly } =
     let
-        queryParameters : List Url.Builder.QueryParameter
-        queryParameters =
+        queryParametersForHeadersToSend : List Url.Builder.QueryParameter
+        queryParametersForHeadersToSend =
+            headers
+                |> List.map
+                    (\( key, value ) ->
+                        (key ++ ":" ++ value)
+                            |> Base64.encode
+                            |> Url.Builder.string "headers-to-send"
+                    )
+
+        queryParametersForHeadersToReturn : List Url.Builder.QueryParameter
+        queryParametersForHeadersToReturn =
             desiredResponseHeaders
                 |> List.map
                     (\( key, value ) ->
@@ -730,7 +740,8 @@ makeGetRequest restOfScenario { path, headers, desiredResponseHeaders, respondSl
             Url.Builder.crossOrigin
                 "http://localhost:8080"
                 [ pathWithoutLeadingSlash ]
-                (queryParameters
+                (queryParametersForHeadersToSend
+                    ++ queryParametersForHeadersToReturn
                     ++ (if respondSlowly then
                             [ Url.Builder.string "respond-slowly" "" ]
 
@@ -815,7 +826,6 @@ isForbiddenHeaderName name =
         , "access-control-request-method"
         , "connection"
         , "content-length"
-        , "cookie"
         , "date"
         , "dnt"
         , "expect"
@@ -899,7 +909,7 @@ viewGetRequestHeader scenarioIsRunning stepIndex index header =
                     [ class "mt-2 text-red-700" ]
                     [ text "Setting this header is "
                     , Extras.Html.externalLink "https://developer.mozilla.org/en-US/docs/Glossary/Forbidden_header_name" [ text "not supported" ]
-                    , text "."
+                    , text " (although cookies can be)."
                     ]
             , Extras.Html.showIf (String.toLower header.key == "cache-control") <|
                 div
