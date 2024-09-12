@@ -14,7 +14,6 @@ app.set('etag', false); // Disable automatic ETag generation
 app.use(cors());
 app.use(morgan('combined'));
 
-// Serve static files with 21 days cache, except for the root URL (with any query parameters)
 app.use((req, res, next) => {
     if (req.path === '/') {
         res.setHeader('Cache-Control', 'no-store, max-age=0');
@@ -24,7 +23,6 @@ app.use((req, res, next) => {
     }
 });
 
-// Add a specific route for the root URL
 app.get('/', (req, res) => {
     res.sendFile('dist/index.html', { root: __dirname });
 });
@@ -144,6 +142,7 @@ function addCacheHeadersBasedOnQueryParameters(req, res) {
     });
 }
 
-setInterval(cleanupInteractions, 60 * 1000); // Run every minute
+// Clean up interactions every minute
+setInterval(cleanupInteractions, 60 * 1000);
 
 app.listen(port, () => console.log('Listening on port ' + port));
