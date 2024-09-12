@@ -36,7 +36,7 @@ app.get("/ids/:id", (req, res) => {
 
     addInteraction(id, interactionEntryForRequest(req.path, req.headers))
 
-    addCacheHeadersBasedOnQueryParameters(req, res);
+    addResponseHeadersBasedOnQueryParameters(req, res);
 
     const body = `${unixTime}`;
 
@@ -124,7 +124,7 @@ function interactionEntryForSleeping(seconds) {
     };
 }
 
-function addCacheHeadersBasedOnQueryParameters(req, res) {
+function addResponseHeadersBasedOnQueryParameters(req, res) {
     let base64EncodedHeadersToReturn = req.query['headers-to-return'] || [];
 
     if (base64EncodedHeadersToReturn && !Array.isArray(base64EncodedHeadersToReturn)) {
