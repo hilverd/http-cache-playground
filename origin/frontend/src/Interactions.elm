@@ -734,7 +734,6 @@ viewResponseHeaders showAllHeaders headers =
                         , "last-modified"
                         , "set-cookie"
                         , "vary"
-                        , "x-cache"
                         ]
             )
         |> List.map viewResponseHeader
