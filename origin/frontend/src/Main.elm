@@ -1602,7 +1602,7 @@ view model =
     { title = "Varnish Cache Playground"
     , body =
         [ div
-            [ class "min-h-full py-10" ]
+            [ class "min-h-full pt-4 pb-10 sm:pt-6 md:pt-10" ]
             [ header []
                 [ div
                     [ class "mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8" ]
