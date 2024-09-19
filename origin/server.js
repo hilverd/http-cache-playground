@@ -38,10 +38,12 @@ const idProxy = async (req, res) => {
             method: 'get',
             url: targetUrl,
             headers: headers,
-            validateStatus: () => true, // allows axios to handle all status codes
+            validateStatus: () => true, // don't throw on 4xx and 5xx
         });
 
-        res.status(response.status);
+        // Ignore the acual response status and give back a 200.
+        // If we don't do this, the browser seems to think the request failed and it shows a 503 (at least in Google Chrome).
+        res.status(200);
 
         Object.entries(response.headers).forEach(([key, value]) => {
             res.set(key, value);
