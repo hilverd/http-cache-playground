@@ -1262,13 +1262,6 @@ viewClientAction scenarioIsRunning stepIndex clientAction =
                     [ viewAddHeaderButton
                         [ class "mb-3 mr-3" ]
                         (not scenarioIsRunning
-                            && not (ScenarioForm.clientActionHasGetRequestHeaderWithKey "If-Match" clientAction)
-                        )
-                        "Add If-Match"
-                        (AddGetRequestHeaderWithKey stepIndex "If-Match")
-                    , viewAddHeaderButton
-                        [ class "mb-3 mr-3" ]
-                        (not scenarioIsRunning
                             && not (ScenarioForm.clientActionHasGetRequestHeaderWithKey "If-None-Match" clientAction)
                         )
                         "Add If-None-Match"
