@@ -7,6 +7,10 @@ This project lets you explore how [Varnish Cache](https://varnish-cache.org/) re
 1. `docker compose up`
 2. Open http://localhost:8080/.
 
+## Disclaimer
+
+This project is not affiliated with Varnish Cache.
+
 ## Acknowledgments
 
 This project is mainly written in [Elm](https://elm-lang.org/). The UI is based on components from [daisyUI](https://daisyui.com/).
