@@ -1557,17 +1557,17 @@ viewScenarioForm model =
                         , viewAddHeaderButton
                             [ class "mb-3 mr-3" ]
                             (not model.scenarioIsRunning
-                                && not (ScenarioForm.hasCustomOriginHeaderWithKey "Set-Cookie" model.scenarioForm)
-                            )
-                            "Add Set-Cookie"
-                            (AddOriginResponseHeaderWithKeyAndValue "Set-Cookie" "foo=bar")
-                        , viewAddHeaderButton
-                            [ class "mb-3 mr-3" ]
-                            (not model.scenarioIsRunning
                                 && not (ScenarioForm.hasCustomOriginHeaderWithKey "Vary" model.scenarioForm)
                             )
                             "Add Vary"
                             (AddOriginResponseHeaderWithKeyAndValue "Vary" "Accept-Encoding")
+                        , viewAddHeaderButton
+                            [ class "mb-3 mr-3" ]
+                            (not model.scenarioIsRunning
+                                && not (ScenarioForm.hasCustomOriginHeaderWithKey "Set-Cookie" model.scenarioForm)
+                            )
+                            "Add Set-Cookie"
+                            (AddOriginResponseHeaderWithKeyAndValue "Set-Cookie" "foo=bar")
                         , viewAddHeaderButton
                             [ class "mb-3" ]
                             (not model.scenarioIsRunning)
