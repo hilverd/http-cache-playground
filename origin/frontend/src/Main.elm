@@ -1458,7 +1458,7 @@ viewScenarioForm model =
                     ]
                 ]
             , div
-                [ class "space-y-4 mt-4 lg:mt-0" ]
+                [ class "space-y-4 mt-8 lg:mt-0" ]
                 [ h2
                     [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-8" ]
                     [ text "Origin" ]
