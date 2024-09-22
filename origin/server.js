@@ -82,8 +82,6 @@ app.get("/ids/:id", (req, res) => {
 
     addInteraction(id, interactionEntryForRequest(req.path, req.headers))
 
-    addResponseHeadersBasedOnQueryParameters(req, res);
-
     let body = `${unixTime}`;
 
     if (req.query['auto-304'] === '' && (req.headers['if-none-match'] || req.headers['if-modified-since'])) {
@@ -92,6 +90,8 @@ app.get("/ids/:id", (req, res) => {
     } else {
         res.status(200);
     }
+
+    addResponseHeadersBasedOnQueryParameters(req, res, body);
 
     if (req.query['respond-slowly'] === '') {
         const howManySecondsToSleep = 2;
@@ -199,7 +199,7 @@ function requestHeadersBasedOnQueryParameters(req) {
     return headersToSend;
 }
 
-function addResponseHeadersBasedOnQueryParameters(req, res) {
+function addResponseHeadersBasedOnQueryParameters(req, res, body) {
     let base64EncodedHeadersToReturn = req.query['headers-to-return'] || [];
 
     if (base64EncodedHeadersToReturn && !Array.isArray(base64EncodedHeadersToReturn)) {
@@ -211,9 +211,16 @@ function addResponseHeadersBasedOnQueryParameters(req, res) {
     decodedHeadersToReturn.forEach(decodedHeaderToReturn => {
         const colonIndex = decodedHeaderToReturn.indexOf(":");
         const key = decodedHeaderToReturn.slice(0, colonIndex);
-        const value = decodedHeaderToReturn.slice(colonIndex + 1);
+        let value = decodedHeaderToReturn.slice(colonIndex + 1);
 
-        res.append(key, value);
+        if (key.toLowerCase() === "etag" && value.toLowerCase() === "auto") {
+            if (body !== "") {
+                value = `"${body}"`;
+                res.append(key, value);
+            }
+        } else {
+            res.append(key, value);
+        }
     });
 }
 

@@ -1009,6 +1009,16 @@ viewOriginCustomHeader scenarioIsRunning index header =
                 ]
                 []
             ]
+        , Extras.Html.showIf (String.toLower header.key == "etag") <|
+            div
+                [ class "mt-2" ]
+                [ button
+                    [ class "btn btn-sm"
+                    , Html.Events.onClick <| UpdateCustomOriginResponseHeaderValue index "auto"
+                    , Html.Attributes.disabled (scenarioIsRunning || header.value == "auto")
+                    ]
+                    [ text "Auto-generate ETags" ]
+                ]
         ]
 
 

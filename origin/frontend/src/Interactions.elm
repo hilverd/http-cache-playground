@@ -820,11 +820,11 @@ viewResponseHeader ( key, value ) =
                         ]
                     , span
                         [ class "text-gray-500 font-sans" ]
-                        [ text <| "Indicates that '"
+                        [ text <| "Indicates that "
                         , span
                             [ class "font-mono" ]
                             [ text value ]
-                        , text "' is an identifier for the current resource at this URL."
+                        , text " is an identifier for the current resource at this URL."
                         ]
                     ]
                 ]
