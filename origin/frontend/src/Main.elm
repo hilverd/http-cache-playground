@@ -1389,7 +1389,7 @@ viewScenarioForm model =
                     )
                   <|
                     p
-                        [ class "mt-4 text-gray-600" ]
+                        [ class "mt-4 text-red-800" ]
                         [ text "[Add one or more steps to create a scenario.]" ]
                 , ul
                     [ Html.Attributes.attribute "role" "list"
