@@ -1447,15 +1447,6 @@ viewScenarioForm model =
                             [ class "font-mono text-gray-700" ]
                             [ text "/ids/:id" ]
                         ]
-                    , Extras.Html.showIf
-                        (model.scenarioForm
-                            |> ScenarioForm.originHeaders
-                            |> List.isEmpty
-                        )
-                      <|
-                        p
-                            [ class "mt-4 text-gray-700" ]
-                            [ text "[No headers defined yet.]" ]
                     , div
                         [ class "space-y-4" ]
                         (model.scenarioForm
