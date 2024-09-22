@@ -72,67 +72,6 @@ type alias Model =
     }
 
 
-scenarioFromForm : ScenarioForm -> String -> Scenario
-scenarioFromForm form id =
-    let
-        path : String
-        path =
-            "/from-browser/ids/" ++ id
-
-        clientActions : Array.Array ScenarioForm.ClientAction
-        clientActions =
-            ScenarioForm.clientActions form
-
-        originWait2SecondsBeforeResponding : Bool
-        originWait2SecondsBeforeResponding =
-            ScenarioForm.originWait2SecondsBeforeResponding form
-
-        originReturn304ForConditionalRequests : Bool
-        originReturn304ForConditionalRequests =
-            ScenarioForm.originReturn304ForConditionalRequests form
-
-        desiredResponseHeaders : List ( String, String )
-        desiredResponseHeaders =
-            form
-                |> ScenarioForm.originHeadersAsPairs
-                |> List.filter (\( key, value ) -> key /= "" && value /= "")
-    in
-    clientActions
-        |> Array.toList
-        |> List.map
-            (\clientAction ->
-                case clientAction of
-                    ScenarioForm.MakeGetRequest headers ->
-                        Scenario.MakeGetRequest
-                            { path = path
-                            , headers =
-                                headers
-                                    |> Array.toList
-                                    |> List.map (\{ key, value } -> ( key, value ))
-                                    |> List.filter (\( key, value ) -> key /= "" && value /= "")
-                            , desiredResponseHeaders = desiredResponseHeaders
-                            , respondSlowly = originWait2SecondsBeforeResponding
-                            , auto304 = originReturn304ForConditionalRequests
-                            }
-
-                    ScenarioForm.SleepForOneSecond ->
-                        Scenario.SleepForSeconds 1
-
-                    ScenarioForm.SleepForTwoSeconds ->
-                        Scenario.SleepForSeconds 2
-
-                    ScenarioForm.SleepForThreeSeconds ->
-                        Scenario.SleepForSeconds 3
-
-                    ScenarioForm.SleepForFiveSeconds ->
-                        Scenario.SleepForSeconds 5
-
-                    ScenarioForm.SleepForEightSeconds ->
-                        Scenario.SleepForSeconds 8
-            )
-        |> Scenario.create id
-
-
 init : Flags -> Url -> Key -> ( Model, Cmd Msg )
 init _ url key =
     ( { key = key
@@ -474,7 +413,7 @@ update msg model =
             let
                 scenario : Scenario
                 scenario =
-                    scenarioFromForm model.scenarioForm uuid
+                    ScenarioForm.toScenario model.scenarioForm uuid
             in
             ( { model | id = Just uuid }
             , runScenario scenario

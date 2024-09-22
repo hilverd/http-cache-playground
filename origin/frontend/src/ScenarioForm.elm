@@ -1,10 +1,10 @@
-module ScenarioForm exposing (ClientAction(..), Header, OriginHeader(..), ScenarioForm, addGetRequestHeader, addMakeGetRequest, addOriginCacheControlHeader, addOriginCustomHeader, addSleepForTwoSeconds, changeClientAction, changeMaxAge, changeSMaxAge, changeStaleWhileRevalidate, clientActionHasGetRequestHeaderWithKey, clientActions, deleteClientAction, deleteGetRequestHeader, deleteOriginHeader, empty, fromUrl, hasCustomOriginHeaderWithKey, hasOriginCacheControlHeader, hasTenClientActions, indexOfLastCustomHeaderInGetRequest, isEmpty, originHeaders, originHeadersAsPairs, originReturn304ForConditionalRequests, originWait2SecondsBeforeResponding, toRelativeUrl, toggleNoStore, toggleOriginReturn304ForConditionalRequests, toggleOriginWait2SecondsBeforeResponding, togglePrivate, updateGetRequestHeaderKey, updateGetRequestHeaderValue, updateOriginCustomHeaderKey, updateOriginCustomHeaderValue)
+module ScenarioForm exposing (ClientAction(..), Header, OriginHeader(..), ScenarioForm, addGetRequestHeader, addMakeGetRequest, addOriginCacheControlHeader, addOriginCustomHeader, addSleepForTwoSeconds, changeClientAction, changeMaxAge, changeSMaxAge, changeStaleWhileRevalidate, clientActionHasGetRequestHeaderWithKey, clientActions, deleteClientAction, deleteGetRequestHeader, deleteOriginHeader, empty, fromUrl, hasCustomOriginHeaderWithKey, hasOriginCacheControlHeader, hasTenClientActions, indexOfLastCustomHeaderInGetRequest, isEmpty, originHeaders, originHeadersAsPairs, originReturn304ForConditionalRequests, originWait2SecondsBeforeResponding, toRelativeUrl, toScenario, toggleNoStore, toggleOriginReturn304ForConditionalRequests, toggleOriginWait2SecondsBeforeResponding, togglePrivate, updateGetRequestHeaderKey, updateGetRequestHeaderValue, updateOriginCustomHeaderKey, updateOriginCustomHeaderValue)
 
 import Array exposing (Array)
 import Data.CacheControlResponseDirectives as CacheControlResponseDirectives exposing (CacheControlResponseDirectives)
 import Extras.Array
 import QueryParameters exposing (QueryParameters)
-import Scenario exposing (Action(..))
+import Scenario exposing (Action(..), Scenario)
 import Url exposing (Url)
 
 
@@ -639,3 +639,52 @@ changeClientAction index newClientAction (ScenarioForm form) =
         { form
             | clientActions = Extras.Array.update (always newClientAction) index form.clientActions
         }
+
+
+toScenario : ScenarioForm -> String -> Scenario
+toScenario ((ScenarioForm form) as scenarioForm) id =
+    let
+        path : String
+        path =
+            "/from-browser/ids/" ++ id
+
+        desiredResponseHeaders : List ( String, String )
+        desiredResponseHeaders =
+            scenarioForm
+                |> originHeadersAsPairs
+                |> List.filter (\( key, value ) -> key /= "" && value /= "")
+    in
+    form.clientActions
+        |> Array.toList
+        |> List.map
+            (\clientAction ->
+                case clientAction of
+                    MakeGetRequest headers ->
+                        Scenario.MakeGetRequest
+                            { path = path
+                            , headers =
+                                headers
+                                    |> Array.toList
+                                    |> List.map (\{ key, value } -> ( key, value ))
+                                    |> List.filter (\( key, value ) -> key /= "" && value /= "")
+                            , desiredResponseHeaders = desiredResponseHeaders
+                            , respondSlowly = form.originWait2SecondsBeforeResponding
+                            , auto304 = form.originReturn304ForConditionalRequests
+                            }
+
+                    SleepForOneSecond ->
+                        Scenario.SleepForSeconds 1
+
+                    SleepForTwoSeconds ->
+                        Scenario.SleepForSeconds 2
+
+                    SleepForThreeSeconds ->
+                        Scenario.SleepForSeconds 3
+
+                    SleepForFiveSeconds ->
+                        Scenario.SleepForSeconds 5
+
+                    SleepForEightSeconds ->
+                        Scenario.SleepForSeconds 8
+            )
+        |> Scenario.create id
