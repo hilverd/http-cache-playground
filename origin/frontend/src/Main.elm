@@ -27,7 +27,7 @@ import Interactions exposing (Interactions)
 import Process
 import Random
 import Regex
-import Scenario exposing (Scenario)
+import Scenario exposing (Scenario, allRequestHeaderKeys, allResponseHeaderKeys)
 import ScenarioForm exposing (ScenarioForm, clientActions, originWait2SecondsBeforeResponding)
 import Svg.Attributes
 import Task
@@ -1580,6 +1580,19 @@ viewScenarioForm model =
 
 view : Model -> Document Msg
 view model =
+    let
+        scenario : Scenario
+        scenario =
+            ScenarioForm.toScenario model.scenarioForm (model.id |> Maybe.withDefault "")
+
+        allRequestHeaderKeys : List String
+        allRequestHeaderKeys =
+            Scenario.allRequestHeaderKeys scenario
+
+        allResponseHeaderKeys : List String
+        allResponseHeaderKeys =
+            Scenario.allResponseHeaderKeys scenario
+    in
     { title = "Varnish Cache Playground"
     , body =
         [ div
@@ -1691,6 +1704,8 @@ view model =
                                 , Interactions.view
                                     { scenarioIsRunning = model.scenarioIsRunning
                                     , showAllHeaders = model.showAllHeaders
+                                    , allRequestHeaderKeys = allRequestHeaderKeys
+                                    , allResponseHeaderKeys = allResponseHeaderKeys
                                     }
                                     interactions
                                 ]

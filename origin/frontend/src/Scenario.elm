@@ -1,4 +1,6 @@
-module Scenario exposing (Action(..), Scenario, actions, create, id, isEmpty, nextAction)
+module Scenario exposing (Action(..), Scenario, actions, allRequestHeaderKeys, allResponseHeaderKeys, create, id, isEmpty, nextAction)
+
+import Set
 
 
 type Action
@@ -44,3 +46,41 @@ nextAction (Scenario { id_, actions_ }) =
 
         _ ->
             Nothing
+
+
+allRequestHeaderKeys : Scenario -> List String
+allRequestHeaderKeys (Scenario { actions_ }) =
+    actions_
+        |> List.map
+            (\action ->
+                case action of
+                    MakeGetRequest { headers } ->
+                        headers
+                            |> List.map (String.toLower << Tuple.first)
+                            |> List.filter ((/=) "")
+
+                    _ ->
+                        []
+            )
+        |> List.concat
+        |> Set.fromList
+        |> Set.toList
+
+
+allResponseHeaderKeys : Scenario -> List String
+allResponseHeaderKeys (Scenario { actions_ }) =
+    actions_
+        |> List.map
+            (\action ->
+                case action of
+                    MakeGetRequest { desiredResponseHeaders } ->
+                        desiredResponseHeaders
+                            |> List.map (String.toLower << Tuple.first)
+                            |> List.filter ((/=) "")
+
+                    _ ->
+                        []
+            )
+        |> List.concat
+        |> Set.fromList
+        |> Set.toList

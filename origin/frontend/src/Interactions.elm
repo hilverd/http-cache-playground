@@ -102,10 +102,14 @@ bodyBadge colour body =
 
 
 view :
-    { scenarioIsRunning : Bool, showAllHeaders : Bool }
+    { scenarioIsRunning : Bool
+    , showAllHeaders : Bool
+    , allRequestHeaderKeys : List String
+    , allResponseHeaderKeys : List String
+    }
     -> Interactions
     -> Html msg
-view { scenarioIsRunning, showAllHeaders } (Interactions interactions) =
+view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeaderKeys } (Interactions interactions) =
     if List.isEmpty interactions then
         div
             [ class "text-gray-700 mt-4" ]
@@ -143,7 +147,7 @@ view { scenarioIsRunning, showAllHeaders } (Interactions interactions) =
                             [ text "Origin" ]
                         ]
                     ]
-                    :: (List.map (viewInteraction showAllHeaders bodyToBodyColour_) interactions
+                    :: (List.map (viewInteraction showAllHeaders allRequestHeaderKeys allResponseHeaderKeys bodyToBodyColour_) interactions
                             ++ [ viewSpacer
                                , div
                                     [ class "pb-8 grid grid-cols-8 text-center text-base sticky bottom-0 bg-white z-20" ]
@@ -213,26 +217,26 @@ viewSpacer =
         ]
 
 
-viewInteraction : Bool -> Dict String BodyColour -> Interaction -> Html msg
-viewInteraction showAllHeaders bodyToBodyColour_ interaction =
+viewInteraction : Bool -> List String -> List String -> Dict String BodyColour -> Interaction -> Html msg
+viewInteraction showAllHeaders extraKeysOfRequestHeadersToShow extraKeysOfResponseHeadersToShow bodyToBodyColour_ interaction =
     case interaction of
         ClientSleepingForSeconds seconds ->
             viewClientSleepingForSeconds seconds
 
         ClientToVarnish { path, headers } ->
-            viewClientToVarnishInteraction showAllHeaders path headers
+            viewClientToVarnishInteraction showAllHeaders path extraKeysOfRequestHeadersToShow headers
 
         VarnishToOrigin { path, headers } ->
-            viewVarnishToOriginInteraction showAllHeaders path headers
+            viewVarnishToOriginInteraction showAllHeaders path extraKeysOfRequestHeadersToShow headers
 
         OriginSleepingForSeconds seconds ->
             viewOriginSleepingForSeconds seconds
 
         OriginToVarnish { statusCode, headers, body } ->
-            viewOriginToVarnishInteraction showAllHeaders bodyToBodyColour_ statusCode headers body
+            viewOriginToVarnishInteraction showAllHeaders bodyToBodyColour_ statusCode extraKeysOfResponseHeadersToShow headers body
 
         VarnishToClient { statusCode, headers, body } ->
-            viewVarnishToClientInteraction showAllHeaders bodyToBodyColour_ statusCode headers body
+            viewVarnishToClientInteraction showAllHeaders bodyToBodyColour_ statusCode extraKeysOfResponseHeadersToShow headers body
 
 
 viewClientSleepingForSeconds : Int -> Html msg
@@ -285,8 +289,8 @@ viewOriginSleepingForSeconds seconds =
         ]
 
 
-viewClientToVarnishInteraction : Bool -> String -> List ( String, String ) -> Html msg
-viewClientToVarnishInteraction showAllHeaders path headers =
+viewClientToVarnishInteraction : Bool -> String -> List String -> List ( String, String ) -> Html msg
+viewClientToVarnishInteraction showAllHeaders path extraKeysOfHeadersToShow headers =
     div
         [ class "grid grid-cols-8" ]
         [ div [] []
@@ -297,7 +301,7 @@ viewClientToVarnishInteraction showAllHeaders path headers =
                 [ text <| "GET " ++ String.replace "/from-browser" "" path ]
             , ul
                 [ class "list-disc list-inside mt-2 space-y-1" ]
-                (viewRequestHeaders showAllHeaders headers)
+                (viewRequestHeaders showAllHeaders extraKeysOfHeadersToShow headers)
             , span
                 [ class "absolute right-0 z-10" ]
                 [ Icons.chevronRight
@@ -313,8 +317,8 @@ viewClientToVarnishInteraction showAllHeaders path headers =
         ]
 
 
-viewVarnishToOriginInteraction : Bool -> String -> List ( String, String ) -> Html msg
-viewVarnishToOriginInteraction showAllHeaders path headers =
+viewVarnishToOriginInteraction : Bool -> String -> List String -> List ( String, String ) -> Html msg
+viewVarnishToOriginInteraction showAllHeaders path extraKeysOfHeadersToShow headers =
     div
         [ class "grid grid-cols-8" ]
         [ div [] []
@@ -328,7 +332,7 @@ viewVarnishToOriginInteraction showAllHeaders path headers =
                 [ text <| "GET " ++ path ]
             , ul
                 [ class "list-disc list-inside mt-2 space-y-1" ]
-                (viewRequestHeaders showAllHeaders headers)
+                (viewRequestHeaders showAllHeaders extraKeysOfHeadersToShow headers)
             , span
                 [ class "absolute right-0 z-10" ]
                 [ Icons.chevronRight
@@ -341,8 +345,8 @@ viewVarnishToOriginInteraction showAllHeaders path headers =
         ]
 
 
-viewOriginToVarnishInteraction : Bool -> Dict String BodyColour -> Int -> List ( String, String ) -> String -> Html msg
-viewOriginToVarnishInteraction showAllHeaders bodyToBodyColour_ statusCode headers body =
+viewOriginToVarnishInteraction : Bool -> Dict String BodyColour -> Int -> List String -> List ( String, String ) -> String -> Html msg
+viewOriginToVarnishInteraction showAllHeaders bodyToBodyColour_ statusCode extraKeysOfHeadersToShow headers body =
     div
         [ class "grid grid-cols-8" ]
         [ div [] []
@@ -354,7 +358,7 @@ viewOriginToVarnishInteraction showAllHeaders bodyToBodyColour_ statusCode heade
             [ viewStatusCode statusCode
             , ul
                 [ class "list-disc list-inside mt-2 space-y-1" ]
-                (viewResponseHeaders showAllHeaders headers)
+                (viewResponseHeaders showAllHeaders extraKeysOfHeadersToShow headers)
             , div
                 [ class "mt-2 font-mono" ]
                 [ bodyBadge (Dict.get body bodyToBodyColour_) body ]
@@ -370,8 +374,8 @@ viewOriginToVarnishInteraction showAllHeaders bodyToBodyColour_ statusCode heade
         ]
 
 
-viewVarnishToClientInteraction : Bool -> Dict String BodyColour -> Int -> List ( String, String ) -> String -> Html msg
-viewVarnishToClientInteraction showAllHeaders bodyToBodyColour_ statusCode headers body =
+viewVarnishToClientInteraction : Bool -> Dict String BodyColour -> Int -> List String -> List ( String, String ) -> String -> Html msg
+viewVarnishToClientInteraction showAllHeaders bodyToBodyColour_ statusCode extraKeysOfHeadersToShow headers body =
     div
         [ class "grid grid-cols-8" ]
         [ div [] []
@@ -380,7 +384,7 @@ viewVarnishToClientInteraction showAllHeaders bodyToBodyColour_ statusCode heade
             [ viewStatusCode statusCode
             , ul
                 [ class "list-disc list-inside mt-2 space-y-1" ]
-                (viewResponseHeaders showAllHeaders headers)
+                (viewResponseHeaders showAllHeaders extraKeysOfHeadersToShow headers)
             , div
                 [ class "mt-2 font-mono" ]
                 [ bodyBadge (Dict.get body bodyToBodyColour_) body ]
@@ -437,20 +441,22 @@ viewStatusCode statusCode =
                 [ text statusCodeAndMessage ]
 
 
-viewRequestHeaders : Bool -> List ( String, String ) -> List (Html msg)
-viewRequestHeaders showAllHeaders headers =
+viewRequestHeaders : Bool -> List String -> List ( String, String ) -> List (Html msg)
+viewRequestHeaders showAllHeaders keysToShow headers =
     headers
         |> List.filter
             (\( key, _ ) ->
                 showAllHeaders
                     || List.member (String.toLower key)
-                        [ "cache-control"
-                        , "cookie"
-                        , "if-match"
-                        , "if-none-match"
-                        , "if-modified-since"
-                        , "if-unmodified-since"
-                        ]
+                        ([ "cache-control"
+                         , "cookie"
+                         , "if-match"
+                         , "if-none-match"
+                         , "if-modified-since"
+                         , "if-unmodified-since"
+                         ]
+                            ++ keysToShow
+                        )
             )
         |> List.map viewRequestHeader
 
@@ -720,21 +726,23 @@ viewCacheControlResponseDirective directive =
             div [ class "mt-1 ml-5" ] [ text directive ]
 
 
-viewResponseHeaders : Bool -> List ( String, String ) -> List (Html msg)
-viewResponseHeaders showAllHeaders headers =
+viewResponseHeaders : Bool -> List String -> List ( String, String ) -> List (Html msg)
+viewResponseHeaders showAllHeaders keysToShow headers =
     headers
         |> List.filter
             (\( key, _ ) ->
                 showAllHeaders
                     || List.member (String.toLower key)
-                        [ "age"
-                        , "cache-control"
-                        , "content-encoding"
-                        , "etag"
-                        , "last-modified"
-                        , "set-cookie"
-                        , "vary"
-                        ]
+                        ([ "age"
+                         , "cache-control"
+                         , "content-encoding"
+                         , "etag"
+                         , "last-modified"
+                         , "set-cookie"
+                         , "vary"
+                         ]
+                            ++ keysToShow
+                        )
             )
         |> List.map viewResponseHeader
 
