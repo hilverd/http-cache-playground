@@ -1,4 +1,4 @@
-module ScenarioForm exposing (ClientAction(..), Header, OriginHeader(..), ScenarioForm, addGetRequestHeader, addMakeGetRequest, addOriginCacheControlHeader, addOriginCustomHeader, addSleepForTwoSeconds, changeClientAction, changeMaxAge, changeSMaxAge, changeStaleWhileRevalidate, clientActionHasGetRequestHeaderWithKey, clientActions, deleteClientAction, deleteGetRequestHeader, deleteOriginHeader, empty, fromUrl, hasCustomOriginHeaderWithKey, hasOriginCacheControlHeader, hasTenClientActions, indexOfLastCustomHeaderInGetRequest, isEmpty, originHeaders, originHeadersAsPairs, originWait2SecondsBeforeResponding, toRelativeUrl, toggleNoStore, toggleOriginWait2SecondsBeforeResponding, togglePrivate, updateGetRequestHeaderKey, updateGetRequestHeaderValue, updateOriginCustomHeaderKey, updateOriginCustomHeaderValue)
+module ScenarioForm exposing (ClientAction(..), Header, OriginHeader(..), ScenarioForm, addGetRequestHeader, addMakeGetRequest, addOriginCacheControlHeader, addOriginCustomHeader, addSleepForTwoSeconds, changeClientAction, changeMaxAge, changeSMaxAge, changeStaleWhileRevalidate, clientActionHasGetRequestHeaderWithKey, clientActions, deleteClientAction, deleteGetRequestHeader, deleteOriginHeader, empty, fromUrl, hasCustomOriginHeaderWithKey, hasOriginCacheControlHeader, hasTenClientActions, indexOfLastCustomHeaderInGetRequest, isEmpty, originHeaders, originHeadersAsPairs, originReturn304ForConditionalRequests, originWait2SecondsBeforeResponding, toRelativeUrl, toggleNoStore, toggleOriginReturn304ForConditionalRequests, toggleOriginWait2SecondsBeforeResponding, togglePrivate, updateGetRequestHeaderKey, updateGetRequestHeaderValue, updateOriginCustomHeaderKey, updateOriginCustomHeaderValue)
 
 import Array exposing (Array)
 import Data.CacheControlResponseDirectives as CacheControlResponseDirectives exposing (CacheControlResponseDirectives)
@@ -13,6 +13,7 @@ type ScenarioForm
         { clientActions : Array ClientAction
         , originWait2SecondsBeforeResponding : Bool
         , originHeaders : Array OriginHeader
+        , originReturn304ForConditionalRequests : Bool
         }
 
 
@@ -36,12 +37,13 @@ type ClientAction
     | SleepForEightSeconds
 
 
-create : List ClientAction -> Bool -> List OriginHeader -> ScenarioForm
-create clientActions_ originWait2SecondsBeforeResponding_ originHeaders_ =
+create : List ClientAction -> Bool -> List OriginHeader -> Bool -> ScenarioForm
+create clientActions_ originWait2SecondsBeforeResponding_ originHeaders_ originReturn304ForConditionalRequests_ =
     ScenarioForm
         { clientActions = Array.fromList clientActions_
         , originWait2SecondsBeforeResponding = originWait2SecondsBeforeResponding_
         , originHeaders = Array.fromList originHeaders_
+        , originReturn304ForConditionalRequests = originReturn304ForConditionalRequests_
         }
 
 
@@ -124,6 +126,7 @@ fromQueryParameters queryParameters =
          in
          headers
         )
+        (QueryParameters.originReturn304ForConditionalRequests queryParameters)
 
 
 fromUrl : Url -> ScenarioForm
@@ -215,6 +218,7 @@ toQueryParameters (ScenarioForm form) =
                                 |> Just
                 )
         )
+        form.originReturn304ForConditionalRequests
 
 
 toRelativeUrl : ScenarioForm -> String
@@ -233,7 +237,7 @@ toRelativeUrl scenarioForm =
 
 empty : ScenarioForm
 empty =
-    create [] False []
+    create [] False [] False
 
 
 isEmpty : ScenarioForm -> Bool
@@ -280,6 +284,19 @@ toggleOriginWait2SecondsBeforeResponding (ScenarioForm form) =
     ScenarioForm
         { form
             | originWait2SecondsBeforeResponding = not form.originWait2SecondsBeforeResponding
+        }
+
+
+originReturn304ForConditionalRequests : ScenarioForm -> Bool
+originReturn304ForConditionalRequests (ScenarioForm form) =
+    form.originReturn304ForConditionalRequests
+
+
+toggleOriginReturn304ForConditionalRequests : ScenarioForm -> ScenarioForm
+toggleOriginReturn304ForConditionalRequests (ScenarioForm form) =
+    ScenarioForm
+        { form
+            | originReturn304ForConditionalRequests = not form.originReturn304ForConditionalRequests
         }
 
 

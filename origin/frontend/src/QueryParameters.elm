@@ -1,4 +1,4 @@
-module QueryParameters exposing (ClientActionWithoutDetails(..), QueryParameters, clientActionsWithoutDetails, clientMakeGetRequestHeaderKeys, clientMakeGetRequestHeaderValues, create, fromUrl, originHeaderKeys, originHeaderValues, originWait2SecondsBeforeResponding, toRelativeUrl)
+module QueryParameters exposing (ClientActionWithoutDetails(..), QueryParameters, clientActionsWithoutDetails, clientMakeGetRequestHeaderKeys, clientMakeGetRequestHeaderValues, create, fromUrl, originHeaderKeys, originHeaderValues, originReturn304ForConditionalRequests, originWait2SecondsBeforeResponding, toRelativeUrl)
 
 import Dict
 import Url exposing (Url)
@@ -22,6 +22,7 @@ type QueryParameters
         , clientMakeGetRequestHeaderKeys : List ( Int, String )
         , clientMakeGetRequestHeaderValues : List ( Int, String )
         , originWait2SecondsBeforeResponding : Bool
+        , originReturn304ForConditionalRequests : Bool
         , originHeaderKeys : List String
         , originHeaderValues : List String
         }
@@ -34,8 +35,9 @@ create :
     -> Bool
     -> List String
     -> List String
+    -> Bool
     -> QueryParameters
-create clientActionsWithoutDetails_ clientMakeGetRequestHeaderKeys_ clientMakeGetRequestHeaderValues_ originWait2SecondsBeforeResponding_ originHeaderKeys_ originHeaderValues_ =
+create clientActionsWithoutDetails_ clientMakeGetRequestHeaderKeys_ clientMakeGetRequestHeaderValues_ originWait2SecondsBeforeResponding_ originHeaderKeys_ originHeaderValues_ originReturn304ForConditionalRequests_ =
     QueryParameters
         { clientActionsWithoutDetails = clientActionsWithoutDetails_
         , clientMakeGetRequestHeaderKeys = clientMakeGetRequestHeaderKeys_
@@ -43,12 +45,13 @@ create clientActionsWithoutDetails_ clientMakeGetRequestHeaderKeys_ clientMakeGe
         , originWait2SecondsBeforeResponding = originWait2SecondsBeforeResponding_
         , originHeaderKeys = originHeaderKeys_
         , originHeaderValues = originHeaderValues_
+        , originReturn304ForConditionalRequests = originReturn304ForConditionalRequests_
         }
 
 
 default : QueryParameters
 default =
-    create [] [] [] False [] []
+    create [] [] [] False [] [] False
 
 
 clientActionsWithoutDetails : QueryParameters -> List ClientActionWithoutDetails
@@ -132,9 +135,26 @@ originWait2SecondsBeforeResponding (QueryParameters queryParameters) =
     queryParameters.originWait2SecondsBeforeResponding
 
 
+originReturn304ForConditionalRequests : QueryParameters -> Bool
+originReturn304ForConditionalRequests (QueryParameters queryParameters) =
+    queryParameters.originReturn304ForConditionalRequests
+
+
 originWait2SecondsBeforeRespondingFromQuery : Url.Parser.Query.Parser Bool
 originWait2SecondsBeforeRespondingFromQuery =
     Url.Parser.Query.custom "wait" <|
+        \maybeValue ->
+            case maybeValue of
+                [ "y" ] ->
+                    True
+
+                _ ->
+                    False
+
+
+originReturn304ForConditionalRequestsFromQuery : Url.Parser.Query.Parser Bool
+originReturn304ForConditionalRequestsFromQuery =
+    Url.Parser.Query.custom "auto-304" <|
         \maybeValue ->
             case maybeValue of
                 [ "y" ] ->
@@ -153,6 +173,17 @@ originWait2SecondsBeforeRespondingToQuery originWait2SecondsBeforeResponding_ =
         Nothing
     )
         |> Maybe.map (Url.Builder.string "wait")
+
+
+originReturn304ForConditionalRequestsToQuery : Bool -> Maybe Url.Builder.QueryParameter
+originReturn304ForConditionalRequestsToQuery originReturn304ForConditionalRequests_ =
+    (if originReturn304ForConditionalRequests_ then
+        Just "y"
+
+     else
+        Nothing
+    )
+        |> Maybe.map (Url.Builder.string "auto-304")
 
 
 clientActionsParser : Url.Parser.Query.Parser (List (Maybe ClientActionWithoutDetails))
@@ -310,7 +341,7 @@ originHeaderValueToQuery headerIndex =
 
 query : Url.Parser.Query.Parser QueryParameters
 query =
-    Url.Parser.Query.map6 create
+    Url.Parser.Query.map7 create
         (clientActionsParser |> Url.Parser.Query.map (List.filterMap identity >> List.reverse))
         (clientMakeGetRequestHeaderKeysParser
             |> Url.Parser.Query.map
@@ -329,6 +360,7 @@ query =
             |> Url.Parser.Query.map
                 (List.filterMap identity >> List.reverse)
         )
+        originReturn304ForConditionalRequestsFromQuery
 
 
 parser : Url.Parser.Parser (QueryParameters -> a) a
@@ -447,4 +479,9 @@ toRelativeUrl (QueryParameters queryParameters) =
            )
         ++ originHeaderKeys_
         ++ originHeaderValues_
+        ++ ([ queryParameters.originReturn304ForConditionalRequests
+                |> originReturn304ForConditionalRequestsToQuery
+            ]
+                |> List.filterMap identity
+           )
         |> Url.Builder.relative []

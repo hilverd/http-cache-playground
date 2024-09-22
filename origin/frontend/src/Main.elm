@@ -87,6 +87,10 @@ scenarioFromForm form id =
         originWait2SecondsBeforeResponding =
             ScenarioForm.originWait2SecondsBeforeResponding form
 
+        originReturn304ForConditionalRequests : Bool
+        originReturn304ForConditionalRequests =
+            ScenarioForm.originReturn304ForConditionalRequests form
+
         desiredResponseHeaders : List ( String, String )
         desiredResponseHeaders =
             form
@@ -108,6 +112,7 @@ scenarioFromForm form id =
                                     |> List.filter (\( key, value ) -> key /= "" && value /= "")
                             , desiredResponseHeaders = desiredResponseHeaders
                             , respondSlowly = originWait2SecondsBeforeResponding
+                            , auto304 = originReturn304ForConditionalRequests
                             }
 
                     ScenarioForm.SleepForOneSecond ->
@@ -169,6 +174,7 @@ type Msg
     | ChangeSleepDuration Int Int
     | DeleteClientAction Int
     | ToggleOriginWait2SecondsBeforeResponding
+    | ToggleOriginReturn304ForConditionalRequests
     | AddCustomOriginResponseHeader
     | AddOriginResponseHeaderWithKey String
     | AddOriginResponseHeaderWithKeyAndValue String String
@@ -196,6 +202,7 @@ type Msg
         , headers : List ( String, String )
         , desiredResponseHeaders : List ( String, String )
         , respondSlowly : Bool
+        , auto304 : Bool
         }
         (Result Http.Error ())
     | GotResponseToGetRequest Scenario (Result Http.Error ( Http.Metadata, String ))
@@ -354,6 +361,12 @@ update msg model =
                 []
                 model
 
+        ToggleOriginReturn304ForConditionalRequests ->
+            updateScenarioForm
+                ScenarioForm.toggleOriginReturn304ForConditionalRequests
+                []
+                model
+
         AddCustomOriginResponseHeader ->
             let
                 scenarioForm_ =
@@ -504,7 +517,7 @@ update msg model =
                 ]
             )
 
-        RecordedMakeGetRequest restOfScenario { path, headers, desiredResponseHeaders, respondSlowly } _ ->
+        RecordedMakeGetRequest restOfScenario { path, headers, desiredResponseHeaders, respondSlowly, auto304 } _ ->
             ( model
             , Cmd.batch
                 [ getInteractions <| Scenario.id restOfScenario
@@ -513,6 +526,7 @@ update msg model =
                     , headers = headers
                     , desiredResponseHeaders = desiredResponseHeaders
                     , respondSlowly = respondSlowly
+                    , auto304 = auto304
                     }
                 ]
             )
@@ -622,12 +636,13 @@ runScenario scenario =
                     Scenario.SleepForSeconds seconds ->
                         recordSleepForSeconds restOfScenario seconds
 
-                    Scenario.MakeGetRequest { path, headers, desiredResponseHeaders, respondSlowly } ->
+                    Scenario.MakeGetRequest { path, headers, desiredResponseHeaders, respondSlowly, auto304 } ->
                         recordMakeGetRequest restOfScenario
                             { path = path
                             , headers = headers
                             , desiredResponseHeaders = desiredResponseHeaders
                             , respondSlowly = respondSlowly
+                            , auto304 = auto304
                             }
             )
         |> Maybe.withDefault
@@ -665,9 +680,10 @@ recordMakeGetRequest :
         , headers : List ( String, String )
         , desiredResponseHeaders : List ( String, String )
         , respondSlowly : Bool
+        , auto304 : Bool
         }
     -> Cmd Msg
-recordMakeGetRequest restOfScenario { path, headers, desiredResponseHeaders, respondSlowly } =
+recordMakeGetRequest restOfScenario { path, headers, desiredResponseHeaders, respondSlowly, auto304 } =
     let
         id =
             Scenario.id restOfScenario
@@ -692,6 +708,7 @@ recordMakeGetRequest restOfScenario { path, headers, desiredResponseHeaders, res
                     , headers = headers
                     , desiredResponseHeaders = desiredResponseHeaders
                     , respondSlowly = respondSlowly
+                    , auto304 = auto304
                     }
         }
 
@@ -703,9 +720,10 @@ makeGetRequest :
         , headers : List ( String, String )
         , desiredResponseHeaders : List ( String, String )
         , respondSlowly : Bool
+        , auto304 : Bool
         }
     -> Cmd Msg
-makeGetRequest restOfScenario { path, headers, desiredResponseHeaders, respondSlowly } =
+makeGetRequest restOfScenario { path, headers, desiredResponseHeaders, respondSlowly, auto304 } =
     let
         queryParametersForHeadersToSend : List Url.Builder.QueryParameter
         queryParametersForHeadersToSend =
@@ -744,6 +762,12 @@ makeGetRequest restOfScenario { path, headers, desiredResponseHeaders, respondSl
                     ++ queryParametersForHeadersToReturn
                     ++ (if respondSlowly then
                             [ Url.Builder.string "respond-slowly" "" ]
+
+                        else
+                            []
+                       )
+                    ++ (if auto304 then
+                            [ Url.Builder.string "auto-304" "" ]
 
                         else
                             []
@@ -1466,41 +1490,6 @@ viewScenarioForm model =
                     [ class "space-y-4" ]
                     [ h2
                         [ class "font-medium text-gray-900 dark:text-gray-100" ]
-                        [ text "Response time"
-                        , span
-                            [ class "font-normal text-gray-700" ]
-                            [ text " for " ]
-                        , span
-                            [ class "font-mono text-gray-700" ]
-                            [ text "/ids/:id" ]
-                        ]
-                    , div
-                        [ Html.Attributes.class "form-control w-fit"
-                        ]
-                        [ label
-                            [ Html.Attributes.class "label cursor-pointer"
-                            ]
-                            [ input
-                                [ Html.Attributes.type_ "checkbox"
-                                , Html.Attributes.disabled model.scenarioIsRunning
-                                , Html.Attributes.class "toggle"
-                                , Html.Attributes.checked <| ScenarioForm.originWait2SecondsBeforeResponding model.scenarioForm
-                                , Html.Attributes.id "toggle-origin-wait-2-seconds-before-responding"
-                                , Html.Events.onClick ToggleOriginWait2SecondsBeforeResponding
-                                ]
-                                []
-                            , span
-                                [ Html.Attributes.class "label-text text-base ml-3"
-                                ]
-                                [ text "Wait 2 seconds before responding" ]
-                            ]
-                        ]
-                    ]
-                , div [ class "divider" ] []
-                , div
-                    [ class "space-y-4" ]
-                    [ h2
-                        [ class "font-medium text-gray-900 dark:text-gray-100" ]
                         [ text "Response headers"
                         , span
                             [ class "font-normal text-gray-700" ]
@@ -1573,7 +1562,7 @@ viewScenarioForm model =
                     [ class "text-gray-700 space-y-4" ]
                     [ h2
                         [ class "font-medium text-gray-900 dark:text-gray-100" ]
-                        [ text "Response body"
+                        [ text "Response code and body"
                         , span
                             [ class "font-normal text-gray-700" ]
                             [ text " for " ]
@@ -1583,7 +1572,66 @@ viewScenarioForm model =
                         ]
                     , p
                         []
-                        [ text "The body is always the current Unix time (in seconds)." ]
+                        [ text "By default, the response status code is 200 and the body is the current Unix time (in seconds)." ]
+                    , div
+                        [ Html.Attributes.class "form-control w-fit"
+                        ]
+                        [ label
+                            [ Html.Attributes.class "label cursor-pointer pl-0"
+                            ]
+                            [ input
+                                [ Html.Attributes.type_ "checkbox"
+                                , Html.Attributes.disabled model.scenarioIsRunning
+                                , Html.Attributes.class "toggle"
+                                , Html.Attributes.checked <| ScenarioForm.originReturn304ForConditionalRequests model.scenarioForm
+                                , Html.Attributes.id "toggle-origin-toggle-origin-return-304-for-conditional-requests"
+                                , Html.Events.onClick ToggleOriginReturn304ForConditionalRequests
+                                ]
+                                []
+                            , span
+                                [ Html.Attributes.class "label-text text-base ml-3"
+                                ]
+                                [ text "Return 304 and empty body for "
+                                , em [] [ text "all" ]
+                                , text " conditional requests"
+                                ]
+                            ]
+                        ]
+                    ]
+                , div [ class "divider" ] []
+                , div
+                    [ class "space-y-4" ]
+                    [ h2
+                        [ class "font-medium text-gray-900 dark:text-gray-100" ]
+                        [ text "Response time"
+                        , span
+                            [ class "font-normal text-gray-700" ]
+                            [ text " for " ]
+                        , span
+                            [ class "font-mono text-gray-700" ]
+                            [ text "/ids/:id" ]
+                        ]
+                    , div
+                        [ Html.Attributes.class "form-control w-fit"
+                        ]
+                        [ label
+                            [ Html.Attributes.class "label cursor-pointer pl-0"
+                            ]
+                            [ input
+                                [ Html.Attributes.type_ "checkbox"
+                                , Html.Attributes.disabled model.scenarioIsRunning
+                                , Html.Attributes.class "toggle"
+                                , Html.Attributes.checked <| ScenarioForm.originWait2SecondsBeforeResponding model.scenarioForm
+                                , Html.Attributes.id "toggle-origin-wait-2-seconds-before-responding"
+                                , Html.Events.onClick ToggleOriginWait2SecondsBeforeResponding
+                                ]
+                                []
+                            , span
+                                [ Html.Attributes.class "label-text text-base ml-3"
+                                ]
+                                [ text "Wait 2 seconds before responding" ]
+                            ]
+                        ]
                     ]
                 ]
             ]

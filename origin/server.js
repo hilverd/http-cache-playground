@@ -84,7 +84,14 @@ app.get("/ids/:id", (req, res) => {
 
     addResponseHeadersBasedOnQueryParameters(req, res);
 
-    const body = `${unixTime}`;
+    let body = `${unixTime}`;
+
+    if (req.query['auto-304'] === '' && (req.headers['if-none-match'] || req.headers['if-modified-since'])) {
+        res.status(304);
+        body = '';
+    } else {
+        res.status(200);
+    }
 
     if (req.query['respond-slowly'] === '') {
         const howManySecondsToSleep = 2;

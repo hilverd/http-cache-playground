@@ -8,6 +8,7 @@ type Action
         , headers : List ( String, String )
         , desiredResponseHeaders : List ( String, String )
         , respondSlowly : Bool
+        , auto304 : Bool
         }
 
 
