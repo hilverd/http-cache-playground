@@ -129,21 +129,21 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
                     [ div
                         [ class "col-span-2 py-0.5" ]
                         [ span
-                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800" ]
+                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 shadow-md" ]
                             [ text "Client" ]
                         ]
                     , div [] []
                     , div
                         [ class "col-span-2 py-0.5" ]
                         [ span
-                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800" ]
+                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 shadow-md" ]
                             [ text "Varnish" ]
                         ]
                     , div [] []
                     , div
                         [ class "col-span-2 py-0.5" ]
                         [ span
-                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800" ]
+                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 shadow-md" ]
                             [ text "Origin" ]
                         ]
                     ]
@@ -156,7 +156,7 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
                                         , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
                                         ]
                                         [ span
-                                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white"
+                                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
                                             , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
                                             ]
                                             [ text "Client" ]
@@ -167,7 +167,7 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
                                         , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
                                         ]
                                         [ span
-                                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white"
+                                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
                                             , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
                                             ]
                                             [ text "Varnish" ]
@@ -178,7 +178,7 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
                                         , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
                                         ]
                                         [ span
-                                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white"
+                                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
                                             , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
                                             ]
                                             [ text "Origin" ]
