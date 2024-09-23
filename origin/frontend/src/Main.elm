@@ -570,13 +570,15 @@ runScenario scenario =
     scenario
         |> Scenario.nextAction
         |> Maybe.map
-            (\( action, restOfScenario ) ->
+            (\( ( stepIndex, action ), restOfScenario ) ->
                 case action of
                     Scenario.SleepForSeconds seconds ->
-                        recordSleepForSeconds restOfScenario seconds
+                        recordSleepForSeconds restOfScenario stepIndex seconds
 
                     Scenario.MakeGetRequest { path, headers, desiredResponseHeaders, respondSlowly, auto304 } ->
-                        recordMakeGetRequest restOfScenario
+                        recordMakeGetRequest
+                            restOfScenario
+                            stepIndex
                             { path = path
                             , headers = headers
                             , desiredResponseHeaders = desiredResponseHeaders
@@ -590,8 +592,8 @@ runScenario scenario =
             )
 
 
-recordSleepForSeconds : Scenario -> Int -> Cmd Msg
-recordSleepForSeconds restOfScenario seconds =
+recordSleepForSeconds : Scenario -> Int -> Int -> Cmd Msg
+recordSleepForSeconds restOfScenario stepIndex seconds =
     let
         id =
             Scenario.id restOfScenario
@@ -605,7 +607,7 @@ recordSleepForSeconds restOfScenario seconds =
     Http.post
         { url = url
         , body =
-            Interaction.ClientSleepingForSeconds seconds
+            Interaction.ClientSleepingForSeconds stepIndex seconds
                 |> Codec.encodeToValue Interaction.codec
                 |> Http.jsonBody
         , expect = Http.expectWhatever <| RecordedSleepForSeconds restOfScenario seconds
@@ -614,6 +616,7 @@ recordSleepForSeconds restOfScenario seconds =
 
 recordMakeGetRequest :
     Scenario
+    -> Int
     ->
         { path : String
         , headers : List ( String, String )
@@ -622,7 +625,7 @@ recordMakeGetRequest :
         , auto304 : Bool
         }
     -> Cmd Msg
-recordMakeGetRequest restOfScenario { path, headers, desiredResponseHeaders, respondSlowly, auto304 } =
+recordMakeGetRequest restOfScenario stepIndex { path, headers, desiredResponseHeaders, respondSlowly, auto304 } =
     let
         id =
             Scenario.id restOfScenario
@@ -636,7 +639,7 @@ recordMakeGetRequest restOfScenario { path, headers, desiredResponseHeaders, res
     Http.post
         { url = url
         , body =
-            Interaction.ClientToVarnish
+            Interaction.ClientToVarnish stepIndex
                 { path = path, headers = headers }
                 |> Codec.encodeToValue Interaction.codec
                 |> Http.jsonBody

@@ -220,11 +220,11 @@ viewSpacer =
 viewInteraction : Bool -> List String -> List String -> Dict String BodyColour -> Interaction -> Html msg
 viewInteraction showAllHeaders extraKeysOfRequestHeadersToShow extraKeysOfResponseHeadersToShow bodyToBodyColour_ interaction =
     case interaction of
-        ClientSleepingForSeconds seconds ->
-            viewClientSleepingForSeconds seconds
+        ClientSleepingForSeconds stepIndex seconds ->
+            viewClientSleepingForSeconds stepIndex seconds
 
-        ClientToVarnish { path, headers } ->
-            viewClientToVarnishInteraction showAllHeaders path extraKeysOfRequestHeadersToShow headers
+        ClientToVarnish stepIndex { path, headers } ->
+            viewClientToVarnishInteraction showAllHeaders stepIndex path extraKeysOfRequestHeadersToShow headers
 
         VarnishToOrigin { path, headers } ->
             viewVarnishToOriginInteraction showAllHeaders path extraKeysOfRequestHeadersToShow headers
@@ -239,11 +239,20 @@ viewInteraction showAllHeaders extraKeysOfRequestHeadersToShow extraKeysOfRespon
             viewVarnishToClientInteraction showAllHeaders bodyToBodyColour_ statusCode extraKeysOfResponseHeadersToShow headers body
 
 
-viewClientSleepingForSeconds : Int -> Html msg
-viewClientSleepingForSeconds seconds =
+viewClientSleepingForSeconds : Int -> Int -> Html msg
+viewClientSleepingForSeconds stepIndex seconds =
     div
         [ class "grid grid-cols-8" ]
-        [ div [] []
+        [ div
+            [ class "pt-6 text-right border-b-2 border-b-white self-start" ]
+            [ span
+                [ class "badge badge-ghost text-base mr-3" ]
+                [ span
+                    [ class "hidden sm:inline sm:mr-1" ]
+                    [ text "Step" ]
+                , text <| String.fromInt <| stepIndex + 1
+                ]
+            ]
         , div
             [ class "col-span-3 border-l-2 border-l-gray-300 px-2 pt-4" ]
             [ span
@@ -289,11 +298,20 @@ viewOriginSleepingForSeconds seconds =
         ]
 
 
-viewClientToVarnishInteraction : Bool -> String -> List String -> List ( String, String ) -> Html msg
-viewClientToVarnishInteraction showAllHeaders path extraKeysOfHeadersToShow headers =
+viewClientToVarnishInteraction : Bool -> Int -> String -> List String -> List ( String, String ) -> Html msg
+viewClientToVarnishInteraction showAllHeaders stepIndex path extraKeysOfHeadersToShow headers =
     div
         [ class "grid grid-cols-8" ]
-        [ div [] []
+        [ div
+            [ class "pt-4 text-right border-b-2 border-b-white self-start" ]
+            [ span
+                [ class "badge badge-ghost text-base mr-3" ]
+                [ span
+                    [ class "hidden sm:inline sm:mr-1" ]
+                    [ text "Step" ]
+                , text <| String.fromInt <| stepIndex + 1
+                ]
+            ]
         , div
             [ class "col-span-3 border-l-2 border-l-gray-300 border-b-2 border-b-gray-700 p-2 pt-4 relative text-gray-700" ]
             [ div

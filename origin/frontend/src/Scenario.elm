@@ -15,10 +15,13 @@ type Action
 
 
 type Scenario
-    = Scenario { id_ : String, actions_ : List Action }
+    = Scenario
+        { id_ : String
+        , actions_ : List ( Int, Action )
+        }
 
 
-create : String -> List Action -> Scenario
+create : String -> List ( Int, Action ) -> Scenario
 create id_ actions_ =
     Scenario { id_ = id_, actions_ = actions_ }
 
@@ -33,12 +36,12 @@ id (Scenario { id_ }) =
     id_
 
 
-actions : Scenario -> List Action
+actions : Scenario -> List ( Int, Action )
 actions (Scenario { actions_ }) =
     actions_
 
 
-nextAction : Scenario -> Maybe ( Action, Scenario )
+nextAction : Scenario -> Maybe ( ( Int, Action ), Scenario )
 nextAction (Scenario { id_, actions_ }) =
     case actions_ of
         head :: tail ->
@@ -52,7 +55,7 @@ allRequestHeaderKeys : Scenario -> List String
 allRequestHeaderKeys (Scenario { actions_ }) =
     actions_
         |> List.map
-            (\action ->
+            (\( _, action ) ->
                 case action of
                     MakeGetRequest { headers } ->
                         headers
@@ -71,7 +74,7 @@ allResponseHeaderKeys : Scenario -> List String
 allResponseHeaderKeys (Scenario { actions_ }) =
     actions_
         |> List.map
-            (\action ->
+            (\( _, action ) ->
                 case action of
                     MakeGetRequest { desiredResponseHeaders } ->
                         desiredResponseHeaders

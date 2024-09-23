@@ -3,9 +3,14 @@ module Interaction exposing (Interaction(..), codec)
 import Codec exposing (Codec)
 
 
+type alias StepIndex =
+    Int
+
+
 type Interaction
-    = ClientSleepingForSeconds Int
+    = ClientSleepingForSeconds StepIndex Int
     | ClientToVarnish
+        StepIndex
         { path : String
         , headers : List ( String, String )
         }
@@ -31,11 +36,11 @@ codec =
     Codec.custom
         (\clientSleepingForSeconds clientToVarnish varnishToOrigin originSleepingForSeconds originToVarnish varnishToClient value ->
             case value of
-                ClientSleepingForSeconds seconds ->
-                    clientSleepingForSeconds seconds
+                ClientSleepingForSeconds stepIndex seconds ->
+                    clientSleepingForSeconds stepIndex seconds
 
-                ClientToVarnish request ->
-                    clientToVarnish request
+                ClientToVarnish stepIndex request ->
+                    clientToVarnish stepIndex request
 
                 VarnishToOrigin request ->
                     varnishToOrigin request
@@ -49,9 +54,10 @@ codec =
                 VarnishToClient response ->
                     varnishToClient response
         )
-        |> Codec.variant1 "ClientSleepingForSeconds" ClientSleepingForSeconds Codec.int
-        |> Codec.variant1 "ClientToVarnish"
+        |> Codec.variant2 "ClientSleepingForSeconds" ClientSleepingForSeconds Codec.int Codec.int
+        |> Codec.variant2 "ClientToVarnish"
             ClientToVarnish
+            Codec.int
             (Codec.object (\path headers -> { path = path, headers = headers })
                 |> Codec.field "path" .path Codec.string
                 |> Codec.field "headers"

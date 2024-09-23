@@ -687,4 +687,5 @@ toScenario ((ScenarioForm form) as scenarioForm) id =
                     SleepForEightSeconds ->
                         Scenario.SleepForSeconds 8
             )
+        |> List.indexedMap Tuple.pair
         |> Scenario.create id
