@@ -1,11 +1,13 @@
-module Interactions exposing (Interactions, codec, empty, isEmpty, view)
+module Interactions exposing (Interactions, codec, empty, isEmpty, view, withoutInteractionsAfterFinalClientAction)
 
 import Codec exposing (Codec)
+import Data.SequenceDiagramVisibility exposing (SequenceDiagramVisibility(..))
 import Dict exposing (Dict)
 import Extras.Html
 import Extras.HtmlAttribute
 import Html exposing (..)
 import Html.Attributes exposing (class)
+import Html.Events
 import Icons
 import Interaction exposing (Interaction(..))
 import Language
@@ -31,6 +33,39 @@ empty =
 isEmpty : Interactions -> Bool
 isEmpty (Interactions interactions) =
     List.isEmpty interactions
+
+
+withoutInteractionsAfterFinalClientAction : Int -> Interactions -> Interactions
+withoutInteractionsAfterFinalClientAction stepIndexOfFinalClientAction (Interactions interactions) =
+    interactions
+        |> List.foldl
+            (\interaction ( finalClientActionSeen, result ) ->
+                if finalClientActionSeen then
+                    ( finalClientActionSeen, result )
+
+                else
+                    case interaction of
+                        ClientSleepingForSeconds stepIndex _ ->
+                            if stepIndex == stepIndexOfFinalClientAction then
+                                ( True, interaction :: result )
+
+                            else
+                                ( False, interaction :: result )
+
+                        ClientToVarnish stepIndex _ ->
+                            if stepIndex == stepIndexOfFinalClientAction then
+                                ( True, interaction :: result )
+
+                            else
+                                ( False, interaction :: result )
+
+                        _ ->
+                            ( finalClientActionSeen, interaction :: result )
+            )
+            ( False, [] )
+        |> Tuple.second
+        |> List.reverse
+        |> Interactions
 
 
 type BodyColour
@@ -106,10 +141,12 @@ view :
     , showAllHeaders : Bool
     , allRequestHeaderKeys : List String
     , allResponseHeaderKeys : List String
+    , sequenceDiagramVisibility : SequenceDiagramVisibility
+    , revealFinalInteractions : msg
     }
     -> Interactions
     -> Html msg
-view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeaderKeys } (Interactions interactions) =
+view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeaderKeys, sequenceDiagramVisibility, revealFinalInteractions } (Interactions interactions) =
     if List.isEmpty interactions then
         div
             [ class "text-gray-700 mt-4" ]
@@ -148,43 +185,65 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
                         ]
                     ]
                     :: (List.map (viewInteraction showAllHeaders allRequestHeaderKeys allResponseHeaderKeys bodyToBodyColour_) interactions
-                            ++ [ viewSpacer
-                               , div
-                                    [ class "pb-8 grid grid-cols-8 text-center text-base sticky bottom-0 bg-white z-20" ]
+                            ++ (if not scenarioIsRunning && sequenceDiagramVisibility == FinalInteractionsConcealedForQuiz then
+                                    [ viewSpacer
+                                    , viewDashedSpacer
+                                    ]
+
+                                else
+                                    []
+                               )
+                            ++ (if not scenarioIsRunning && sequenceDiagramVisibility == FinalInteractionsConcealedForQuiz then
                                     [ div
-                                        [ class "col-span-2 py-0.5"
-                                        , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
-                                        ]
-                                        [ span
-                                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
-                                            , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
+                                        [ class "mt-4 text-center" ]
+                                        [ button
+                                            [ class "btn btn-lg"
+                                            , Html.Events.onClick revealFinalInteractions
                                             ]
-                                            [ text "Client" ]
-                                        ]
-                                    , div [] []
-                                    , div
-                                        [ class "col-span-2 py-0.5"
-                                        , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
-                                        ]
-                                        [ span
-                                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
-                                            , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
+                                            [ text "Reveal final interactions"
                                             ]
-                                            [ text "Varnish" ]
-                                        ]
-                                    , div [] []
-                                    , div
-                                        [ class "col-span-2 py-0.5"
-                                        , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
-                                        ]
-                                        [ span
-                                            [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
-                                            , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
-                                            ]
-                                            [ text "Origin" ]
                                         ]
                                     ]
-                               ]
+
+                                else
+                                    [ viewSpacer
+                                    , div
+                                        [ class "pb-8 grid grid-cols-8 text-center text-base sticky bottom-0 bg-white z-20" ]
+                                        [ div
+                                            [ class "col-span-2 py-0.5"
+                                            , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
+                                            ]
+                                            [ span
+                                                [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
+                                                , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
+                                                ]
+                                                [ text "Client" ]
+                                            ]
+                                        , div [] []
+                                        , div
+                                            [ class "col-span-2 py-0.5"
+                                            , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
+                                            ]
+                                            [ span
+                                                [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
+                                                , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
+                                                ]
+                                                [ text "Varnish" ]
+                                            ]
+                                        , div [] []
+                                        , div
+                                            [ class "col-span-2 py-0.5"
+                                            , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
+                                            ]
+                                            [ span
+                                                [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
+                                                , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
+                                                ]
+                                                [ text "Origin" ]
+                                            ]
+                                        ]
+                                    ]
+                               )
                        )
                 )
             ]
@@ -213,6 +272,35 @@ viewSpacer =
             []
         , div
             [ class "border-l-2 border-l-gray-300" ]
+            []
+        ]
+
+
+viewDashedSpacer : Html msg
+viewDashedSpacer =
+    div
+        [ class "grid grid-cols-8" ]
+        [ div [] []
+        , div
+            [ class "col-span-3 border-dashed border-l-2 border-l-gray-300" ]
+            []
+        , div
+            [ class "col-span-3 border-dashed border-l-2 border-l-gray-300" ]
+            []
+        , div
+            [ class "border-l-2 border-dashed border-l-gray-300" ]
+            []
+        , div
+            [ class "py-2" ]
+            [ text "\u{00A0}" ]
+        , div
+            [ class "col-span-3 border-dashed border-l-2 border-l-gray-300" ]
+            []
+        , div
+            [ class "col-span-3 border-dashed border-l-2 border-l-gray-300" ]
+            []
+        , div
+            [ class "border-l-2 border-dashed border-l-gray-300" ]
             []
         ]
 

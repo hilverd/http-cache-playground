@@ -11,6 +11,7 @@ import Codec
 import Components.Button
 import Components.RangeSlider
 import Data.CacheControlResponseDirectives as CacheControlResponseDirectives exposing (CacheControlResponseDirectives)
+import Data.SequenceDiagramVisibility exposing (SequenceDiagramVisibility(..))
 import Dict
 import ElementIds
 import Extras.BrowserDom
@@ -28,7 +29,7 @@ import Process
 import Random
 import Regex
 import Scenario exposing (Scenario, allRequestHeaderKeys, allResponseHeaderKeys)
-import ScenarioForm exposing (ScenarioForm, clientActions, originWait2SecondsBeforeResponding)
+import ScenarioForm exposing (ScenarioForm)
 import Svg.Attributes
 import Task
 import Time
@@ -69,6 +70,7 @@ type alias Model =
     , interactions : Result Http.Error Interactions
     , formWasModifiedSinceScenarioRun : Bool
     , showAllHeaders : Bool
+    , sequenceDiagramVisibility : SequenceDiagramVisibility
     }
 
 
@@ -81,6 +83,7 @@ init _ url key =
       , interactions = Ok Interactions.empty
       , formWasModifiedSinceScenarioRun = False
       , showAllHeaders = False
+      , sequenceDiagramVisibility = Revealed
       }
     , Cmd.none
     )
@@ -127,6 +130,8 @@ type Msg
     | UpdateCustomOriginResponseHeaderKey Int String
     | UpdateCustomOriginResponseHeaderValue Int String
     | RunScenarioFromForm
+    | RunScenarioAsQuizFromForm
+    | RevealFinalInteractions
     | ResetScenarioForm
     | NewUuid String
     | GetInteractions Time.Posix
@@ -407,6 +412,21 @@ update msg model =
                 , formWasModifiedSinceScenarioRun = False
               }
             , Random.generate NewUuid Uuid.uuidStringGenerator
+            )
+
+        RunScenarioAsQuizFromForm ->
+            ( { model
+                | scenarioIsRunning = True
+                , interactions = Ok Interactions.empty
+                , formWasModifiedSinceScenarioRun = False
+                , sequenceDiagramVisibility = FinalInteractionsConcealedForQuiz
+              }
+            , Random.generate NewUuid Uuid.uuidStringGenerator
+            )
+
+        RevealFinalInteractions ->
+            ( { model | sequenceDiagramVisibility = Revealed }
+            , Process.sleep 200 |> Task.perform (always ScrollToBottomOfSequenceDiagram)
             )
 
         NewUuid uuid ->
@@ -1643,7 +1663,18 @@ view model =
                             )
                         ]
                         [ Icons.play [ Svg.Attributes.class "h-5 w-5" ]
-                        , text "Run scenario"
+                        , text "Run"
+                        ]
+                    , button
+                        [ class "ml-4 btn"
+                        , Html.Events.onClick RunScenarioAsQuizFromForm
+                        , Html.Attributes.disabled <|
+                            (model.scenarioIsRunning
+                                || (model.scenarioForm |> ScenarioForm.clientActions |> Array.isEmpty)
+                            )
+                        ]
+                        [ Icons.graduationCap [ Svg.Attributes.class "h-5 w-5" ]
+                        , text "Quiz"
                         ]
                     , span
                         [ class "ml-4" ]
@@ -1662,10 +1693,20 @@ view model =
                 , model.interactions
                     |> Result.map
                         (\interactions ->
+                            let
+                                interactionsToShow =
+                                    if model.sequenceDiagramVisibility == Revealed then
+                                        interactions
+
+                                    else
+                                        Interactions.withoutInteractionsAfterFinalClientAction
+                                            (Scenario.length scenario - 1)
+                                            interactions
+                            in
                             div
                                 [ Extras.HtmlAttribute.showIf model.formWasModifiedSinceScenarioRun <| class "opacity-50"
                                 ]
-                                [ Extras.Html.showUnless (Interactions.isEmpty interactions) <|
+                                [ Extras.Html.showUnless (Interactions.isEmpty interactionsToShow) <|
                                     Extras.Html.showMaybe
                                         (\id ->
                                             div
@@ -1709,8 +1750,10 @@ view model =
                                     , showAllHeaders = model.showAllHeaders
                                     , allRequestHeaderKeys = allRequestHeaderKeys
                                     , allResponseHeaderKeys = allResponseHeaderKeys
+                                    , sequenceDiagramVisibility = model.sequenceDiagramVisibility
+                                    , revealFinalInteractions = RevealFinalInteractions
                                     }
-                                    interactions
+                                    interactionsToShow
                                 ]
                         )
                     |> Result.withDefault

@@ -1,4 +1,4 @@
-module Scenario exposing (Action(..), Scenario, actions, allRequestHeaderKeys, allResponseHeaderKeys, create, id, isEmpty, nextAction)
+module Scenario exposing (Action(..), Scenario, actions, allRequestHeaderKeys, allResponseHeaderKeys, create, id, isEmpty, length, nextAction)
 
 import Set
 
@@ -39,6 +39,11 @@ id (Scenario { id_ }) =
 actions : Scenario -> List ( Int, Action )
 actions (Scenario { actions_ }) =
     actions_
+
+
+length : Scenario -> Int
+length (Scenario { actions_ }) =
+    List.length actions_
 
 
 nextAction : Scenario -> Maybe ( ( Int, Action ), Scenario )

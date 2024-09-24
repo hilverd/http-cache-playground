@@ -6,8 +6,7 @@ var app = Elm.Main.init({
 });
 
 app.ports.scrollToBottomOfSequenceDiagram.subscribe(() => {
-    const element = document.getElementById('sequence-diagram');
-
-    if (element)
-        element.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    setTimeout(() => {
+        window.scrollTo({ left: 0, top: document.body.scrollHeight, behavior: 'smooth' });
+    }, 0);
 });
