@@ -26,7 +26,7 @@ import Icons
 import Interaction
 import Interactions exposing (Interactions)
 import Process
-import QueryParameters exposing (QueryParameters)
+import QueryParameters
 import Random
 import Regex
 import Scenario exposing (Scenario, allRequestHeaderKeys, allResponseHeaderKeys)

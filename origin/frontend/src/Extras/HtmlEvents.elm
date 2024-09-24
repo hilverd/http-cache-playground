@@ -65,11 +65,6 @@ enter =
     Control "Enter" |> withoutModifiers
 
 
-escape : KeyDownEvent
-escape =
-    Control "Escape" |> withoutModifiers
-
-
 onEnter : msg -> Attribute msg
 onEnter msg =
     onKeydown
