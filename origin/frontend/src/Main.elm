@@ -95,7 +95,8 @@ init _ url key =
       , sequenceDiagramVisibility = sequenceDiagramVisibility
       }
     , if sequenceDiagramVisibility == FinalInteractionsConcealedForQuiz then
-        Process.sleep 500 |> Task.perform (always RunScenarioAsQuizFromForm)
+        Process.sleep 500
+            |> Task.perform (always <| RunScenarioAsQuizFromForm sequenceDiagramVisibility)
 
       else
         Cmd.none
@@ -146,7 +147,7 @@ type Msg
     | UpdateCustomOriginResponseHeaderKey Int String
     | UpdateCustomOriginResponseHeaderValue Int String
     | RunScenarioFromForm
-    | RunScenarioAsQuizFromForm
+    | RunScenarioAsQuizFromForm SequenceDiagramVisibility
     | RevealFinalInteractions
     | ResetScenarioForm
     | NewUuid String
@@ -431,17 +432,12 @@ update msg model =
             , Random.generate NewUuid Uuid.uuidStringGenerator
             )
 
-        RunScenarioAsQuizFromForm ->
+        RunScenarioAsQuizFromForm sequenceDiagramVisibility ->
             ( { model
                 | scenarioIsRunning = True
                 , interactions = Ok Interactions.empty
                 , formWasModifiedSinceScenarioRun = False
-                , sequenceDiagramVisibility =
-                    if model.sequenceDiagramVisibility == CompletelyRevealed then
-                        FinalInteractionsConcealedByPresenter
-
-                    else
-                        FinalInteractionsConcealedForQuiz
+                , sequenceDiagramVisibility = sequenceDiagramVisibility
               }
             , Random.generate NewUuid Uuid.uuidStringGenerator
             )
@@ -1699,7 +1695,7 @@ view model =
                             ]
                         , button
                             [ class "btn mr-4"
-                            , Html.Events.onClick RunScenarioAsQuizFromForm
+                            , Html.Events.onClick <| RunScenarioAsQuizFromForm FinalInteractionsConcealedByPresenter
                             , Html.Attributes.disabled <|
                                 (model.scenarioIsRunning
                                     || (model.scenarioForm |> ScenarioForm.clientActions |> Array.isEmpty)
