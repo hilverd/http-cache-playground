@@ -26,6 +26,7 @@ import Icons
 import Interaction
 import Interactions exposing (Interactions)
 import Process
+import QueryParameters exposing (QueryParameters)
 import Random
 import Regex
 import Scenario exposing (Scenario, allRequestHeaderKeys, allResponseHeaderKeys)
@@ -83,7 +84,12 @@ init _ url key =
       , interactions = Ok Interactions.empty
       , formWasModifiedSinceScenarioRun = False
       , showAllHeaders = False
-      , sequenceDiagramVisibility = Revealed
+      , sequenceDiagramVisibility =
+            if QueryParameters.urlIsObfuscatedForQuiz url then
+                FinalInteractionsPermanentlyConcealed
+
+            else
+                Revealed
       }
     , Cmd.none
     )
@@ -94,6 +100,9 @@ init _ url key =
 
 
 port scrollToBottomOfSequenceDiagram : () -> Cmd msg
+
+
+port copyTextToClipboard : String -> Cmd msg
 
 
 
@@ -152,6 +161,7 @@ type Msg
     | GotResponseToGetRequest Scenario (Result Http.Error ( Http.Metadata, String ))
     | RecordedResponseToGetRequest Scenario (Result Http.Error ())
     | ToggleShowAllHeaders
+    | CopyObfuscatedQuizUrlToClipboard
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -188,7 +198,7 @@ update msg model =
             if model.scenarioForm == scenarioForm then
                 ( model
                 , scenarioForm
-                    |> ScenarioForm.toRelativeUrl
+                    |> ScenarioForm.toRelativeUrl False
                     |> Browser.Navigation.pushUrl model.key
                 )
 
@@ -419,7 +429,12 @@ update msg model =
                 | scenarioIsRunning = True
                 , interactions = Ok Interactions.empty
                 , formWasModifiedSinceScenarioRun = False
-                , sequenceDiagramVisibility = FinalInteractionsConcealedForQuiz
+                , sequenceDiagramVisibility =
+                    if model.sequenceDiagramVisibility == Revealed then
+                        FinalInteractionsConcealedButRevealable
+
+                    else
+                        FinalInteractionsPermanentlyConcealed
               }
             , Random.generate NewUuid Uuid.uuidStringGenerator
             )
@@ -520,6 +535,13 @@ update msg model =
         ToggleShowAllHeaders ->
             ( { model | showAllHeaders = not model.showAllHeaders }
             , Cmd.none
+            )
+
+        CopyObfuscatedQuizUrlToClipboard ->
+            ( model
+            , model.scenarioForm
+                |> ScenarioForm.toRelativeUrl True
+                |> copyTextToClipboard
             )
 
 
@@ -1654,19 +1676,22 @@ view model =
                 [ viewScenarioForm model
                 , div
                     [ class "inline-flex items-center mt-8" ]
-                    [ button
-                        [ class "btn btn-primary"
-                        , Html.Events.onClick RunScenarioFromForm
-                        , Html.Attributes.disabled <|
-                            (model.scenarioIsRunning
-                                || (model.scenarioForm |> ScenarioForm.clientActions |> Array.isEmpty)
-                            )
-                        ]
-                        [ Icons.play [ Svg.Attributes.class "h-5 w-5" ]
-                        , text "Run"
-                        ]
+                    [ Extras.Html.showUnless
+                        (model.sequenceDiagramVisibility == FinalInteractionsPermanentlyConcealed)
+                      <|
+                        button
+                            [ class "btn btn-primary mr-4"
+                            , Html.Events.onClick RunScenarioFromForm
+                            , Html.Attributes.disabled <|
+                                (model.scenarioIsRunning
+                                    || (model.scenarioForm |> ScenarioForm.clientActions |> Array.isEmpty)
+                                )
+                            ]
+                            [ Icons.play [ Svg.Attributes.class "h-5 w-5" ]
+                            , text "Run"
+                            ]
                     , button
-                        [ class "ml-4 btn"
+                        [ class "btn mr-4"
                         , Html.Events.onClick RunScenarioAsQuizFromForm
                         , Html.Attributes.disabled <|
                             (model.scenarioIsRunning
@@ -1676,16 +1701,18 @@ view model =
                         [ Icons.graduationCap [ Svg.Attributes.class "h-5 w-5" ]
                         , text "Quiz"
                         ]
-                    , span
-                        [ class "ml-4" ]
-                        [ button
-                            [ class "btn btn-warning"
-                            , Html.Events.onClick ResetScenarioForm
-                            , Html.Attributes.disabled <| (model.scenarioIsRunning || ScenarioForm.isEmpty model.scenarioForm)
-                            ]
-                            [ text "Reset form"
-                            ]
+                    , button
+                        [ class "btn btn-warning mr-4"
+                        , Html.Events.onClick ResetScenarioForm
+                        , Html.Attributes.disabled <| (model.scenarioIsRunning || ScenarioForm.isEmpty model.scenarioForm)
                         ]
+                        [ text "Reset form" ]
+                    , Extras.Html.showUnless (model.scenarioIsRunning || ScenarioForm.isEmpty model.scenarioForm) <|
+                        button
+                            [ class "btn btn-link mr-4"
+                            , Html.Events.onClick CopyObfuscatedQuizUrlToClipboard
+                            ]
+                            [ text "\t" ]
                     ]
                 , h2
                     [ class "mt-8 text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" ]

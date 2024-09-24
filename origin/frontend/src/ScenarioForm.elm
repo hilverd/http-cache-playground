@@ -221,11 +221,11 @@ toQueryParameters (ScenarioForm form) =
         form.originReturn304ForConditionalRequests
 
 
-toRelativeUrl : ScenarioForm -> String
-toRelativeUrl scenarioForm =
+toRelativeUrl : Bool -> ScenarioForm -> String
+toRelativeUrl obfuscateForQuiz scenarioForm =
     scenarioForm
         |> toQueryParameters
-        |> QueryParameters.toRelativeUrl
+        |> QueryParameters.toRelativeUrl obfuscateForQuiz
         |> (\urlString ->
                 if urlString == "" then
                     "?"

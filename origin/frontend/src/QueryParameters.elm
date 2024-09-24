@@ -1,4 +1,4 @@
-module QueryParameters exposing (ClientActionWithoutDetails(..), QueryParameters, clientActionsWithoutDetails, clientMakeGetRequestHeaderKeys, clientMakeGetRequestHeaderValues, create, fromUrl, originHeaderKeys, originHeaderValues, originReturn304ForConditionalRequests, originWait2SecondsBeforeResponding, toRelativeUrl)
+module QueryParameters exposing (ClientActionWithoutDetails(..), QueryParameters, clientActionsWithoutDetails, clientMakeGetRequestHeaderKeys, clientMakeGetRequestHeaderValues, create, fromUrl, originHeaderKeys, originHeaderValues, originReturn304ForConditionalRequests, originWait2SecondsBeforeResponding, toRelativeUrl, urlIsObfuscatedForQuiz)
 
 import Dict
 import Url exposing (Url)
@@ -375,8 +375,20 @@ fromUrl url =
         |> Maybe.withDefault default
 
 
-toRelativeUrl : QueryParameters -> String
-toRelativeUrl (QueryParameters queryParameters) =
+urlIsObfuscatedForQuiz : Url -> Bool
+urlIsObfuscatedForQuiz url =
+    { url | path = "" }
+        |> Url.Parser.parse
+            (Url.Parser.query
+                (Url.Parser.Query.custom "q" <|
+                    List.member "t"
+                )
+            )
+        |> Maybe.withDefault False
+
+
+toRelativeUrl : Bool -> QueryParameters -> String
+toRelativeUrl obfuscateForQuiz (QueryParameters queryParameters) =
     let
         clientActionsWithoutDetails_ : List Url.Builder.QueryParameter
         clientActionsWithoutDetails_ =
@@ -483,5 +495,11 @@ toRelativeUrl (QueryParameters queryParameters) =
                 |> originReturn304ForConditionalRequestsToQuery
             ]
                 |> List.filterMap identity
+           )
+        |> (if obfuscateForQuiz then
+                List.intersperse (Url.Builder.string "q" "t")
+
+            else
+                identity
            )
         |> Url.Builder.relative []

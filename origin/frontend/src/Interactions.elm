@@ -185,7 +185,7 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
                         ]
                     ]
                     :: (List.map (viewInteraction showAllHeaders allRequestHeaderKeys allResponseHeaderKeys bodyToBodyColour_) interactions
-                            ++ (if not scenarioIsRunning && sequenceDiagramVisibility == FinalInteractionsConcealedForQuiz then
+                            ++ (if not scenarioIsRunning && sequenceDiagramVisibility /= Revealed then
                                     [ viewSpacer
                                     , viewDashedSpacer
                                     ]
@@ -193,60 +193,77 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
                                 else
                                     []
                                )
-                            ++ (if not scenarioIsRunning && sequenceDiagramVisibility == FinalInteractionsConcealedForQuiz then
-                                    [ div
-                                        [ class "mt-4 text-center" ]
-                                        [ button
-                                            [ class "btn"
-                                            , Html.Events.onClick revealFinalInteractions
-                                            ]
-                                            [ text "Reveal final interactions"
-                                            ]
-                                        ]
-                                    ]
+                            ++ (if scenarioIsRunning then
+                                    viewAgentsAtBottom scenarioIsRunning
 
                                 else
-                                    [ viewSpacer
-                                    , div
-                                        [ class "pb-8 grid grid-cols-8 text-center text-base sticky bottom-0 bg-white z-20" ]
-                                        [ div
-                                            [ class "col-span-2 py-0.5"
-                                            , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
-                                            ]
-                                            [ span
-                                                [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
-                                                , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
+                                    case sequenceDiagramVisibility of
+                                        FinalInteractionsConcealedButRevealable ->
+                                            [ div
+                                                [ class "mt-4 text-center" ]
+                                                [ button
+                                                    [ class "btn"
+                                                    , Html.Events.onClick revealFinalInteractions
+                                                    ]
+                                                    [ text "Reveal final interactions"
+                                                    ]
                                                 ]
-                                                [ text "Client" ]
                                             ]
-                                        , div [] []
-                                        , div
-                                            [ class "col-span-2 py-0.5"
-                                            , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
-                                            ]
-                                            [ span
-                                                [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
-                                                , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
+
+                                        FinalInteractionsPermanentlyConcealed ->
+                                            [ div
+                                                [ class "mt-4 text-center text-8xl text-gray-500 select-none" ]
+                                                [ text "?"
                                                 ]
-                                                [ text "Varnish" ]
                                             ]
-                                        , div [] []
-                                        , div
-                                            [ class "col-span-2 py-0.5"
-                                            , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
-                                            ]
-                                            [ span
-                                                [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
-                                                , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
-                                                ]
-                                                [ text "Origin" ]
-                                            ]
-                                        ]
-                                    ]
+
+                                        Revealed ->
+                                            viewAgentsAtBottom scenarioIsRunning
                                )
                        )
                 )
             ]
+
+
+viewAgentsAtBottom : Bool -> List (Html msg)
+viewAgentsAtBottom scenarioIsRunning =
+    [ viewSpacer
+    , div
+        [ class "pb-8 grid grid-cols-8 text-center text-base sticky bottom-0 bg-white z-20" ]
+        [ div
+            [ class "col-span-2 py-0.5"
+            , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
+            ]
+            [ span
+                [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
+                , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
+                ]
+                [ text "Client" ]
+            ]
+        , div [] []
+        , div
+            [ class "col-span-2 py-0.5"
+            , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
+            ]
+            [ span
+                [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
+                , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
+                ]
+                [ text "Varnish" ]
+            ]
+        , div [] []
+        , div
+            [ class "col-span-2 py-0.5"
+            , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-bounce"
+            ]
+            [ span
+                [ class "border-2 rounded-md border-gray-500 px-2 py-1 text-gray-800 bg-white shadow-md"
+                , Extras.HtmlAttribute.showIf scenarioIsRunning <| class "motion-safe:animate-pulse"
+                ]
+                [ text "Origin" ]
+            ]
+        ]
+    ]
 
 
 viewSpacer : Html msg

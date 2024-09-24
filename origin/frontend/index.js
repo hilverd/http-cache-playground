@@ -10,3 +10,10 @@ app.ports.scrollToBottomOfSequenceDiagram.subscribe(() => {
         window.scrollTo({ left: 0, top: document.body.scrollHeight, behavior: 'smooth' });
     }, 0);
 });
+
+app.ports.copyTextToClipboard.subscribe((textToCopy) => {
+    navigator.clipboard.writeText(textToCopy).then(
+        () => { }, // success
+        () => { }, // failure
+    );
+});
