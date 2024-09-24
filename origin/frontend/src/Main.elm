@@ -77,6 +77,14 @@ type alias Model =
 
 init : Flags -> Url -> Key -> ( Model, Cmd Msg )
 init _ url key =
+    let
+        sequenceDiagramVisibility =
+            if QueryParameters.urlIsObfuscatedForQuiz url then
+                FinalInteractionsConcealedForQuiz
+
+            else
+                CompletelyRevealed
+    in
     ( { key = key
       , id = Nothing
       , scenarioForm = ScenarioForm.fromUrl url
@@ -84,14 +92,13 @@ init _ url key =
       , interactions = Ok Interactions.empty
       , formWasModifiedSinceScenarioRun = False
       , showAllHeaders = False
-      , sequenceDiagramVisibility =
-            if QueryParameters.urlIsObfuscatedForQuiz url then
-                FinalInteractionsPermanentlyConcealed
-
-            else
-                Revealed
+      , sequenceDiagramVisibility = sequenceDiagramVisibility
       }
-    , Cmd.none
+    , if sequenceDiagramVisibility == FinalInteractionsConcealedForQuiz then
+        Process.sleep 500 |> Task.perform (always RunScenarioAsQuizFromForm)
+
+      else
+        Cmd.none
     )
 
 
@@ -430,17 +437,17 @@ update msg model =
                 , interactions = Ok Interactions.empty
                 , formWasModifiedSinceScenarioRun = False
                 , sequenceDiagramVisibility =
-                    if model.sequenceDiagramVisibility == Revealed then
-                        FinalInteractionsConcealedButRevealable
+                    if model.sequenceDiagramVisibility == CompletelyRevealed then
+                        FinalInteractionsConcealedByPresenter
 
                     else
-                        FinalInteractionsPermanentlyConcealed
+                        FinalInteractionsConcealedForQuiz
               }
             , Random.generate NewUuid Uuid.uuidStringGenerator
             )
 
         RevealFinalInteractions ->
-            ( { model | sequenceDiagramVisibility = Revealed }
+            ( { model | sequenceDiagramVisibility = CompletelyRevealed }
             , Process.sleep 200 |> Task.perform (always ScrollToBottomOfSequenceDiagram)
             )
 
@@ -1674,12 +1681,12 @@ view model =
             , main_
                 [ class "mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8" ]
                 [ viewScenarioForm model
-                , div
-                    [ class "inline-flex items-center mt-8" ]
-                    [ Extras.Html.showUnless
-                        (model.sequenceDiagramVisibility == FinalInteractionsPermanentlyConcealed)
-                      <|
-                        button
+                , Extras.Html.showUnless
+                    (model.sequenceDiagramVisibility == FinalInteractionsConcealedForQuiz)
+                  <|
+                    div
+                        [ class "inline-flex items-center mt-8" ]
+                        [ button
                             [ class "btn btn-primary mr-4"
                             , Html.Events.onClick RunScenarioFromForm
                             , Html.Attributes.disabled <|
@@ -1690,30 +1697,30 @@ view model =
                             [ Icons.play [ Svg.Attributes.class "h-5 w-5" ]
                             , text "Run"
                             ]
-                    , button
-                        [ class "btn mr-4"
-                        , Html.Events.onClick RunScenarioAsQuizFromForm
-                        , Html.Attributes.disabled <|
-                            (model.scenarioIsRunning
-                                || (model.scenarioForm |> ScenarioForm.clientActions |> Array.isEmpty)
-                            )
-                        ]
-                        [ Icons.graduationCap [ Svg.Attributes.class "h-5 w-5" ]
-                        , text "Quiz"
-                        ]
-                    , button
-                        [ class "btn btn-warning mr-4"
-                        , Html.Events.onClick ResetScenarioForm
-                        , Html.Attributes.disabled <| (model.scenarioIsRunning || ScenarioForm.isEmpty model.scenarioForm)
-                        ]
-                        [ text "Reset form" ]
-                    , Extras.Html.showUnless (model.scenarioIsRunning || ScenarioForm.isEmpty model.scenarioForm) <|
-                        button
-                            [ class "btn btn-link mr-4"
-                            , Html.Events.onClick CopyObfuscatedQuizUrlToClipboard
+                        , button
+                            [ class "btn mr-4"
+                            , Html.Events.onClick RunScenarioAsQuizFromForm
+                            , Html.Attributes.disabled <|
+                                (model.scenarioIsRunning
+                                    || (model.scenarioForm |> ScenarioForm.clientActions |> Array.isEmpty)
+                                )
                             ]
-                            [ text "\t" ]
-                    ]
+                            [ Icons.graduationCap [ Svg.Attributes.class "h-5 w-5" ]
+                            , text "Quiz"
+                            ]
+                        , button
+                            [ class "btn btn-warning mr-4"
+                            , Html.Events.onClick ResetScenarioForm
+                            , Html.Attributes.disabled <| (model.scenarioIsRunning || ScenarioForm.isEmpty model.scenarioForm)
+                            ]
+                            [ text "Reset form" ]
+                        , Extras.Html.showUnless (model.scenarioIsRunning || ScenarioForm.isEmpty model.scenarioForm) <|
+                            button
+                                [ class "btn btn-link mr-4"
+                                , Html.Events.onClick CopyObfuscatedQuizUrlToClipboard
+                                ]
+                                [ text "\t" ]
+                        ]
                 , h2
                     [ class "mt-8 text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" ]
                     [ text "Interactions" ]
@@ -1722,7 +1729,7 @@ view model =
                         (\interactions ->
                             let
                                 interactionsToShow =
-                                    if model.sequenceDiagramVisibility == Revealed then
+                                    if model.sequenceDiagramVisibility == CompletelyRevealed then
                                         interactions
 
                                     else

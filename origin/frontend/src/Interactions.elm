@@ -185,7 +185,7 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
                         ]
                     ]
                     :: (List.map (viewInteraction showAllHeaders allRequestHeaderKeys allResponseHeaderKeys bodyToBodyColour_) interactions
-                            ++ (if not scenarioIsRunning && sequenceDiagramVisibility /= Revealed then
+                            ++ (if not scenarioIsRunning && sequenceDiagramVisibility /= CompletelyRevealed then
                                     [ viewSpacer
                                     , viewDashedSpacer
                                     ]
@@ -198,7 +198,7 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
 
                                 else
                                     case sequenceDiagramVisibility of
-                                        FinalInteractionsConcealedButRevealable ->
+                                        FinalInteractionsConcealedByPresenter ->
                                             [ div
                                                 [ class "mt-4 text-center" ]
                                                 [ button
@@ -210,14 +210,14 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
                                                 ]
                                             ]
 
-                                        FinalInteractionsPermanentlyConcealed ->
+                                        FinalInteractionsConcealedForQuiz ->
                                             [ div
                                                 [ class "mt-4 text-center text-8xl text-gray-500 select-none" ]
                                                 [ text "?"
                                                 ]
                                             ]
 
-                                        Revealed ->
+                                        CompletelyRevealed ->
                                             viewAgentsAtBottom scenarioIsRunning
                                )
                        )
