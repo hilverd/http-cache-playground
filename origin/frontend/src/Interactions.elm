@@ -197,7 +197,7 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
                                     [ div
                                         [ class "mt-4 text-center" ]
                                         [ button
-                                            [ class "btn btn-lg"
+                                            [ class "btn"
                                             , Html.Events.onClick revealFinalInteractions
                                             ]
                                             [ text "Reveal final interactions"
