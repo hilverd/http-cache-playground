@@ -806,7 +806,54 @@ exerciseMaxAgeAndSMaxage =
         )
 
 
+exerciseStaleWhileRevalidate1 : ScenarioForm
+exerciseStaleWhileRevalidate1 =
+    create
+        [ MakeGetRequest ([] |> Array.fromList)
+        , SleepForTwoSeconds
+        , MakeGetRequest ([] |> Array.fromList)
+        ]
+        True
+        [ CacheControlResponseDirectives.empty
+            |> CacheControlResponseDirectives.updateSMaxAge (Just 1)
+            |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 5)
+            |> CacheControl
+        ]
+        False
+        ([ { answer = "Varnish returns a response with the same body as before", selected = False, correct = True }
+         , { answer = "Varnish returns a different response body", selected = False, correct = False }
+         ]
+            |> Array.fromList
+            |> Just
+        )
+
+
+exerciseStaleWhileRevalidate2 : ScenarioForm
+exerciseStaleWhileRevalidate2 =
+    create
+        [ MakeGetRequest ([] |> Array.fromList)
+        , SleepForThreeSeconds
+        , MakeGetRequest ([] |> Array.fromList)
+        ]
+        False
+        [ CacheControlResponseDirectives.empty
+            |> CacheControlResponseDirectives.updateSMaxAge (Just 1)
+            |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 1)
+            |> CacheControl
+        ]
+        False
+        ([ { answer = "Varnish returns a response with the same body as before", selected = False, correct = False }
+         , { answer = "Varnish returns a different response body", selected = False, correct = True }
+         ]
+            |> Array.fromList
+            |> Just
+        )
+
+
 exercisesById : Dict String ScenarioForm
 exercisesById =
     Dict.fromList
-        [ ( "max-age-and-s-maxage", exerciseMaxAgeAndSMaxage ) ]
+        [ ( "max-age-and-s-maxage", exerciseMaxAgeAndSMaxage )
+        , ( "stale-while-revalidate-1", exerciseStaleWhileRevalidate1 )
+        , ( "stale-while-revalidate-2", exerciseStaleWhileRevalidate2 )
+        ]
