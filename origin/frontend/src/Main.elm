@@ -78,8 +78,11 @@ type alias Model =
 init : Flags -> Url -> Key -> ( Model, Cmd Msg )
 init _ url key =
     let
+        scenarioForm =
+            ScenarioForm.fromUrl url
+
         sequenceDiagramVisibility =
-            if QueryParameters.urlIsObfuscatedForQuiz url then
+            if ScenarioForm.predefinedExercise scenarioForm then
                 FinalInteractionsConcealedForQuiz
 
             else
@@ -87,7 +90,7 @@ init _ url key =
     in
     ( { key = key
       , id = Nothing
-      , scenarioForm = ScenarioForm.fromUrl url
+      , scenarioForm = scenarioForm
       , scenarioIsRunning = False
       , interactions = Ok Interactions.empty
       , formWasModifiedSinceScenarioRun = False
@@ -108,9 +111,6 @@ init _ url key =
 
 
 port scrollToBottomOfSequenceDiagram : () -> Cmd msg
-
-
-port copyTextToClipboard : String -> Cmd msg
 
 
 
@@ -169,7 +169,6 @@ type Msg
     | GotResponseToGetRequest Scenario (Result Http.Error ( Http.Metadata, String ))
     | RecordedResponseToGetRequest Scenario (Result Http.Error ())
     | ToggleShowAllHeaders
-    | CopyObfuscatedQuizUrlToClipboard
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -206,7 +205,7 @@ update msg model =
             if model.scenarioForm == scenarioForm then
                 ( model
                 , scenarioForm
-                    |> ScenarioForm.toRelativeUrl False
+                    |> ScenarioForm.toRelativeUrl
                     |> Browser.Navigation.pushUrl model.key
                 )
 
@@ -540,34 +539,35 @@ update msg model =
             , Cmd.none
             )
 
-        CopyObfuscatedQuizUrlToClipboard ->
-            ( model
-            , model.scenarioForm
-                |> ScenarioForm.toRelativeUrl True
-                |> copyTextToClipboard
-            )
-
 
 updateScenarioForm : (ScenarioForm -> ScenarioForm) -> List (Cmd Msg) -> Model -> ( Model, Cmd Msg )
 updateScenarioForm f commands model =
     let
-        updatedScenarioForm =
-            f model.scenarioForm
+        doNotAllowMakingChanges =
+            ScenarioForm.predefinedExercise model.scenarioForm
     in
-    ( { model
-        | scenarioForm = updatedScenarioForm
-        , formWasModifiedSinceScenarioRun = True
-      }
-    , Cmd.batch
-        ((Process.sleep 1000
-            |> Task.perform
-                (always <|
-                    MakeUrlReflectScenarioForm updatedScenarioForm
-                )
-         )
-            :: commands
+    if doNotAllowMakingChanges then
+        ( model, Cmd.none )
+
+    else
+        let
+            updatedScenarioForm =
+                f model.scenarioForm
+        in
+        ( { model
+            | scenarioForm = updatedScenarioForm
+            , formWasModifiedSinceScenarioRun = True
+          }
+        , Cmd.batch
+            ((Process.sleep 1000
+                |> Task.perform
+                    (always <|
+                        MakeUrlReflectScenarioForm updatedScenarioForm
+                    )
+             )
+                :: commands
+            )
         )
-    )
 
 
 getInteractions : String -> Cmd Msg
@@ -1705,17 +1705,11 @@ view model =
                             , text "Quiz"
                             ]
                         , button
-                            [ class "btn btn-warning mr-4"
+                            [ class "btn btn-warning"
                             , Html.Events.onClick ResetScenarioForm
                             , Html.Attributes.disabled <| (model.scenarioIsRunning || ScenarioForm.isEmpty model.scenarioForm)
                             ]
                             [ text "Reset form" ]
-                        , Extras.Html.showUnless (model.scenarioIsRunning || ScenarioForm.isEmpty model.scenarioForm) <|
-                            button
-                                [ class "btn btn-link mr-4"
-                                , Html.Events.onClick CopyObfuscatedQuizUrlToClipboard
-                                ]
-                                [ text "\t" ]
                         ]
                 , h2
                     [ class "mt-8 text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" ]

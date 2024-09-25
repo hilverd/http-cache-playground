@@ -1,4 +1,4 @@
-module QueryParameters exposing (ClientActionWithoutDetails(..), QueryParameters, clientActionsWithoutDetails, clientMakeGetRequestHeaderKeys, clientMakeGetRequestHeaderValues, create, fromUrl, originHeaderKeys, originHeaderValues, originReturn304ForConditionalRequests, originWait2SecondsBeforeResponding, toRelativeUrl, urlIsObfuscatedForQuiz)
+module QueryParameters exposing (ClientActionWithoutDetails(..), QueryParameters, clientActionsWithoutDetails, clientMakeGetRequestHeaderKeys, clientMakeGetRequestHeaderValues, create, exerciseIdFromUrl, fromUrl, originHeaderKeys, originHeaderValues, originReturn304ForConditionalRequests, originWait2SecondsBeforeResponding, toRelativeUrl)
 
 import Dict
 import Url exposing (Url)
@@ -375,20 +375,20 @@ fromUrl url =
         |> Maybe.withDefault default
 
 
-urlIsObfuscatedForQuiz : Url -> Bool
-urlIsObfuscatedForQuiz url =
+exerciseIdFromUrl : Url -> Maybe String
+exerciseIdFromUrl url =
     { url | path = "" }
         |> Url.Parser.parse
             (Url.Parser.query
-                (Url.Parser.Query.custom "q" <|
-                    List.member "t"
+                (Url.Parser.Query.custom "exercise-id" <|
+                    List.head
                 )
             )
-        |> Maybe.withDefault False
+        |> Maybe.withDefault Nothing
 
 
-toRelativeUrl : Bool -> QueryParameters -> String
-toRelativeUrl obfuscateForQuiz (QueryParameters queryParameters) =
+toRelativeUrl : QueryParameters -> String
+toRelativeUrl (QueryParameters queryParameters) =
     let
         clientActionsWithoutDetails_ : List Url.Builder.QueryParameter
         clientActionsWithoutDetails_ =
@@ -495,11 +495,5 @@ toRelativeUrl obfuscateForQuiz (QueryParameters queryParameters) =
                 |> originReturn304ForConditionalRequestsToQuery
             ]
                 |> List.filterMap identity
-           )
-        |> (if obfuscateForQuiz then
-                List.intersperse (Url.Builder.string "q" "t")
-
-            else
-                identity
            )
         |> Url.Builder.relative []
