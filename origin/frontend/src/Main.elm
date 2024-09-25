@@ -1797,7 +1797,7 @@ view model =
                         [ class "mt-6 flex flex-col justify-center items-center" ]
                         [ div
                             [ class "text-gray-700 font-medium text-lg" ]
-                            [ text "What happens next?" ]
+                            [ text "What do you think happens next?" ]
                         , div
                             [ class "mt-4" ]
                             [ div
