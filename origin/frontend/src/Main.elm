@@ -82,7 +82,7 @@ init _ url key =
             ScenarioForm.fromUrl url
 
         sequenceDiagramVisibility =
-            if ScenarioForm.predefinedExercise scenarioForm then
+            if ScenarioForm.exerciseAnswers scenarioForm /= Nothing then
                 FinalInteractionsConcealedForQuiz
 
             else
@@ -544,7 +544,7 @@ updateScenarioForm : (ScenarioForm -> ScenarioForm) -> List (Cmd Msg) -> Model -
 updateScenarioForm f commands model =
     let
         doNotAllowMakingChanges =
-            ScenarioForm.predefinedExercise model.scenarioForm
+            ScenarioForm.exerciseAnswers model.scenarioForm /= Nothing
     in
     if doNotAllowMakingChanges then
         ( model, Cmd.none )
@@ -1798,41 +1798,33 @@ view model =
                         [ div
                             [ class "text-gray-700 font-medium text-lg" ]
                             [ text "What do you think happens next?" ]
-                        , div
-                            [ class "mt-4" ]
-                            [ div
-                                [ class "form-control" ]
-                                [ label
-                                    [ class "label cursor-pointer" ]
-                                    [ span
-                                        [ class "label-text inline-flex items-center text-lg max-w-prose" ]
-                                        [ input
-                                            [ type_ "radio"
-                                            , name "exercise-answer"
-                                            , class "radio mr-3"
-                                            ]
-                                            []
-                                        , text "Varnish calls the origin"
-                                        ]
-                                    ]
-                                ]
-                            , div
-                                [ class "form-control" ]
-                                [ label
-                                    [ class "label cursor-pointer" ]
-                                    [ span
-                                        [ class "label-text inline-flex items-center text-lg max-w-prose" ]
-                                        [ input
-                                            [ type_ "radio"
-                                            , name "exercise-answer"
-                                            , class "radio mr-3"
-                                            ]
-                                            []
-                                        , text "Varnish returns a cached response"
-                                        ]
-                                    ]
-                                ]
-                            ]
+                        , Extras.Html.showMaybe
+                            (\exerciseAnswers ->
+                                div
+                                    [ class "mt-4" ]
+                                    (List.map
+                                        (\exerciseAnswer ->
+                                            div
+                                                [ class "form-control" ]
+                                                [ label
+                                                    [ class "label cursor-pointer" ]
+                                                    [ span
+                                                        [ class "label-text inline-flex items-center text-lg max-w-prose" ]
+                                                        [ input
+                                                            [ type_ "radio"
+                                                            , name "exercise-answer"
+                                                            , class "radio mr-3"
+                                                            ]
+                                                            []
+                                                        , text exerciseAnswer.answer
+                                                        ]
+                                                    ]
+                                                ]
+                                        )
+                                        exerciseAnswers
+                                    )
+                            )
+                            (ScenarioForm.exerciseAnswers model.scenarioForm)
                         , div
                             [ class "mt-4" ]
                             [ button

@@ -1,4 +1,4 @@
-module ScenarioForm exposing (ClientAction(..), Header, OriginHeader(..), ScenarioForm, addGetRequestHeader, addMakeGetRequest, addOriginCacheControlHeader, addOriginCustomHeader, addSleepForTwoSeconds, changeClientAction, changeMaxAge, changeSMaxAge, changeStaleWhileRevalidate, clientActionHasGetRequestHeaderWithKey, clientActions, deleteClientAction, deleteGetRequestHeader, deleteOriginHeader, empty, fromUrl, hasCustomOriginHeaderWithKey, hasOriginCacheControlHeader, hasTenClientActions, indexOfLastCustomHeaderInGetRequest, isEmpty, originHeaders, originHeadersAsPairs, originReturn304ForConditionalRequests, originWait2SecondsBeforeResponding, predefinedExercise, toRelativeUrl, toScenario, toggleNoStore, toggleOriginReturn304ForConditionalRequests, toggleOriginWait2SecondsBeforeResponding, togglePrivate, updateGetRequestHeaderKey, updateGetRequestHeaderValue, updateOriginCustomHeaderKey, updateOriginCustomHeaderValue)
+module ScenarioForm exposing (ClientAction(..), Header, OriginHeader(..), ScenarioForm, addGetRequestHeader, addMakeGetRequest, addOriginCacheControlHeader, addOriginCustomHeader, addSleepForTwoSeconds, changeClientAction, changeMaxAge, changeSMaxAge, changeStaleWhileRevalidate, clientActionHasGetRequestHeaderWithKey, clientActions, deleteClientAction, deleteGetRequestHeader, deleteOriginHeader, empty, exerciseAnswers, fromUrl, hasCustomOriginHeaderWithKey, hasOriginCacheControlHeader, hasTenClientActions, indexOfLastCustomHeaderInGetRequest, isEmpty, originHeaders, originHeadersAsPairs, originReturn304ForConditionalRequests, originWait2SecondsBeforeResponding, toRelativeUrl, toScenario, toggleNoStore, toggleOriginReturn304ForConditionalRequests, toggleOriginWait2SecondsBeforeResponding, togglePrivate, updateGetRequestHeaderKey, updateGetRequestHeaderValue, updateOriginCustomHeaderKey, updateOriginCustomHeaderValue)
 
 import Array exposing (Array)
 import Data.CacheControlResponseDirectives as CacheControlResponseDirectives exposing (CacheControlResponseDirectives)
@@ -9,13 +9,19 @@ import Scenario exposing (Action(..), Scenario)
 import Url exposing (Url)
 
 
+type alias ExerciseAnswer =
+    { answer : String
+    , correct : Bool
+    }
+
+
 type ScenarioForm
     = ScenarioForm
         { clientActions : Array ClientAction
         , originWait2SecondsBeforeResponding : Bool
         , originHeaders : Array OriginHeader
         , originReturn304ForConditionalRequests : Bool
-        , predefinedExercise : Bool
+        , exerciseAnswers : Maybe (List ExerciseAnswer)
         }
 
 
@@ -39,14 +45,14 @@ type ClientAction
     | SleepForEightSeconds
 
 
-create : Bool -> List ClientAction -> Bool -> List OriginHeader -> Bool -> ScenarioForm
-create predefinedExercise_ clientActions_ originWait2SecondsBeforeResponding_ originHeaders_ originReturn304ForConditionalRequests_ =
+create : List ClientAction -> Bool -> List OriginHeader -> Bool -> Maybe (List ExerciseAnswer) -> ScenarioForm
+create clientActions_ originWait2SecondsBeforeResponding_ originHeaders_ originReturn304ForConditionalRequests_ exerciseAnswers_ =
     ScenarioForm
         { clientActions = Array.fromList clientActions_
         , originWait2SecondsBeforeResponding = originWait2SecondsBeforeResponding_
         , originHeaders = Array.fromList originHeaders_
         , originReturn304ForConditionalRequests = originReturn304ForConditionalRequests_
-        , predefinedExercise = predefinedExercise_
+        , exerciseAnswers = exerciseAnswers_
         }
 
 
@@ -62,7 +68,6 @@ fromQueryParameters queryParameters =
             QueryParameters.clientMakeGetRequestHeaderValues queryParameters
     in
     create
-        False
         (queryParameters
             |> QueryParameters.clientActionsWithoutDetails
             |> List.indexedMap
@@ -131,6 +136,7 @@ fromQueryParameters queryParameters =
          headers
         )
         (QueryParameters.originReturn304ForConditionalRequests queryParameters)
+        Nothing
 
 
 fromUrl : Url -> ScenarioForm
@@ -246,7 +252,7 @@ toRelativeUrl scenarioForm =
 
 empty : ScenarioForm
 empty =
-    create False [] False [] False
+    create [] False [] False Nothing
 
 
 isEmpty : ScenarioForm -> Bool
@@ -261,9 +267,9 @@ hasTenClientActions (ScenarioForm form) =
         |> (==) 10
 
 
-predefinedExercise : ScenarioForm -> Bool
-predefinedExercise (ScenarioForm form) =
-    form.predefinedExercise
+exerciseAnswers : ScenarioForm -> Maybe (List ExerciseAnswer)
+exerciseAnswers (ScenarioForm form) =
+    form.exerciseAnswers
 
 
 clientActions : ScenarioForm -> Array ClientAction
@@ -708,11 +714,15 @@ toScenario ((ScenarioForm form) as scenarioForm) id =
 exerciseOne : ScenarioForm
 exerciseOne =
     create
-        True
         [ MakeGetRequest ([ { key = "X-Foo", value = "bar" } ] |> Array.fromList) ]
         False
         []
         False
+        (Just
+            [ { answer = "Varnish returns a cached response", correct = False }
+            , { answer = "Varnish calls the origin", correct = True }
+            ]
+        )
 
 
 exercisesById : Dict String ScenarioForm
