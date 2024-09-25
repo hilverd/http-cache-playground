@@ -202,7 +202,7 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
                                             [ div
                                                 [ class "mt-4 text-center" ]
                                                 [ button
-                                                    [ class "btn"
+                                                    [ class "btn btn-outline text-gray-700 border-gray-800"
                                                     , Html.Events.onClick revealFinalInteractions
                                                     ]
                                                     [ text "Reveal final interactions"
@@ -211,11 +211,7 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
                                             ]
 
                                         FinalInteractionsConcealedForQuiz ->
-                                            [ div
-                                                [ class "mt-4 text-center text-8xl text-gray-500 select-none" ]
-                                                [ text "?"
-                                                ]
-                                            ]
+                                            []
 
                                         CompletelyRevealed ->
                                             viewAgentsAtBottom scenarioIsRunning

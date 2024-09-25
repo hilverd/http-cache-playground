@@ -19,7 +19,7 @@ import Extras.Html
 import Extras.HtmlAttribute
 import Extras.HtmlEvents
 import Html exposing (..)
-import Html.Attributes exposing (checked, class, disabled, href, id, type_)
+import Html.Attributes exposing (checked, class, disabled, href, id, name, type_)
 import Html.Events
 import Http
 import Icons
@@ -1640,6 +1640,13 @@ view model =
         allResponseHeaderKeys : List String
         allResponseHeaderKeys =
             Scenario.allResponseHeaderKeys scenario
+
+        userCanSelectAnswerToExercise : Bool
+        userCanSelectAnswerToExercise =
+            not (model.interactions |> Result.map Interactions.isEmpty |> Result.withDefault True)
+                && not model.scenarioIsRunning
+                && model.sequenceDiagramVisibility
+                == FinalInteractionsConcealedForQuiz
     in
     { title = "Varnish Cache Playground"
     , body =
@@ -1785,6 +1792,54 @@ view model =
                             [ class "mt-4 text-red-700" ]
                             [ text "Error while retrieving interaction log." ]
                         )
+                , Extras.Html.showIf userCanSelectAnswerToExercise <|
+                    div
+                        [ class "mt-6 flex flex-col justify-center items-center" ]
+                        [ div
+                            [ class "text-gray-700 font-medium text-lg" ]
+                            [ text "What happens next?" ]
+                        , div
+                            [ class "mt-4" ]
+                            [ div
+                                [ class "form-control" ]
+                                [ label
+                                    [ class "label cursor-pointer" ]
+                                    [ span
+                                        [ class "label-text inline-flex items-center text-lg max-w-prose" ]
+                                        [ input
+                                            [ type_ "radio"
+                                            , name "exercise-answer"
+                                            , class "radio mr-3"
+                                            ]
+                                            []
+                                        , text "Varnish calls the origin"
+                                        ]
+                                    ]
+                                ]
+                            , div
+                                [ class "form-control" ]
+                                [ label
+                                    [ class "label cursor-pointer" ]
+                                    [ span
+                                        [ class "label-text inline-flex items-center text-lg max-w-prose" ]
+                                        [ input
+                                            [ type_ "radio"
+                                            , name "exercise-answer"
+                                            , class "radio mr-3"
+                                            ]
+                                            []
+                                        , text "Varnish returns a cached response"
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        , div
+                            [ class "mt-4" ]
+                            [ button
+                                [ class "btn btn-lg btn-outline text-gray-700 border-gray-800" ]
+                                [ text "Submit" ]
+                            ]
+                        ]
                 ]
             ]
         ]
