@@ -1845,6 +1845,7 @@ view model =
                                                                 span
                                                                     []
                                                                     [ Icons.circleX
+                                                                        -- this is just a spacer
                                                                         [ Svg.Attributes.class "h-7 w-7 text-white" ]
                                                                     ]
                                                             , input
