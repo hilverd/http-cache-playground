@@ -1703,7 +1703,7 @@ view model =
                 [ class "mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8" ]
                 [ viewScenarioForm model
                 , Extras.Html.showUnless
-                    (model.sequenceDiagramVisibility == FinalInteractionsConcealedForExercise)
+                    (model.sequenceDiagramVisibility == FinalInteractionsConcealedForExercise || model.sequenceDiagramVisibility == FinalInteractionsRevealedForExercise)
                   <|
                     div
                         [ class "inline-flex items-center mt-8" ]
