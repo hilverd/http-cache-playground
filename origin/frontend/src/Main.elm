@@ -26,7 +26,6 @@ import Icons
 import Interaction
 import Interactions exposing (Interactions)
 import Process
-import QueryParameters
 import Random
 import Regex
 import Scenario exposing (Scenario, allRequestHeaderKeys, allResponseHeaderKeys)
@@ -83,7 +82,7 @@ init _ url key =
 
         sequenceDiagramVisibility =
             if ScenarioForm.exerciseAnswers scenarioForm /= Nothing then
-                FinalInteractionsConcealedForQuiz
+                FinalInteractionsConcealedForExercise
 
             else
                 CompletelyRevealed
@@ -97,7 +96,7 @@ init _ url key =
       , showAllHeaders = False
       , sequenceDiagramVisibility = sequenceDiagramVisibility
       }
-    , if sequenceDiagramVisibility == FinalInteractionsConcealedForQuiz then
+    , if sequenceDiagramVisibility == FinalInteractionsConcealedForExercise then
         Process.sleep 500
             |> Task.perform (always <| RunScenarioAsQuizFromForm sequenceDiagramVisibility)
 
@@ -169,6 +168,8 @@ type Msg
     | GotResponseToGetRequest Scenario (Result Http.Error ( Http.Metadata, String ))
     | RecordedResponseToGetRequest Scenario (Result Http.Error ())
     | ToggleShowAllHeaders
+    | SelectExerciseAnswer Int
+    | SubmitExerciseForm
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -537,6 +538,20 @@ update msg model =
         ToggleShowAllHeaders ->
             ( { model | showAllHeaders = not model.showAllHeaders }
             , Cmd.none
+            )
+
+        SelectExerciseAnswer id ->
+            ( { model
+                | scenarioForm = model.scenarioForm |> ScenarioForm.selectExerciseAnswer id
+              }
+            , Cmd.none
+            )
+
+        SubmitExerciseForm ->
+            ( { model
+                | sequenceDiagramVisibility = FinalInteractionsRevealedForExercise
+              }
+            , Process.sleep 200 |> Task.perform (always ScrollToBottomOfSequenceDiagram)
             )
 
 
@@ -1641,12 +1656,15 @@ view model =
         allResponseHeaderKeys =
             Scenario.allResponseHeaderKeys scenario
 
-        userCanSelectAnswerToExercise : Bool
-        userCanSelectAnswerToExercise =
+        userShouldSeeExerciseForm : Bool
+        userShouldSeeExerciseForm =
             not (model.interactions |> Result.map Interactions.isEmpty |> Result.withDefault True)
                 && not model.scenarioIsRunning
-                && model.sequenceDiagramVisibility
-                == FinalInteractionsConcealedForQuiz
+                && (model.sequenceDiagramVisibility
+                        == FinalInteractionsConcealedForExercise
+                        || model.sequenceDiagramVisibility
+                        == FinalInteractionsRevealedForExercise
+                   )
     in
     { title = "Varnish Cache Playground"
     , body =
@@ -1685,7 +1703,7 @@ view model =
                 [ class "mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8" ]
                 [ viewScenarioForm model
                 , Extras.Html.showUnless
-                    (model.sequenceDiagramVisibility == FinalInteractionsConcealedForQuiz)
+                    (model.sequenceDiagramVisibility == FinalInteractionsConcealedForExercise)
                   <|
                     div
                         [ class "inline-flex items-center mt-8" ]
@@ -1726,7 +1744,7 @@ view model =
                         (\interactions ->
                             let
                                 interactionsToShow =
-                                    if model.sequenceDiagramVisibility == CompletelyRevealed then
+                                    if model.sequenceDiagramVisibility == CompletelyRevealed || model.sequenceDiagramVisibility == FinalInteractionsRevealedForExercise then
                                         interactions
 
                                     else
@@ -1792,7 +1810,7 @@ view model =
                             [ class "mt-4 text-red-700" ]
                             [ text "Error while retrieving interaction log." ]
                         )
-                , Extras.Html.showIf userCanSelectAnswerToExercise <|
+                , Extras.Html.showIf userShouldSeeExerciseForm <|
                     div
                         [ class "mt-6 flex flex-col justify-center items-center" ]
                         [ div
@@ -1802,33 +1820,69 @@ view model =
                             (\exerciseAnswers ->
                                 div
                                     [ class "mt-4" ]
-                                    (List.map
-                                        (\exerciseAnswer ->
-                                            div
-                                                [ class "form-control" ]
-                                                [ label
-                                                    [ class "label cursor-pointer" ]
-                                                    [ span
-                                                        [ class "label-text inline-flex items-center text-lg max-w-prose" ]
-                                                        [ input
-                                                            [ type_ "radio"
-                                                            , name "exercise-answer"
-                                                            , class "radio mr-3"
+                                    (exerciseAnswers
+                                        |> Array.toList
+                                        |> List.indexedMap
+                                            (\index exerciseAnswer ->
+                                                div
+                                                    [ class "form-control" ]
+                                                    [ label
+                                                        [ class "label cursor-pointer" ]
+                                                        [ span
+                                                            [ class "label-text inline-flex items-center text-lg max-w-prose" ]
+                                                            [ Extras.Html.showIf (model.sequenceDiagramVisibility == FinalInteractionsRevealedForExercise) <|
+                                                                span
+                                                                    []
+                                                                    [ if exerciseAnswer.correct then
+                                                                        Icons.circleCheck
+                                                                            [ Svg.Attributes.class "h-7 w-7 text-green-800" ]
+
+                                                                      else
+                                                                        Icons.circleX
+                                                                            [ Svg.Attributes.class "h-7 w-7 text-red-800" ]
+                                                                    ]
+                                                            , Extras.Html.showIf (model.sequenceDiagramVisibility == FinalInteractionsConcealedForExercise) <|
+                                                                span
+                                                                    []
+                                                                    [ Icons.circleX
+                                                                        [ Svg.Attributes.class "h-7 w-7 text-white" ]
+                                                                    ]
+                                                            , input
+                                                                [ type_ "radio"
+                                                                , name "exercise-answer"
+                                                                , class "ml-3 radio mr-3"
+                                                                , Html.Events.onClick <| SelectExerciseAnswer index
+                                                                , checked exerciseAnswer.selected
+                                                                , disabled <| model.sequenceDiagramVisibility == FinalInteractionsRevealedForExercise
+                                                                ]
+                                                                []
+                                                            , text exerciseAnswer.answer
+                                                            , Extras.Html.showIf (model.sequenceDiagramVisibility == FinalInteractionsRevealedForExercise && exerciseAnswer.selected && exerciseAnswer.correct) <|
+                                                                span
+                                                                    [ class "ml-3 text-green-800" ]
+                                                                    [ text "Correct!" ]
+                                                            , Extras.Html.showIf (model.sequenceDiagramVisibility == FinalInteractionsRevealedForExercise && exerciseAnswer.selected && not exerciseAnswer.correct) <|
+                                                                span
+                                                                    [ class "ml-3 text-red-800" ]
+                                                                    [ text "Wrong!" ]
                                                             ]
-                                                            []
-                                                        , text exerciseAnswer.answer
                                                         ]
                                                     ]
-                                                ]
-                                        )
-                                        exerciseAnswers
+                                            )
                                     )
                             )
                             (ScenarioForm.exerciseAnswers model.scenarioForm)
                         , div
                             [ class "mt-4" ]
                             [ button
-                                [ class "btn btn-lg btn-outline text-gray-700 border-gray-800" ]
+                                [ class "btn btn-lg btn-outline text-gray-700 border-gray-800"
+                                , disabled <|
+                                    ((not <| ScenarioForm.someExerciseAnswerIsSelected model.scenarioForm)
+                                        || model.sequenceDiagramVisibility
+                                        /= FinalInteractionsConcealedForExercise
+                                    )
+                                , Html.Events.onClick SubmitExerciseForm
+                                ]
                                 [ text "Submit" ]
                             ]
                         ]

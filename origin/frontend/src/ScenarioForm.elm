@@ -1,4 +1,47 @@
-module ScenarioForm exposing (ClientAction(..), Header, OriginHeader(..), ScenarioForm, addGetRequestHeader, addMakeGetRequest, addOriginCacheControlHeader, addOriginCustomHeader, addSleepForTwoSeconds, changeClientAction, changeMaxAge, changeSMaxAge, changeStaleWhileRevalidate, clientActionHasGetRequestHeaderWithKey, clientActions, deleteClientAction, deleteGetRequestHeader, deleteOriginHeader, empty, exerciseAnswers, fromUrl, hasCustomOriginHeaderWithKey, hasOriginCacheControlHeader, hasTenClientActions, indexOfLastCustomHeaderInGetRequest, isEmpty, originHeaders, originHeadersAsPairs, originReturn304ForConditionalRequests, originWait2SecondsBeforeResponding, toRelativeUrl, toScenario, toggleNoStore, toggleOriginReturn304ForConditionalRequests, toggleOriginWait2SecondsBeforeResponding, togglePrivate, updateGetRequestHeaderKey, updateGetRequestHeaderValue, updateOriginCustomHeaderKey, updateOriginCustomHeaderValue)
+module ScenarioForm exposing
+    ( ClientAction(..)
+    , Header
+    , OriginHeader(..)
+    , ScenarioForm
+    , addGetRequestHeader
+    , addMakeGetRequest
+    , addOriginCacheControlHeader
+    , addOriginCustomHeader
+    , addSleepForTwoSeconds
+    , changeClientAction
+    , changeMaxAge
+    , changeSMaxAge
+    , changeStaleWhileRevalidate
+    , clientActionHasGetRequestHeaderWithKey
+    , clientActions
+    , deleteClientAction
+    , deleteGetRequestHeader
+    , deleteOriginHeader
+    , empty
+    , exerciseAnswers
+    , fromUrl
+    , hasCustomOriginHeaderWithKey
+    , hasOriginCacheControlHeader
+    , hasTenClientActions
+    , indexOfLastCustomHeaderInGetRequest
+    , isEmpty
+    , originHeaders
+    , originHeadersAsPairs
+    , originReturn304ForConditionalRequests
+    , originWait2SecondsBeforeResponding
+    , selectExerciseAnswer
+    , someExerciseAnswerIsSelected
+    , toRelativeUrl
+    , toScenario
+    , toggleNoStore
+    , toggleOriginReturn304ForConditionalRequests
+    , toggleOriginWait2SecondsBeforeResponding
+    , togglePrivate
+    , updateGetRequestHeaderKey
+    , updateGetRequestHeaderValue
+    , updateOriginCustomHeaderKey
+    , updateOriginCustomHeaderValue
+    )
 
 import Array exposing (Array)
 import Data.CacheControlResponseDirectives as CacheControlResponseDirectives exposing (CacheControlResponseDirectives)
@@ -11,6 +54,7 @@ import Url exposing (Url)
 
 type alias ExerciseAnswer =
     { answer : String
+    , selected : Bool
     , correct : Bool
     }
 
@@ -21,7 +65,7 @@ type ScenarioForm
         , originWait2SecondsBeforeResponding : Bool
         , originHeaders : Array OriginHeader
         , originReturn304ForConditionalRequests : Bool
-        , exerciseAnswers : Maybe (List ExerciseAnswer)
+        , exerciseAnswers : Maybe (Array ExerciseAnswer)
         }
 
 
@@ -45,7 +89,7 @@ type ClientAction
     | SleepForEightSeconds
 
 
-create : List ClientAction -> Bool -> List OriginHeader -> Bool -> Maybe (List ExerciseAnswer) -> ScenarioForm
+create : List ClientAction -> Bool -> List OriginHeader -> Bool -> Maybe (Array ExerciseAnswer) -> ScenarioForm
 create clientActions_ originWait2SecondsBeforeResponding_ originHeaders_ originReturn304ForConditionalRequests_ exerciseAnswers_ =
     ScenarioForm
         { clientActions = Array.fromList clientActions_
@@ -267,7 +311,7 @@ hasTenClientActions (ScenarioForm form) =
         |> (==) 10
 
 
-exerciseAnswers : ScenarioForm -> Maybe (List ExerciseAnswer)
+exerciseAnswers : ScenarioForm -> Maybe (Array ExerciseAnswer)
 exerciseAnswers (ScenarioForm form) =
     form.exerciseAnswers
 
@@ -711,17 +755,48 @@ toScenario ((ScenarioForm form) as scenarioForm) id =
         |> Scenario.create id
 
 
+selectExerciseAnswer : Int -> ScenarioForm -> ScenarioForm
+selectExerciseAnswer index (ScenarioForm form) =
+    let
+        updatedExerciseAnswers =
+            form.exerciseAnswers
+                |> Maybe.map
+                    (\answers ->
+                        answers
+                            |> Array.indexedMap
+                                (\index_ answer ->
+                                    { answer | selected = index_ == index }
+                                )
+                    )
+    in
+    ScenarioForm
+        { form | exerciseAnswers = updatedExerciseAnswers }
+
+
+someExerciseAnswerIsSelected : ScenarioForm -> Bool
+someExerciseAnswerIsSelected (ScenarioForm form) =
+    form.exerciseAnswers
+        |> Maybe.map
+            (\answers ->
+                answers
+                    |> Array.toList
+                    |> List.any (\answer -> answer.selected)
+            )
+        |> Maybe.withDefault False
+
+
 exerciseOne : ScenarioForm
 exerciseOne =
     create
-        [ MakeGetRequest ([ { key = "X-Foo", value = "bar" } ] |> Array.fromList) ]
+        [ MakeGetRequest ([] |> Array.fromList) ]
         False
         []
         False
-        (Just
-            [ { answer = "Varnish returns a cached response", correct = False }
-            , { answer = "Varnish calls the origin", correct = True }
-            ]
+        ([ { answer = "Varnish returns a cached response", selected = False, correct = False }
+         , { answer = "Varnish calls the origin", selected = False, correct = True }
+         ]
+            |> Array.fromList
+            |> Just
         )
 
 

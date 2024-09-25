@@ -185,7 +185,7 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
                         ]
                     ]
                     :: (List.map (viewInteraction showAllHeaders allRequestHeaderKeys allResponseHeaderKeys bodyToBodyColour_) interactions
-                            ++ (if not scenarioIsRunning && sequenceDiagramVisibility /= CompletelyRevealed then
+                            ++ (if not scenarioIsRunning && sequenceDiagramVisibility /= CompletelyRevealed && sequenceDiagramVisibility /= FinalInteractionsRevealedForExercise then
                                     [ viewSpacer
                                     , viewDashedSpacer
                                     ]
@@ -210,8 +210,11 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
                                                 ]
                                             ]
 
-                                        FinalInteractionsConcealedForQuiz ->
+                                        FinalInteractionsConcealedForExercise ->
                                             []
+
+                                        FinalInteractionsRevealedForExercise ->
+                                            viewAgentsAtBottom scenarioIsRunning
 
                                         CompletelyRevealed ->
                                             viewAgentsAtBottom scenarioIsRunning

@@ -1,13 +1,16 @@
-module Icons exposing (chevronLeft, chevronRight, gitHubLogo, graduationCap, hourglass, play, plus, repeat, trash)
+module Icons exposing (chevronLeft, chevronRight, circleCheck, circleX, gitHubLogo, graduationCap, hourglass, play, plus, repeat, trash)
 
 import Html exposing (Html)
-import Svg exposing (path, svg)
+import Svg exposing (circle, path, svg)
 import Svg.Attributes
     exposing
         ( clipRule
+        , cx
+        , cy
         , d
         , fill
         , fillRule
+        , r
         , stroke
         , strokeLinecap
         , strokeLinejoin
@@ -166,4 +169,35 @@ graduationCap =
         , path
             [ d "M6 12.5V16a6 3 0 0 0 12 0v-3.5" ]
             []
+        ]
+
+
+circleX : List (Html.Attribute msg) -> Html msg
+circleX =
+    withAdditionalAttributes
+        [ fill "none"
+        , viewBox "0 0 24 24"
+        , strokeWidth "2"
+        , stroke "currentColor"
+        , strokeLinecap "round"
+        , strokeLinejoin "round"
+        ]
+        [ circle [ cx "12", cy "12", r "10" ] []
+        , path [ d "m15 9-6 6" ] []
+        , path [ d "m9 9 6 6" ] []
+        ]
+
+
+circleCheck : List (Html.Attribute msg) -> Html msg
+circleCheck =
+    withAdditionalAttributes
+        [ fill "none"
+        , viewBox "0 0 24 24"
+        , strokeWidth "2"
+        , stroke "currentColor"
+        , strokeLinecap "round"
+        , strokeLinejoin "round"
+        ]
+        [ circle [ cx "12", cy "12", r "10" ] []
+        , path [ d "m9 12 2 2 4-4" ] []
         ]
