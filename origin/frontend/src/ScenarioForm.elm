@@ -785,15 +785,21 @@ someExerciseAnswerIsSelected (ScenarioForm form) =
         |> Maybe.withDefault False
 
 
-exerciseOne : ScenarioForm
-exerciseOne =
+exerciseMaxAgeAndSMaxage : ScenarioForm
+exerciseMaxAgeAndSMaxage =
     create
-        [ MakeGetRequest ([] |> Array.fromList) ]
+        [ MakeGetRequest ([] |> Array.fromList)
+        , MakeGetRequest ([] |> Array.fromList)
+        ]
         False
-        []
+        [ CacheControlResponseDirectives.empty
+            |> CacheControlResponseDirectives.updateMaxAge (Just 2)
+            |> CacheControlResponseDirectives.updateSMaxAge (Just 0)
+            |> CacheControl
+        ]
         False
-        ([ { answer = "Varnish returns a cached response", selected = False, correct = False }
-         , { answer = "Varnish calls the origin", selected = False, correct = True }
+        ([ { answer = "Varnish returns a cached response without calling the origin", selected = False, correct = False }
+         , { answer = "Varnish requests an up to date response from the origin", selected = False, correct = True }
          ]
             |> Array.fromList
             |> Just
@@ -803,4 +809,4 @@ exerciseOne =
 exercisesById : Dict String ScenarioForm
 exercisesById =
     Dict.fromList
-        [ ( "one", exerciseOne ) ]
+        [ ( "max-age-and-s-maxage", exerciseMaxAgeAndSMaxage ) ]
