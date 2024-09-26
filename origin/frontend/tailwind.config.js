@@ -1,3 +1,5 @@
+const defaultTheme = require('tailwindcss/defaultTheme');
+
 module.exports = {
   content: [
     './index.{css,html,js}',
@@ -12,6 +14,9 @@ module.exports = {
       screens: {
         '3xl': '1800px',
         'print': { 'raw': 'print' },
+      },
+      fontFamily: {
+        sans: ['Inter var', ...defaultTheme.fontFamily.sans],
       },
     },
   },
