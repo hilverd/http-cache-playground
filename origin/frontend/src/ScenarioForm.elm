@@ -917,6 +917,79 @@ exerciseAge3 =
         )
 
 
+exerciseConditionalRequestsWorkflow1 : ScenarioForm
+exerciseConditionalRequestsWorkflow1 =
+    create
+        [ MakeGetRequest ([] |> Array.fromList)
+        , SleepForThreeSeconds
+        , MakeGetRequest ([] |> Array.fromList)
+        ]
+        True
+        [ CacheControlResponseDirectives.empty
+            |> CacheControlResponseDirectives.updateSMaxAge (Just 2)
+            |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 5)
+            |> CacheControl
+        , Custom { key = "ETag", value = "\"some-etag\"" }
+        ]
+        True
+        ([ { answer = "Varnish returns a 200 with an age of 0 and the same body as before", selected = False, correct = False }
+         , { answer = "Varnish returns a 200 with an age of 3 and the same body as before", selected = False, correct = True }
+         , { answer = "Varnish returns a 304 with an empty body", selected = False, correct = False }
+         ]
+            |> Array.fromList
+            |> Just
+        )
+
+
+exerciseConditionalRequestsWorkflow2 : ScenarioForm
+exerciseConditionalRequestsWorkflow2 =
+    create
+        [ MakeGetRequest ([] |> Array.fromList)
+        , SleepForThreeSeconds
+        , MakeGetRequest ([] |> Array.fromList)
+        , SleepForOneSecond
+        , MakeGetRequest ([] |> Array.fromList)
+        ]
+        False
+        [ CacheControlResponseDirectives.empty
+            |> CacheControlResponseDirectives.updateSMaxAge (Just 2)
+            |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 5)
+            |> CacheControl
+        , Custom { key = "ETag", value = "\"some-etag\"" }
+        ]
+        True
+        ([ { answer = "Varnish returns a 200 and also makes a revalidation request", selected = False, correct = False }
+         , { answer = "Varnish returns a 200 and does not make a revalidation request", selected = False, correct = True }
+         ]
+            |> Array.fromList
+            |> Just
+        )
+
+
+exerciseConditionalRequestsWorkflow3 : ScenarioForm
+exerciseConditionalRequestsWorkflow3 =
+    create
+        [ MakeGetRequest ([] |> Array.fromList)
+        , SleepForOneSecond
+        , MakeGetRequest ([ { key = "If-None-Match", value = "\"some-etag\"" } ] |> Array.fromList)
+        ]
+        False
+        [ CacheControlResponseDirectives.empty
+            |> CacheControlResponseDirectives.updateSMaxAge (Just 5)
+            |> CacheControl
+        , Custom { key = "ETag", value = "\"some-etag\"" }
+        ]
+        False
+        ([ { answer = "Varnish returns a 200 and also makes a revalidation request", selected = False, correct = False }
+         , { answer = "Varnish returns a 200 and does not make a revalidation request", selected = False, correct = False }
+         , { answer = "Varnish returns a 304 and also makes a revalidation request", selected = False, correct = False }
+         , { answer = "Varnish returns a 304 and does not make a revalidation request", selected = False, correct = True }
+         ]
+            |> Array.fromList
+            |> Just
+        )
+
+
 exercisesById : Dict String ScenarioForm
 exercisesById =
     Dict.fromList
@@ -926,4 +999,7 @@ exercisesById =
         , ( "age-1", exerciseAge1 )
         , ( "age-2", exerciseAge2 )
         , ( "age-3", exerciseAge3 )
+        , ( "conditional-requests-workflow-1", exerciseConditionalRequestsWorkflow1 )
+        , ( "conditional-requests-workflow-2", exerciseConditionalRequestsWorkflow2 )
+        , ( "conditional-requests-workflow-3", exerciseConditionalRequestsWorkflow3 )
         ]
