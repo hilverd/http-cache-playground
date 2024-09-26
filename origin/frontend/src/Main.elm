@@ -473,7 +473,11 @@ update msg model =
 
         GotInteractions result ->
             ( { model | interactions = result }
-            , Process.sleep 100 |> Task.perform (always ScrollToBottomOfSequenceDiagram)
+            , if model.sequenceDiagramVisibility /= FinalInteractionsConcealedForExercise then
+                Process.sleep 100 |> Task.perform (always ScrollToBottomOfSequenceDiagram)
+
+              else
+                Cmd.none
             )
 
         ScrollToBottomOfSequenceDiagram ->
@@ -871,7 +875,7 @@ isForbiddenHeaderName name =
 
 
 viewGetRequestHeader : Bool -> Int -> Int -> ScenarioForm.Header -> Html Msg
-viewGetRequestHeader scenarioIsRunning stepIndex index header =
+viewGetRequestHeader enabled stepIndex index header =
     let
         keyIsForbidden =
             isForbiddenHeaderName header.key
@@ -881,7 +885,7 @@ viewGetRequestHeader scenarioIsRunning stepIndex index header =
         [ button
             [ class "btn btn-circle mr-3"
             , Accessibility.Aria.label "Delete"
-            , Html.Attributes.disabled scenarioIsRunning
+            , Html.Attributes.disabled <| not enabled
             , Html.Events.onClick <| DeleteGetRequestHeader stepIndex index
             ]
             [ Icons.trash
@@ -901,7 +905,7 @@ viewGetRequestHeader scenarioIsRunning stepIndex index header =
                     , Html.Attributes.attribute "autocapitalize" "off"
                     , Html.Attributes.spellcheck False
                     , Html.Attributes.autocomplete False
-                    , Html.Attributes.disabled scenarioIsRunning
+                    , Html.Attributes.disabled <| not enabled
                     , Accessibility.Aria.required True
                     , Accessibility.Aria.label "Key"
                     , Html.Attributes.value header.key
@@ -921,7 +925,7 @@ viewGetRequestHeader scenarioIsRunning stepIndex index header =
                     , Html.Attributes.attribute "autocapitalize" "off"
                     , Html.Attributes.spellcheck False
                     , Html.Attributes.autocomplete False
-                    , Html.Attributes.disabled scenarioIsRunning
+                    , Html.Attributes.disabled <| not enabled
                     , Accessibility.Aria.required True
                     , Accessibility.Aria.label "Value"
                     , Html.Attributes.value header.value
@@ -946,13 +950,13 @@ viewGetRequestHeader scenarioIsRunning stepIndex index header =
 
 
 viewOriginHeader : Bool -> Int -> ScenarioForm.OriginHeader -> Html Msg
-viewOriginHeader scenarioIsRunning index originHeader =
+viewOriginHeader enabled index originHeader =
     div
         [ class "flex-auto max-w-2xl flex items-center" ]
         [ button
             [ class "btn btn-circle mr-3"
             , Accessibility.Aria.label "Delete"
-            , Html.Attributes.disabled scenarioIsRunning
+            , Html.Attributes.disabled <| not enabled
             , Html.Events.onClick <| DeleteCustomOriginResponseHeader index
             ]
             [ Icons.trash
@@ -960,15 +964,15 @@ viewOriginHeader scenarioIsRunning index originHeader =
             ]
         , case originHeader of
             ScenarioForm.CacheControl cacheControlResponseDirectives ->
-                viewOriginCacheControlHeader scenarioIsRunning index cacheControlResponseDirectives
+                viewOriginCacheControlHeader enabled index cacheControlResponseDirectives
 
             ScenarioForm.Custom header ->
-                viewOriginCustomHeader scenarioIsRunning index header
+                viewOriginCustomHeader enabled index header
         ]
 
 
 viewOriginCustomHeader : Bool -> Int -> ScenarioForm.Header -> Html Msg
-viewOriginCustomHeader scenarioIsRunning index header =
+viewOriginCustomHeader enabled index header =
     div
         [ class "flex-auto" ]
         [ div
@@ -981,7 +985,7 @@ viewOriginCustomHeader scenarioIsRunning index header =
                 , Html.Attributes.attribute "autocapitalize" "off"
                 , Html.Attributes.spellcheck False
                 , Html.Attributes.autocomplete False
-                , Html.Attributes.disabled scenarioIsRunning
+                , Html.Attributes.disabled <| not enabled
                 , Html.Attributes.id <| ElementIds.originCustomHeaderKey index
                 , Accessibility.Aria.required True
                 , Accessibility.Aria.label "Key"
@@ -1001,7 +1005,7 @@ viewOriginCustomHeader scenarioIsRunning index header =
                 , Html.Attributes.attribute "autocapitalize" "off"
                 , Html.Attributes.spellcheck False
                 , Html.Attributes.autocomplete False
-                , Html.Attributes.disabled scenarioIsRunning
+                , Html.Attributes.disabled <| not enabled
                 , Html.Attributes.id <| ElementIds.originCustomHeaderValue index
                 , Accessibility.Aria.required True
                 , Accessibility.Aria.label "Value"
@@ -1017,7 +1021,7 @@ viewOriginCustomHeader scenarioIsRunning index header =
                 [ button
                     [ class "btn btn-sm"
                     , Html.Events.onClick <| UpdateCustomOriginResponseHeaderValue index "auto"
-                    , Html.Attributes.disabled (scenarioIsRunning || header.value == "auto")
+                    , Html.Attributes.disabled (not enabled || header.value == "auto")
                     ]
                     [ text "Auto-generate ETags" ]
                 ]
@@ -1025,7 +1029,7 @@ viewOriginCustomHeader scenarioIsRunning index header =
 
 
 viewOriginCacheControlHeader : Bool -> Int -> CacheControlResponseDirectives -> Html Msg
-viewOriginCacheControlHeader scenarioIsRunning index directives =
+viewOriginCacheControlHeader enabled index directives =
     let
         maxAge =
             CacheControlResponseDirectives.maxAge directives
@@ -1054,11 +1058,11 @@ viewOriginCacheControlHeader scenarioIsRunning index directives =
                 [ text "Cache-Control" ]
             , div
                 [ class "flex flex-wrap" ]
-                [ viewOriginCacheControlMaxAgeDirective scenarioIsRunning index maxAge
-                , viewOriginCacheControlSMaxAgeDirective scenarioIsRunning index sMaxAge
-                , viewOriginCacheControlNoStoreDirective scenarioIsRunning index noStore
-                , viewOriginCacheControlPrivateDirective scenarioIsRunning index private
-                , viewOriginCacheControlStaleWhileRevalidateDirective scenarioIsRunning index staleWhileRevalidate
+                [ viewOriginCacheControlMaxAgeDirective enabled index maxAge
+                , viewOriginCacheControlSMaxAgeDirective enabled index sMaxAge
+                , viewOriginCacheControlNoStoreDirective enabled index noStore
+                , viewOriginCacheControlPrivateDirective enabled index private
+                , viewOriginCacheControlStaleWhileRevalidateDirective enabled index staleWhileRevalidate
                 ]
             , div
                 [ class "mt-4 mb-2 text-gray-700 text-ellipsis text-nowrap overflow-hidden max-w-52 sm:max-w-96 md:max-w-96 text-sm" ]
@@ -1081,14 +1085,14 @@ viewOriginCacheControlHeader scenarioIsRunning index directives =
 
 
 viewOriginCacheControlMaxAgeDirective : Bool -> Int -> Maybe Int -> Html Msg
-viewOriginCacheControlMaxAgeDirective scenarioIsRunning index maxAgeSeconds =
+viewOriginCacheControlMaxAgeDirective enabled index maxAgeSeconds =
     div
         [ class "px-1 pt-3 mr-4 text-gray-800 flex" ]
         [ input
             [ type_ "checkbox"
             , checked <| maxAgeSeconds /= Nothing
             , class "checkbox"
-            , disabled scenarioIsRunning
+            , disabled <| not enabled
             , Html.Attributes.id <| ElementIds.originCacheControlMaxAge index
             , Html.Events.onClick
                 (if maxAgeSeconds == Nothing then
@@ -1101,8 +1105,8 @@ viewOriginCacheControlMaxAgeDirective scenarioIsRunning index maxAgeSeconds =
             []
         , div
             [ class "ml-2 flex flex-col select-none"
-            , Extras.HtmlAttribute.showUnless scenarioIsRunning <| class "cursor-pointer"
-            , Extras.HtmlAttribute.showUnless scenarioIsRunning <|
+            , Extras.HtmlAttribute.showIf enabled <| class "cursor-pointer"
+            , Extras.HtmlAttribute.showIf enabled <|
                 Html.Events.onClick
                     (if maxAgeSeconds == Nothing then
                         ChangeMaxAge index (Just 0)
@@ -1117,7 +1121,7 @@ viewOriginCacheControlMaxAgeDirective scenarioIsRunning index maxAgeSeconds =
             , text "(seconds)"
             ]
         , Components.RangeSlider.viewSeconds
-            (not scenarioIsRunning)
+            enabled
             [ 0, 1, 2, 3, 5 ]
             (ChangeMaxAge index << Just)
             (maxAgeSeconds |> Maybe.withDefault 0)
@@ -1125,14 +1129,14 @@ viewOriginCacheControlMaxAgeDirective scenarioIsRunning index maxAgeSeconds =
 
 
 viewOriginCacheControlSMaxAgeDirective : Bool -> Int -> Maybe Int -> Html Msg
-viewOriginCacheControlSMaxAgeDirective scenarioIsRunning index sMaxAgeSeconds =
+viewOriginCacheControlSMaxAgeDirective enabled index sMaxAgeSeconds =
     div
         [ class "px-1 pt-3 mr-4 text-gray-800 flex" ]
         [ input
             [ type_ "checkbox"
             , checked <| sMaxAgeSeconds /= Nothing
             , class "checkbox"
-            , disabled scenarioIsRunning
+            , disabled <| not enabled
             , Html.Attributes.id <| ElementIds.originCacheControlSMaxAge index
             , Html.Events.onClick
                 (if sMaxAgeSeconds == Nothing then
@@ -1145,8 +1149,8 @@ viewOriginCacheControlSMaxAgeDirective scenarioIsRunning index sMaxAgeSeconds =
             []
         , div
             [ class "ml-2 flex flex-col select-none"
-            , Extras.HtmlAttribute.showUnless scenarioIsRunning <| class "cursor-pointer"
-            , Extras.HtmlAttribute.showUnless scenarioIsRunning <|
+            , Extras.HtmlAttribute.showIf enabled <| class "cursor-pointer"
+            , Extras.HtmlAttribute.showIf enabled <|
                 Html.Events.onClick
                     (if sMaxAgeSeconds == Nothing then
                         ChangeSMaxAge index (Just 0)
@@ -1161,7 +1165,7 @@ viewOriginCacheControlSMaxAgeDirective scenarioIsRunning index sMaxAgeSeconds =
             , text "(seconds)"
             ]
         , Components.RangeSlider.viewSeconds
-            (not scenarioIsRunning)
+            enabled
             [ 0, 1, 2, 3, 5 ]
             (ChangeSMaxAge index << Just)
             (sMaxAgeSeconds |> Maybe.withDefault 0)
@@ -1169,22 +1173,22 @@ viewOriginCacheControlSMaxAgeDirective scenarioIsRunning index sMaxAgeSeconds =
 
 
 viewOriginCacheControlNoStoreDirective : Bool -> Int -> Bool -> Html Msg
-viewOriginCacheControlNoStoreDirective scenarioIsRunning index noStore =
+viewOriginCacheControlNoStoreDirective enabled index noStore =
     div
         [ class "px-1 pt-3 mr-4 text-gray-800 flex" ]
         [ input
             [ type_ "checkbox"
             , checked noStore
             , class "checkbox"
-            , disabled scenarioIsRunning
+            , disabled <| not enabled
             , Html.Attributes.id <| ElementIds.originCacheControlNoStore index
             , Html.Events.onClick <| ToggleNoStore index
             ]
             []
         , div
             [ class "ml-2 flex flex-col select-none"
-            , Extras.HtmlAttribute.showUnless scenarioIsRunning <| class "cursor-pointer"
-            , Extras.HtmlAttribute.showUnless scenarioIsRunning <| Html.Events.onClick <| ToggleNoStore index
+            , Extras.HtmlAttribute.showIf enabled <| class "cursor-pointer"
+            , Extras.HtmlAttribute.showIf enabled <| Html.Events.onClick <| ToggleNoStore index
             ]
             [ span
                 [ class "font-mono" ]
@@ -1194,22 +1198,22 @@ viewOriginCacheControlNoStoreDirective scenarioIsRunning index noStore =
 
 
 viewOriginCacheControlPrivateDirective : Bool -> Int -> Bool -> Html Msg
-viewOriginCacheControlPrivateDirective scenarioIsRunning index private =
+viewOriginCacheControlPrivateDirective enabled index private =
     div
         [ class "px-1 pt-3 mr-4 text-gray-800 flex" ]
         [ input
             [ type_ "checkbox"
             , checked private
             , class "checkbox"
-            , disabled scenarioIsRunning
+            , disabled <| not enabled
             , Html.Attributes.id <| ElementIds.originCacheControlPrivate index
             , Html.Events.onClick <| TogglePrivate index
             ]
             []
         , div
             [ class "ml-2 flex flex-col select-none"
-            , Extras.HtmlAttribute.showUnless scenarioIsRunning <| class "cursor-pointer"
-            , Extras.HtmlAttribute.showUnless scenarioIsRunning <| Html.Events.onClick <| TogglePrivate index
+            , Extras.HtmlAttribute.showIf enabled <| class "cursor-pointer"
+            , Extras.HtmlAttribute.showIf enabled <| Html.Events.onClick <| TogglePrivate index
             ]
             [ span
                 [ class "font-mono" ]
@@ -1219,14 +1223,14 @@ viewOriginCacheControlPrivateDirective scenarioIsRunning index private =
 
 
 viewOriginCacheControlStaleWhileRevalidateDirective : Bool -> Int -> Maybe Int -> Html Msg
-viewOriginCacheControlStaleWhileRevalidateDirective scenarioIsRunning index staleWhileRevalidate =
+viewOriginCacheControlStaleWhileRevalidateDirective enabled index staleWhileRevalidate =
     div
         [ class "px-1 pt-3 mr-4 text-gray-800 flex" ]
         [ input
             [ type_ "checkbox"
             , checked <| staleWhileRevalidate /= Nothing
             , class "checkbox"
-            , disabled scenarioIsRunning
+            , disabled <| not enabled
             , Html.Attributes.id <| ElementIds.originCacheControlStaleWhileRevalidate index
             , Html.Events.onClick
                 (if staleWhileRevalidate == Nothing then
@@ -1239,8 +1243,8 @@ viewOriginCacheControlStaleWhileRevalidateDirective scenarioIsRunning index stal
             []
         , div
             [ class "ml-2 flex flex-col select-none"
-            , Extras.HtmlAttribute.showUnless scenarioIsRunning <| class "cursor-pointer"
-            , Extras.HtmlAttribute.showUnless scenarioIsRunning <|
+            , Extras.HtmlAttribute.showIf enabled <| class "cursor-pointer"
+            , Extras.HtmlAttribute.showIf enabled <|
                 Html.Events.onClick
                     (if staleWhileRevalidate == Nothing then
                         ChangeStaleWhileRevalidate index (Just 0)
@@ -1255,7 +1259,7 @@ viewOriginCacheControlStaleWhileRevalidateDirective scenarioIsRunning index stal
             , text "(seconds)"
             ]
         , Components.RangeSlider.viewSeconds
-            (not scenarioIsRunning)
+            enabled
             [ 0, 1, 2, 3, 5 ]
             (ChangeStaleWhileRevalidate index << Just)
             (staleWhileRevalidate |> Maybe.withDefault 0)
@@ -1263,7 +1267,7 @@ viewOriginCacheControlStaleWhileRevalidateDirective scenarioIsRunning index stal
 
 
 viewClientAction : Bool -> Int -> ScenarioForm.ClientAction -> Html Msg
-viewClientAction scenarioIsRunning stepIndex clientAction =
+viewClientAction enabled stepIndex clientAction =
     case clientAction of
         ScenarioForm.MakeGetRequest headers ->
             li
@@ -1291,27 +1295,27 @@ viewClientAction scenarioIsRunning stepIndex clientAction =
                     [ class "space-y-4 px-4 mt-4 max-w-full" ]
                     (headers
                         |> Array.toList
-                        |> List.indexedMap (viewGetRequestHeader scenarioIsRunning stepIndex)
+                        |> List.indexedMap (viewGetRequestHeader enabled stepIndex)
                     )
                 , div
                     [ class "ml-4 mt-6" ]
                     [ viewAddHeaderButton
                         [ class "mb-3 mr-3" ]
-                        (not scenarioIsRunning
+                        (enabled
                             && not (ScenarioForm.clientActionHasGetRequestHeaderWithKey "If-None-Match" clientAction)
                         )
                         "Add If-None-Match"
                         (AddGetRequestHeaderWithKeyAndValue stepIndex "If-None-Match" "\"some-etag\"")
                     , viewAddHeaderButton
                         [ class "mb-3 mr-3" ]
-                        (not scenarioIsRunning
+                        (enabled
                             && not (ScenarioForm.clientActionHasGetRequestHeaderWithKey "If-Modified-Since" clientAction)
                         )
                         "Add If-Modified-Since"
                         (AddGetRequestHeaderWithKeyAndValue stepIndex "If-Modified-Since" "Wed, 21 Oct 2015 07:28:00 GMT")
                     , viewAddHeaderButton
                         []
-                        (not scenarioIsRunning)
+                        enabled
                         "Add custom"
                         (AddGetRequestHeader stepIndex)
                     ]
@@ -1320,25 +1324,25 @@ viewClientAction scenarioIsRunning stepIndex clientAction =
                     [ span
                         [ class "flex justify-end group" ]
                         [ Components.Button.text
-                            (not scenarioIsRunning)
-                            [ Accessibility.Key.tabbable <| not scenarioIsRunning
+                            enabled
+                            [ Accessibility.Key.tabbable <| enabled
                             , Html.Events.onClick <| DeleteClientAction stepIndex
                             ]
                             [ Icons.trash
                                 [ Svg.Attributes.class "h-5 w-5 text-gray-400 dark:text-gray-300"
-                                , if scenarioIsRunning then
-                                    Svg.Attributes.class ""
+                                , if enabled then
+                                    Svg.Attributes.class "group-hover:text-gray-500 dark:group-hover:text-gray-400"
 
                                   else
-                                    Svg.Attributes.class "group-hover:text-gray-500 dark:group-hover:text-gray-400"
+                                    Svg.Attributes.class ""
                                 ]
                             , span
                                 [ class "font-medium text-gray-600 dark:text-gray-300"
-                                , if scenarioIsRunning then
-                                    class ""
+                                , if enabled then
+                                    class "group-hover:text-gray-700 dark:group-hover:text-gray-400"
 
                                   else
-                                    class "group-hover:text-gray-700 dark:group-hover:text-gray-400"
+                                    class ""
                                 ]
                                 [ text "Delete" ]
                             ]
@@ -1347,23 +1351,23 @@ viewClientAction scenarioIsRunning stepIndex clientAction =
                 ]
 
         ScenarioForm.SleepForOneSecond ->
-            viewSleepForSeconds scenarioIsRunning stepIndex 1
+            viewSleepForSeconds enabled stepIndex 1
 
         ScenarioForm.SleepForTwoSeconds ->
-            viewSleepForSeconds scenarioIsRunning stepIndex 2
+            viewSleepForSeconds enabled stepIndex 2
 
         ScenarioForm.SleepForThreeSeconds ->
-            viewSleepForSeconds scenarioIsRunning stepIndex 3
+            viewSleepForSeconds enabled stepIndex 3
 
         ScenarioForm.SleepForFiveSeconds ->
-            viewSleepForSeconds scenarioIsRunning stepIndex 5
+            viewSleepForSeconds enabled stepIndex 5
 
         ScenarioForm.SleepForEightSeconds ->
-            viewSleepForSeconds scenarioIsRunning stepIndex 8
+            viewSleepForSeconds enabled stepIndex 8
 
 
 viewSleepForSeconds : Bool -> Int -> Int -> Html Msg
-viewSleepForSeconds scenarioIsRunning stepIndex seconds =
+viewSleepForSeconds enabled stepIndex seconds =
     li
         [ class "rounded-lg bg-white border border-gray-300 shadow" ]
         [ div
@@ -1390,7 +1394,7 @@ viewSleepForSeconds scenarioIsRunning stepIndex seconds =
                     )
                 ]
             , Components.RangeSlider.viewSeconds
-                (not scenarioIsRunning)
+                enabled
                 [ 1, 2, 3, 5, 8 ]
                 (ChangeSleepDuration stepIndex)
                 seconds
@@ -1400,25 +1404,25 @@ viewSleepForSeconds scenarioIsRunning stepIndex seconds =
             [ span
                 [ class "flex justify-end group" ]
                 [ Components.Button.text
-                    (not scenarioIsRunning)
-                    [ Accessibility.Key.tabbable <| not scenarioIsRunning
+                    enabled
+                    [ Accessibility.Key.tabbable <| enabled
                     , Html.Events.onClick <| DeleteClientAction stepIndex
                     ]
                     [ Icons.trash
                         [ Svg.Attributes.class "h-5 w-5 text-gray-400 dark:text-gray-300"
-                        , if scenarioIsRunning then
-                            Svg.Attributes.class ""
+                        , if enabled then
+                            Svg.Attributes.class "group-hover:text-gray-500 dark:group-hover:text-gray-400"
 
                           else
-                            Svg.Attributes.class "group-hover:text-gray-500 dark:group-hover:text-gray-400"
+                            Svg.Attributes.class ""
                         ]
                     , span
                         [ class "font-medium text-gray-600 dark:text-gray-300"
-                        , if scenarioIsRunning then
-                            class ""
+                        , if enabled then
+                            class "group-hover:text-gray-700 dark:group-hover:text-gray-400"
 
                           else
-                            class "group-hover:text-gray-700 dark:group-hover:text-gray-400"
+                            class ""
                         ]
                         [ text "Delete" ]
                     ]
@@ -1463,7 +1467,7 @@ viewScenarioForm model =
                         |> Array.toList
                         |> List.indexedMap
                             (\index action ->
-                                viewClientAction model.scenarioIsRunning index action
+                                viewClientAction (not model.scenarioIsRunning || model.sequenceDiagramVisibility == FinalInteractionsConcealedForExercise) index action
                             )
                     )
                 , div
@@ -1471,8 +1475,11 @@ viewScenarioForm model =
                     [ button
                         [ class "btn mr-4 mb-4"
                         , Html.Attributes.disabled <|
-                            (model.scenarioIsRunning
+                            ((model.scenarioIsRunning
                                 || ScenarioForm.hasTenClientActions model.scenarioForm
+                             )
+                                && model.sequenceDiagramVisibility
+                                /= FinalInteractionsConcealedForExercise
                             )
                         , Html.Events.onClick AddMakeGetRequest
                         ]
@@ -1482,9 +1489,12 @@ viewScenarioForm model =
                     , button
                         [ class "btn"
                         , Html.Attributes.disabled <|
-                            (model.scenarioIsRunning
+                            ((model.scenarioIsRunning
                                 || (Array.isEmpty <| ScenarioForm.clientActions model.scenarioForm)
                                 || ScenarioForm.hasTenClientActions model.scenarioForm
+                             )
+                                && model.sequenceDiagramVisibility
+                                /= FinalInteractionsConcealedForExercise
                             )
                         , Html.Events.onClick AddSleepForTwoSeconds
                         ]
@@ -1514,48 +1524,63 @@ viewScenarioForm model =
                         [ class "space-y-4" ]
                         (model.scenarioForm
                             |> ScenarioForm.originHeaders
-                            |> List.indexedMap (viewOriginHeader model.scenarioIsRunning)
+                            |> List.indexedMap (viewOriginHeader <| not model.scenarioIsRunning || model.sequenceDiagramVisibility == FinalInteractionsConcealedForExercise)
                         )
                     , div
                         [ class "pt-4" ]
                         [ viewAddHeaderButton
                             [ class "mb-3 mr-3" ]
-                            (not model.scenarioIsRunning
+                            ((not model.scenarioIsRunning
                                 && not (ScenarioForm.hasOriginCacheControlHeader model.scenarioForm)
+                             )
+                                || model.sequenceDiagramVisibility
+                                == FinalInteractionsConcealedForExercise
                             )
                             "Add Cache-Control"
                             AddOriginCacheControlHeader
                         , viewAddHeaderButton
                             [ class "mb-3 mr-3" ]
-                            (not model.scenarioIsRunning
+                            ((not model.scenarioIsRunning
                                 && not (ScenarioForm.hasCustomOriginHeaderWithKey "ETag" model.scenarioForm)
+                             )
+                                || model.sequenceDiagramVisibility
+                                == FinalInteractionsConcealedForExercise
                             )
                             "Add ETag"
                             (AddOriginResponseHeaderWithKeyAndValue "ETag" "\"some-etag\"")
                         , viewAddHeaderButton
                             [ class "mb-3 mr-3" ]
-                            (not model.scenarioIsRunning
+                            ((not model.scenarioIsRunning
                                 && not (ScenarioForm.hasCustomOriginHeaderWithKey "Last-Modified" model.scenarioForm)
+                             )
+                                || model.sequenceDiagramVisibility
+                                == FinalInteractionsConcealedForExercise
                             )
                             "Add Last-Modified"
                             (AddOriginResponseHeaderWithKeyAndValue "Last-Modified" "Wed, 21 Oct 2015 07:28:00 GMT")
                         , viewAddHeaderButton
                             [ class "mb-3 mr-3" ]
-                            (not model.scenarioIsRunning
+                            ((not model.scenarioIsRunning
                                 && not (ScenarioForm.hasCustomOriginHeaderWithKey "Vary" model.scenarioForm)
+                             )
+                                || model.sequenceDiagramVisibility
+                                == FinalInteractionsConcealedForExercise
                             )
                             "Add Vary"
                             (AddOriginResponseHeaderWithKeyAndValue "Vary" "Accept-Encoding")
                         , viewAddHeaderButton
                             [ class "mb-3 mr-3" ]
-                            (not model.scenarioIsRunning
+                            ((not model.scenarioIsRunning
                                 && not (ScenarioForm.hasCustomOriginHeaderWithKey "Set-Cookie" model.scenarioForm)
+                             )
+                                || model.sequenceDiagramVisibility
+                                == FinalInteractionsConcealedForExercise
                             )
                             "Add Set-Cookie"
                             (AddOriginResponseHeaderWithKeyAndValue "Set-Cookie" "foo=bar")
                         , viewAddHeaderButton
                             [ class "mb-3" ]
-                            (not model.scenarioIsRunning)
+                            (not model.scenarioIsRunning || model.sequenceDiagramVisibility == FinalInteractionsConcealedForExercise)
                             "Add custom"
                             AddCustomOriginResponseHeader
                         ]
@@ -1584,7 +1609,7 @@ viewScenarioForm model =
                             ]
                             [ input
                                 [ Html.Attributes.type_ "checkbox"
-                                , Html.Attributes.disabled model.scenarioIsRunning
+                                , Html.Attributes.disabled (model.scenarioIsRunning && model.sequenceDiagramVisibility /= FinalInteractionsConcealedForExercise)
                                 , Html.Attributes.class "toggle"
                                 , Html.Attributes.checked <| ScenarioForm.originReturn304ForConditionalRequests model.scenarioForm
                                 , Html.Attributes.id "toggle-origin-toggle-origin-return-304-for-conditional-requests"
@@ -1622,7 +1647,7 @@ viewScenarioForm model =
                             ]
                             [ input
                                 [ Html.Attributes.type_ "checkbox"
-                                , Html.Attributes.disabled model.scenarioIsRunning
+                                , Html.Attributes.disabled (model.scenarioIsRunning && model.sequenceDiagramVisibility /= FinalInteractionsConcealedForExercise)
                                 , Html.Attributes.class "toggle"
                                 , Html.Attributes.checked <| ScenarioForm.originWait2SecondsBeforeResponding model.scenarioForm
                                 , Html.Attributes.id "toggle-origin-wait-2-seconds-before-responding"
