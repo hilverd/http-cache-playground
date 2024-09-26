@@ -1434,14 +1434,27 @@ viewSleepForSeconds enabled stepIndex seconds =
 viewScenarioForm : Model -> Html Msg
 viewScenarioForm model =
     div []
-        [ p
-            [ class "mt-8 text-gray-600" ]
-            [ text "Prepare a scenario for a single unique, randomly generated URL "
-            , span
-                [ class "font-mono" ]
-                [ text "/ids/:id" ]
-            , text " — then run it."
-            ]
+        [ case ScenarioForm.exerciseTitle model.scenarioForm of
+            Just exerciseTitle ->
+                div
+                    [ class "mt-8" ]
+                    [ h3
+                        [ class "text-lg font-semibold leading-6 text-gray-900" ]
+                        [ text <| "Exercise: " ++ exerciseTitle ]
+                    , p
+                        [ class "mt-2 max-w-4xl text-gray-500" ]
+                        [ text "Explore the scenario below, then predict what happens after the last client request." ]
+                    ]
+
+            Nothing ->
+                p
+                    [ class "mt-8 text-gray-600" ]
+                    [ text "Prepare a scenario for a single unique, randomly generated URL "
+                    , span
+                        [ class "font-mono" ]
+                        [ text "/ids/:id" ]
+                    , text " — then run it."
+                    ]
         , div
             [ class "mt-8 grid grid-cols-1 lg:gap-12 lg:grid-cols-2" ]
             [ div

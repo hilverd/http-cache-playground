@@ -19,6 +19,7 @@ module ScenarioForm exposing
     , deleteOriginHeader
     , empty
     , exerciseAnswers
+    , exerciseTitle
     , fromUrl
     , hasCustomOriginHeaderWithKey
     , hasOriginCacheControlHeader
@@ -65,6 +66,7 @@ type ScenarioForm
         , originWait2SecondsBeforeResponding : Bool
         , originHeaders : Array OriginHeader
         , originReturn304ForConditionalRequests : Bool
+        , exerciseTitle : Maybe String
         , exerciseAnswers : Maybe (Array ExerciseAnswer)
         }
 
@@ -89,13 +91,14 @@ type ClientAction
     | SleepForEightSeconds
 
 
-create : List ClientAction -> Bool -> List OriginHeader -> Bool -> Maybe (Array ExerciseAnswer) -> ScenarioForm
-create clientActions_ originWait2SecondsBeforeResponding_ originHeaders_ originReturn304ForConditionalRequests_ exerciseAnswers_ =
+create : List ClientAction -> Bool -> List OriginHeader -> Bool -> Maybe String -> Maybe (Array ExerciseAnswer) -> ScenarioForm
+create clientActions_ originWait2SecondsBeforeResponding_ originHeaders_ originReturn304ForConditionalRequests_ exerciseTitle_ exerciseAnswers_ =
     ScenarioForm
         { clientActions = Array.fromList clientActions_
         , originWait2SecondsBeforeResponding = originWait2SecondsBeforeResponding_
         , originHeaders = Array.fromList originHeaders_
         , originReturn304ForConditionalRequests = originReturn304ForConditionalRequests_
+        , exerciseTitle = exerciseTitle_
         , exerciseAnswers = exerciseAnswers_
         }
 
@@ -180,6 +183,7 @@ fromQueryParameters queryParameters =
          headers
         )
         (QueryParameters.originReturn304ForConditionalRequests queryParameters)
+        Nothing
         Nothing
 
 
@@ -296,7 +300,7 @@ toRelativeUrl scenarioForm =
 
 empty : ScenarioForm
 empty =
-    create [] False [] False Nothing
+    create [] False [] False Nothing Nothing
 
 
 isEmpty : ScenarioForm -> Bool
@@ -309,6 +313,11 @@ hasTenClientActions (ScenarioForm form) =
     form.clientActions
         |> Array.length
         |> (==) 10
+
+
+exerciseTitle : ScenarioForm -> Maybe String
+exerciseTitle (ScenarioForm form) =
+    form.exerciseTitle
 
 
 exerciseAnswers : ScenarioForm -> Maybe (Array ExerciseAnswer)
@@ -798,6 +807,7 @@ exerciseMaxAgeAndSMaxage =
             |> CacheControl
         ]
         False
+        (Just "max-age and s-maxage")
         ([ { answer = "Varnish returns a cached response without calling the origin", selected = False, correct = False }
          , { answer = "Varnish requests an up to date response from the origin", selected = False, correct = True }
          ]
@@ -820,6 +830,7 @@ exerciseStaleWhileRevalidate1 =
             |> CacheControl
         ]
         False
+        (Just "stale-while-revalidate (1)")
         ([ { answer = "Varnish returns a response with the same body as before", selected = False, correct = True }
          , { answer = "Varnish returns a different response body", selected = False, correct = False }
          ]
@@ -842,6 +853,7 @@ exerciseStaleWhileRevalidate2 =
             |> CacheControl
         ]
         False
+        (Just "stale-while-revalidate (1)")
         ([ { answer = "Varnish returns a response with the same body as before", selected = False, correct = False }
          , { answer = "Varnish returns a different response body", selected = False, correct = True }
          ]
@@ -862,6 +874,7 @@ exerciseAge1 =
         , Custom { key = "Age", value = "4" }
         ]
         False
+        (Just "the Age header (1)")
         ([ { answer = "Varnish returns a 200 with an age of 4", selected = False, correct = True }
          , { answer = "Varnish returns a 200 with an age of 0", selected = False, correct = False }
          ]
@@ -885,6 +898,7 @@ exerciseAge2 =
         , Custom { key = "Age", value = "4" }
         ]
         False
+        (Just "the Age header (1)")
         ([ { answer = "Varnish returns a response with the same body as before, with an age of 1", selected = False, correct = False }
          , { answer = "Varnish returns a response with the same body as before, with an age of 6", selected = False, correct = True }
          , { answer = "Varnish returns a different response body", selected = False, correct = False }
@@ -909,6 +923,7 @@ exerciseAge3 =
         , Custom { key = "Age", value = "5" }
         ]
         False
+        (Just "the Age header (3)")
         ([ { answer = "Varnish returns a response with the same body as before", selected = False, correct = False }
          , { answer = "Varnish returns a different response body", selected = False, correct = True }
          ]
@@ -932,6 +947,7 @@ exerciseConditionalRequestsWorkflow1 =
         , Custom { key = "ETag", value = "\"some-etag\"" }
         ]
         True
+        (Just "the workflow for conditional requests (1)")
         ([ { answer = "Varnish returns a 200 with an age of 0 and the same body as before", selected = False, correct = False }
          , { answer = "Varnish returns a 200 with an age of 3 and the same body as before", selected = False, correct = True }
          , { answer = "Varnish returns a 304 with an empty body", selected = False, correct = False }
@@ -958,6 +974,7 @@ exerciseConditionalRequestsWorkflow2 =
         , Custom { key = "ETag", value = "\"some-etag\"" }
         ]
         True
+        (Just "the workflow for conditional requests (2)")
         ([ { answer = "Varnish returns a 200 and also makes a revalidation request", selected = False, correct = False }
          , { answer = "Varnish returns a 200 and does not make a revalidation request", selected = False, correct = True }
          ]
@@ -980,6 +997,7 @@ exerciseConditionalRequestsWorkflow3 =
         , Custom { key = "ETag", value = "\"some-etag\"" }
         ]
         False
+        (Just "the workflow for conditional requests (3)")
         ([ { answer = "Varnish returns a 200 and also makes a revalidation request", selected = False, correct = False }
          , { answer = "Varnish returns a 200 and does not make a revalidation request", selected = False, correct = False }
          , { answer = "Varnish returns a 304 and also makes a revalidation request", selected = False, correct = False }
