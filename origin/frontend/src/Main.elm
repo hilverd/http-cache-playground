@@ -1882,15 +1882,18 @@ view model =
                                                                 , disabled <| model.sequenceDiagramVisibility == FinalInteractionsRevealedForExercise
                                                                 ]
                                                                 []
-                                                            , text exerciseAnswer.answer
-                                                            , Extras.Html.showIf (model.sequenceDiagramVisibility == FinalInteractionsRevealedForExercise && exerciseAnswer.selected && exerciseAnswer.correct) <|
-                                                                span
-                                                                    [ class "ml-3 text-green-800" ]
-                                                                    [ text "Correct!" ]
-                                                            , Extras.Html.showIf (model.sequenceDiagramVisibility == FinalInteractionsRevealedForExercise && exerciseAnswer.selected && not exerciseAnswer.correct) <|
-                                                                span
-                                                                    [ class "ml-3 text-red-800" ]
-                                                                    [ text "Wrong!" ]
+                                                            , span
+                                                                []
+                                                                [ text exerciseAnswer.answer
+                                                                , Extras.Html.showIf (model.sequenceDiagramVisibility == FinalInteractionsRevealedForExercise && exerciseAnswer.selected && exerciseAnswer.correct) <|
+                                                                    span
+                                                                        [ class "ml-4 text-green-800" ]
+                                                                        [ text "Correct!" ]
+                                                                , Extras.Html.showIf (model.sequenceDiagramVisibility == FinalInteractionsRevealedForExercise && exerciseAnswer.selected && not exerciseAnswer.correct) <|
+                                                                    span
+                                                                        [ class "ml-4 text-red-800" ]
+                                                                        [ text "Incorrect!" ]
+                                                                ]
                                                             ]
                                                         ]
                                                     ]
