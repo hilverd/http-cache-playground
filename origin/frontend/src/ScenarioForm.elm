@@ -850,10 +850,80 @@ exerciseStaleWhileRevalidate2 =
         )
 
 
+exerciseAge1 : ScenarioForm
+exerciseAge1 =
+    create
+        [ MakeGetRequest ([] |> Array.fromList)
+        ]
+        False
+        [ CacheControlResponseDirectives.empty
+            |> CacheControlResponseDirectives.updateSMaxAge (Just 5)
+            |> CacheControl
+        , Custom { key = "Age", value = "4" }
+        ]
+        False
+        ([ { answer = "Varnish returns a 200 with an age of 4", selected = False, correct = True }
+         , { answer = "Varnish returns a 200 with an age of 0", selected = False, correct = False }
+         ]
+            |> Array.fromList
+            |> Just
+        )
+
+
+exerciseAge2 : ScenarioForm
+exerciseAge2 =
+    create
+        [ MakeGetRequest ([] |> Array.fromList)
+        , SleepForTwoSeconds
+        , MakeGetRequest ([] |> Array.fromList)
+        ]
+        False
+        [ CacheControlResponseDirectives.empty
+            |> CacheControlResponseDirectives.updateSMaxAge (Just 5)
+            |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 5)
+            |> CacheControl
+        , Custom { key = "Age", value = "4" }
+        ]
+        False
+        ([ { answer = "Varnish returns a response with the same body as before, with an age of 1", selected = False, correct = False }
+         , { answer = "Varnish returns a response with the same body as before, with an age of 6", selected = False, correct = True }
+         , { answer = "Varnish returns a different response body", selected = False, correct = False }
+         ]
+            |> Array.fromList
+            |> Just
+        )
+
+
+exerciseAge3 : ScenarioForm
+exerciseAge3 =
+    create
+        [ MakeGetRequest ([] |> Array.fromList)
+        , SleepForOneSecond
+        , MakeGetRequest ([] |> Array.fromList)
+        ]
+        False
+        [ CacheControlResponseDirectives.empty
+            |> CacheControlResponseDirectives.updateSMaxAge (Just 5)
+            |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 5)
+            |> CacheControl
+        , Custom { key = "Age", value = "5" }
+        ]
+        False
+        ([ { answer = "Varnish returns a response with the same body as before", selected = False, correct = False }
+         , { answer = "Varnish returns a different response body", selected = False, correct = True }
+         ]
+            |> Array.fromList
+            |> Just
+        )
+
+
 exercisesById : Dict String ScenarioForm
 exercisesById =
     Dict.fromList
         [ ( "max-age-and-s-maxage", exerciseMaxAgeAndSMaxage )
         , ( "stale-while-revalidate-1", exerciseStaleWhileRevalidate1 )
         , ( "stale-while-revalidate-2", exerciseStaleWhileRevalidate2 )
+        , ( "age-1", exerciseAge1 )
+        , ( "age-2", exerciseAge2 )
+        , ( "age-3", exerciseAge3 )
         ]
