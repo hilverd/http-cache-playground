@@ -853,7 +853,7 @@ exerciseStaleWhileRevalidate2 =
             |> CacheControl
         ]
         False
-        (Just "stale-while-revalidate (1)")
+        (Just "stale-while-revalidate (2)")
         ([ { answer = "Varnish returns a response with the same body as before", selected = False, correct = False }
          , { answer = "Varnish returns a different response body", selected = False, correct = True }
          ]
@@ -898,7 +898,7 @@ exerciseAge2 =
         , Custom { key = "Age", value = "4" }
         ]
         False
-        (Just "the Age header (1)")
+        (Just "the Age header (2)")
         ([ { answer = "Varnish returns a response with the same body as before, with an age of 1", selected = False, correct = False }
          , { answer = "Varnish returns a response with the same body as before, with an age of 6", selected = False, correct = True }
          , { answer = "Varnish returns a different response body", selected = False, correct = False }
