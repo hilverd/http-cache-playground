@@ -41,8 +41,7 @@ const idProxy = async (req, res) => {
             validateStatus: () => true, // don't throw on 4xx and 5xx
         });
 
-        // Ignore the acual response status and give back a 200.
-        // If we don't do this, the browser seems to think the request failed and it shows a 503 (at least in Google Chrome).
+        // Ignore the actual response status
         res.status(200);
 
         Object.entries(response.headers).forEach(([key, value]) => {
