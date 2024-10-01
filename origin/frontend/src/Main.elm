@@ -810,13 +810,20 @@ recordResponseToGetRequest restOfScenario metadata responseBody =
                 "http://localhost:8080"
                 [ "interactions", id, "new" ]
                 []
+
+        leadingXVcp =
+            Maybe.withDefault Regex.never <|
+                Regex.fromString "^x-vcp-"
     in
     Http.post
         { url = url
         , body =
             Interaction.VarnishToClient
                 { statusCode = metadata.statusCode
-                , headers = metadata.headers |> Dict.toList
+                , headers =
+                    metadata.headers
+                        |> Dict.toList
+                        |> List.map (Tuple.mapFirst (Regex.replace leadingXVcp <| always ""))
                 , body = responseBody
                 }
                 |> Codec.encodeToValue Interaction.codec
