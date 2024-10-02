@@ -10,6 +10,8 @@ const port = process.env.PORT || 3000;
 const jsonParser = bodyParser.json();
 const { Buffer } = require('node:buffer');
 
+const originHost = 'varnish';
+
 const interactions = {};
 
 app.disable('x-powered-by');
@@ -20,13 +22,12 @@ app.use(morgan('combined'));
 const idProxy = async (req, res) => {
     const id = req.params.id;
     const protocol = req.protocol;
-    const host = 'varnish';
     const query = { ...req.query };
     delete query['headers-to-send'];
 
     const targetUrl = url.format({
         protocol: protocol,
-        host: host,
+        host: originHost,
         pathname: `/ids/${id}`,
         query: query
     });

@@ -10,6 +10,7 @@ import Browser.Navigation exposing (Key)
 import Codec
 import Components.Button
 import Components.RangeSlider
+import Config
 import Data.CacheControlResponseDirectives as CacheControlResponseDirectives exposing (CacheControlResponseDirectives)
 import Data.SequenceDiagramVisibility exposing (SequenceDiagramVisibility(..))
 import Dict
@@ -589,12 +590,16 @@ updateScenarioForm f commands model =
         )
 
 
+originUrl : List String -> List Url.Builder.QueryParameter -> String
+originUrl =
+    Url.Builder.crossOrigin Config.originBaseUrl
+
+
 getInteractions : String -> Cmd Msg
 getInteractions id =
     let
         url =
-            Url.Builder.crossOrigin
-                "http://localhost:8080"
+            originUrl
                 [ "interactions", id ]
                 []
     in
@@ -663,8 +668,7 @@ recordSleepForSeconds restOfScenario stepIndex seconds =
             Scenario.id restOfScenario
 
         url =
-            Url.Builder.crossOrigin
-                "http://localhost:8080"
+            originUrl
                 [ "interactions", id, "new" ]
                 []
     in
@@ -695,8 +699,7 @@ recordMakeGetRequest restOfScenario stepIndex { path, headers, desiredResponseHe
             Scenario.id restOfScenario
 
         url =
-            Url.Builder.crossOrigin
-                "http://localhost:8080"
+            originUrl
                 [ "interactions", id, "new" ]
                 []
     in
@@ -761,8 +764,7 @@ makeGetRequest restOfScenario { path, headers, desiredResponseHeaders, respondSl
                 pathWithoutLeadingSlash =
                     Regex.replace leadingSlashRegex (always "") path
             in
-            Url.Builder.crossOrigin
-                "http://localhost:8080"
+            originUrl
                 [ pathWithoutLeadingSlash ]
                 (queryParametersForHeadersToSend
                     ++ queryParametersForHeadersToReturn
@@ -806,8 +808,7 @@ recordResponseToGetRequest restOfScenario metadata responseBody =
             Scenario.id restOfScenario
 
         url =
-            Url.Builder.crossOrigin
-                "http://localhost:8080"
+            originUrl
                 [ "interactions", id, "new" ]
                 []
 
