@@ -4,7 +4,7 @@ This project lets you explore how [Varnish Cache](https://varnish-cache.org/) re
 
 ## Getting Started
 
-1. `docker compose up`
+1. `docker compose up --build`
 2. Open http://localhost:8080/.
 
 ## Disclaimer
