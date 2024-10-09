@@ -1390,7 +1390,7 @@ viewSleepForSeconds enabled stepIndex seconds =
                 ]
             , span
                 [ class "ml-2"
-                , Extras.HtmlAttribute.showIf (seconds == 1) <| class "mr-1.5"
+                , Extras.HtmlAttribute.showIf (seconds == 1) <| class "mr-3"
                 ]
                 [ text "Sleep "
                 , text <| Language.seconds seconds
