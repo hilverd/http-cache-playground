@@ -796,7 +796,7 @@ viewCacheControlResponseDirective directive =
                             |> Maybe.map (String.join "=")
                             |> Maybe.withDefault ""
                 in
-                Just <| "The response remains fresh until " ++ seconds ++ " seconds after it is generated."
+                Just <| "The response remains fresh until " ++ Language.secondsFromString seconds ++ " after it is generated."
 
             else if directive == "no-store" then
                 Just "Any caches of any kind (private or shared) should not store this response."
@@ -813,7 +813,7 @@ viewCacheControlResponseDirective directive =
                             |> Maybe.map (String.join "=")
                             |> Maybe.withDefault ""
                 in
-                Just <| "The cache is allowed to reuse a stale response for " ++ seconds ++ " seconds while it revalidates it to a cache in the background."
+                Just <| "The cache is allowed to reuse a stale response for " ++ Language.secondsFromString seconds ++ " while it revalidates it to a cache in the background."
 
             else if String.startsWith "s-maxage=" directive then
                 let
@@ -824,7 +824,10 @@ viewCacheControlResponseDirective directive =
                             |> Maybe.map (String.join "=")
                             |> Maybe.withDefault ""
                 in
-                Just <| "The response remains fresh for " ++ seconds ++ " seconds in a shared cache."
+                Just <|
+                    "The response remains fresh for "
+                        ++ Language.secondsFromString seconds
+                        ++ " in a shared cache."
 
             else
                 Nothing
@@ -890,8 +893,8 @@ viewResponseHeader ( key, value ) =
                     , span
                         [ class "text-gray-500 font-sans" ]
                         [ text "The object has been in the cache for "
-                        , text value
-                        , text " seconds."
+                        , text <| Language.secondsFromString value
+                        , text "."
                         ]
                     ]
                 ]

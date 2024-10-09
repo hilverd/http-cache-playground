@@ -1,4 +1,4 @@
-module Language exposing (seconds)
+module Language exposing (seconds, secondsFromString)
 
 
 seconds : Int -> String
@@ -9,3 +9,11 @@ seconds n =
 
         _ ->
             String.fromInt n ++ " seconds"
+
+
+secondsFromString : String -> String
+secondsFromString value =
+    value
+        |> String.toInt
+        |> Maybe.map seconds
+        |> Maybe.withDefault value

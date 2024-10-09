@@ -26,6 +26,7 @@ import Http
 import Icons
 import Interaction
 import Interactions exposing (Interactions)
+import Language
 import Process
 import Random
 import Regex
@@ -1392,14 +1393,7 @@ viewSleepForSeconds enabled stepIndex seconds =
                 , Extras.HtmlAttribute.showIf (seconds == 1) <| class "mr-1.5"
                 ]
                 [ text "Sleep "
-                , text <| String.fromInt seconds
-                , text
-                    (if seconds == 1 then
-                        " second"
-
-                     else
-                        " seconds"
-                    )
+                , text <| Language.seconds seconds
                 ]
             , Components.RangeSlider.viewSeconds
                 enabled
