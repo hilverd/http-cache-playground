@@ -1685,8 +1685,15 @@ view model =
                         || model.sequenceDiagramVisibility
                         == FinalInteractionsRevealedForExercise
                    )
+
+        pageTitle : String -> String
+        pageTitle =
+            model.scenarioForm
+                |> ScenarioForm.exerciseTitle
+                |> Maybe.map (\exerciseTitle overallTitle -> exerciseTitle ++ " · " ++ overallTitle)
+                |> Maybe.withDefault identity
     in
-    { title = "Varnish Cache Playground"
+    { title = pageTitle "Varnish Cache Playground"
     , body =
         [ div
             [ class "min-h-full pt-4 pb-10 sm:pt-6 md:pt-10" ]
