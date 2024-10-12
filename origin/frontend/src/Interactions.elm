@@ -7,7 +7,6 @@ import Extras.Html
 import Extras.HtmlAttribute
 import Html exposing (..)
 import Html.Attributes exposing (class)
-import Html.Events
 import Icons
 import Interaction exposing (Interaction(..))
 import Language
@@ -142,11 +141,10 @@ view :
     , allRequestHeaderKeys : List String
     , allResponseHeaderKeys : List String
     , sequenceDiagramVisibility : SequenceDiagramVisibility
-    , revealFinalInteractions : msg
     }
     -> Interactions
     -> Html msg
-view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeaderKeys, sequenceDiagramVisibility, revealFinalInteractions } (Interactions interactions) =
+view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeaderKeys, sequenceDiagramVisibility } (Interactions interactions) =
     if List.isEmpty interactions then
         div
             [ class "text-gray-700 mt-4" ]
@@ -198,18 +196,6 @@ view { scenarioIsRunning, showAllHeaders, allRequestHeaderKeys, allResponseHeade
 
                                 else
                                     case sequenceDiagramVisibility of
-                                        FinalInteractionsConcealedByPresenter ->
-                                            [ div
-                                                [ class "mt-4 text-center" ]
-                                                [ button
-                                                    [ class "btn btn-outline text-gray-700 border-gray-800"
-                                                    , Html.Events.onClick revealFinalInteractions
-                                                    ]
-                                                    [ text "Reveal final interactions"
-                                                    ]
-                                                ]
-                                            ]
-
                                         FinalInteractionsConcealedForExercise ->
                                             []
 

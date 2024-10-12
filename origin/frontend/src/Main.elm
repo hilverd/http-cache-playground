@@ -100,7 +100,7 @@ init _ url key =
       }
     , if sequenceDiagramVisibility == FinalInteractionsConcealedForExercise then
         Process.sleep 500
-            |> Task.perform (always <| RunScenarioAsQuizFromForm sequenceDiagramVisibility)
+            |> Task.perform (always <| RunScenarioAsExerciseFromForm sequenceDiagramVisibility)
 
       else
         Cmd.none
@@ -148,8 +148,7 @@ type Msg
     | UpdateCustomOriginResponseHeaderKey Int String
     | UpdateCustomOriginResponseHeaderValue Int String
     | RunScenarioFromForm
-    | RunScenarioAsQuizFromForm SequenceDiagramVisibility
-    | RevealFinalInteractions
+    | RunScenarioAsExerciseFromForm SequenceDiagramVisibility
     | ResetScenarioForm
     | NewUuid String
     | GetInteractions Time.Posix
@@ -434,7 +433,7 @@ update msg model =
             , Random.generate NewUuid Uuid.uuidStringGenerator
             )
 
-        RunScenarioAsQuizFromForm sequenceDiagramVisibility ->
+        RunScenarioAsExerciseFromForm sequenceDiagramVisibility ->
             ( { model
                 | scenarioIsRunning = True
                 , interactions = Ok Interactions.empty
@@ -442,11 +441,6 @@ update msg model =
                 , sequenceDiagramVisibility = sequenceDiagramVisibility
               }
             , Random.generate NewUuid Uuid.uuidStringGenerator
-            )
-
-        RevealFinalInteractions ->
-            ( { model | sequenceDiagramVisibility = CompletelyRevealed }
-            , Process.sleep 200 |> Task.perform (always ScrollToBottomOfSequenceDiagram)
             )
 
         NewUuid uuid ->
@@ -1759,17 +1753,6 @@ view model =
                             , text "Run"
                             ]
                         , button
-                            [ class "btn mr-4"
-                            , Html.Events.onClick <| RunScenarioAsQuizFromForm FinalInteractionsConcealedByPresenter
-                            , Html.Attributes.disabled <|
-                                (model.scenarioIsRunning
-                                    || (model.scenarioForm |> ScenarioForm.clientActions |> Array.isEmpty)
-                                )
-                            ]
-                            [ Icons.graduationCap [ Svg.Attributes.class "h-5 w-5" ]
-                            , text "Quiz"
-                            ]
-                        , button
                             [ class "btn btn-warning"
                             , Html.Events.onClick ResetScenarioForm
                             , Html.Attributes.disabled <| (model.scenarioIsRunning || ScenarioForm.isEmpty model.scenarioForm)
@@ -1840,7 +1823,6 @@ view model =
                                     , allRequestHeaderKeys = allRequestHeaderKeys
                                     , allResponseHeaderKeys = allResponseHeaderKeys
                                     , sequenceDiagramVisibility = model.sequenceDiagramVisibility
-                                    , revealFinalInteractions = RevealFinalInteractions
                                     }
                                     interactionsToShow
                                 ]
