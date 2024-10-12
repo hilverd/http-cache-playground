@@ -874,7 +874,7 @@ exerciseAge1 =
         , Custom { key = "Age", value = "4" }
         ]
         False
-        (Just "the Age header (1)")
+        (Just "The Age header (1)")
         ([ { answer = "Varnish returns a 200 with an age of 4", selected = False, correct = True }
          , { answer = "Varnish returns a 200 with an age of 0", selected = False, correct = False }
          ]
@@ -898,7 +898,7 @@ exerciseAge2 =
         , Custom { key = "Age", value = "4" }
         ]
         False
-        (Just "the Age header (2)")
+        (Just "The Age header (2)")
         ([ { answer = "Varnish returns a response with the same body as before, with an age of 1", selected = False, correct = False }
          , { answer = "Varnish returns a response with the same body as before, with an age of 6", selected = False, correct = True }
          , { answer = "Varnish returns a different response body", selected = False, correct = False }
@@ -923,7 +923,7 @@ exerciseAge3 =
         , Custom { key = "Age", value = "5" }
         ]
         False
-        (Just "the Age header (3)")
+        (Just "The Age header (3)")
         ([ { answer = "Varnish returns a response with the same body as before", selected = False, correct = False }
          , { answer = "Varnish returns a different response body", selected = False, correct = True }
          ]
@@ -947,7 +947,7 @@ exerciseConditionalRequestsWorkflow1 =
         , Custom { key = "ETag", value = "\"some-etag\"" }
         ]
         True
-        (Just "the workflow for conditional requests (1)")
+        (Just "Workflow for conditional requests (1)")
         ([ { answer = "Varnish returns a 200 with an age of 0 and the same body as before", selected = False, correct = False }
          , { answer = "Varnish returns a 200 with an age of 3 and the same body as before", selected = False, correct = True }
          , { answer = "Varnish returns a 304 with an empty body", selected = False, correct = False }
@@ -974,7 +974,7 @@ exerciseConditionalRequestsWorkflow2 =
         , Custom { key = "ETag", value = "\"some-etag\"" }
         ]
         True
-        (Just "the workflow for conditional requests (2)")
+        (Just "Workflow for conditional requests (2)")
         ([ { answer = "Varnish returns a 200 and also makes a revalidation request", selected = False, correct = False }
          , { answer = "Varnish returns a 200 and does not make a revalidation request", selected = False, correct = True }
          ]
@@ -997,7 +997,7 @@ exerciseConditionalRequestsWorkflow3 =
         , Custom { key = "ETag", value = "\"some-etag\"" }
         ]
         False
-        (Just "the workflow for conditional requests (3)")
+        (Just "Workflow for conditional requests (3)")
         ([ { answer = "Varnish returns a 200 and also makes a revalidation request", selected = False, correct = False }
          , { answer = "Varnish returns a 200 and does not make a revalidation request", selected = False, correct = False }
          , { answer = "Varnish returns a 304 and also makes a revalidation request", selected = False, correct = False }
