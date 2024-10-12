@@ -1323,19 +1323,6 @@ viewClientAction enabled stepIndex clientAction =
                             (AddGetRequestHeader stepIndex)
                         ]
                     ]
-
-                -- , div
-                --     [ class "px-4 mt-6" ]
-                --     [ h4
-                --         [ class "font-medium text-gray-700" ]
-                --         [ text "Request headers" ]
-                --     ]
-                -- , div
-                --     [ class "space-y-4 px-4 mt-4 max-w-full" ]
-                --     (headers
-                --         |> Array.toList
-                --         |> List.indexedMap (viewGetRequestHeader enabled stepIndex)
-                --     )
                 , div
                     [ class "pr-3 pb-2" ]
                     [ span
