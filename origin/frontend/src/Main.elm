@@ -1284,40 +1284,58 @@ viewClientAction enabled stepIndex clientAction =
                         [ class "ml-2 font-mono" ]
                         [ text "GET /ids/:id" ]
                     ]
-                , div
-                    [ class "px-4 mt-6" ]
-                    [ h4
-                        [ class "font-medium text-gray-700" ]
-                        [ text "Request headers" ]
+                , details
+                    [ class "px-4 mt-6"
+                    , Extras.HtmlAttribute.showIf (not <| Array.isEmpty headers) <| Html.Attributes.attribute "open" "true"
                     ]
-                , div
-                    [ class "space-y-4 px-4 mt-4 max-w-full" ]
-                    (headers
-                        |> Array.toList
-                        |> List.indexedMap (viewGetRequestHeader enabled stepIndex)
-                    )
-                , div
-                    [ class "ml-4 mt-6" ]
-                    [ viewAddHeaderButton
-                        [ class "mb-3 mr-3" ]
-                        (enabled
-                            && not (ScenarioForm.clientActionHasGetRequestHeaderWithKey "If-None-Match" clientAction)
+                    [ summary
+                        [ class "select-none" ]
+                        [ span
+                            [ class "ml-2 font-medium text-gray-700" ]
+                            [ text "Request headers" ]
+                        ]
+                    , div
+                        [ class "space-y-4 px-4 mt-4 max-w-full" ]
+                        (headers
+                            |> Array.toList
+                            |> List.indexedMap (viewGetRequestHeader enabled stepIndex)
                         )
-                        "Add If-None-Match"
-                        (AddGetRequestHeaderWithKeyAndValue stepIndex "If-None-Match" "\"some-etag\"")
-                    , viewAddHeaderButton
-                        [ class "mb-3 mr-3" ]
-                        (enabled
-                            && not (ScenarioForm.clientActionHasGetRequestHeaderWithKey "If-Modified-Since" clientAction)
-                        )
-                        "Add If-Modified-Since"
-                        (AddGetRequestHeaderWithKeyAndValue stepIndex "If-Modified-Since" "Wed, 21 Oct 2015 07:28:00 GMT")
-                    , viewAddHeaderButton
-                        []
-                        enabled
-                        "Add custom"
-                        (AddGetRequestHeader stepIndex)
+                    , div
+                        [ class "ml-4 mt-6" ]
+                        [ viewAddHeaderButton
+                            [ class "mb-3 mr-3" ]
+                            (enabled
+                                && not (ScenarioForm.clientActionHasGetRequestHeaderWithKey "If-None-Match" clientAction)
+                            )
+                            "Add If-None-Match"
+                            (AddGetRequestHeaderWithKeyAndValue stepIndex "If-None-Match" "\"some-etag\"")
+                        , viewAddHeaderButton
+                            [ class "mb-3 mr-3" ]
+                            (enabled
+                                && not (ScenarioForm.clientActionHasGetRequestHeaderWithKey "If-Modified-Since" clientAction)
+                            )
+                            "Add If-Modified-Since"
+                            (AddGetRequestHeaderWithKeyAndValue stepIndex "If-Modified-Since" "Wed, 21 Oct 2015 07:28:00 GMT")
+                        , viewAddHeaderButton
+                            []
+                            enabled
+                            "Add custom"
+                            (AddGetRequestHeader stepIndex)
+                        ]
                     ]
+
+                -- , div
+                --     [ class "px-4 mt-6" ]
+                --     [ h4
+                --         [ class "font-medium text-gray-700" ]
+                --         [ text "Request headers" ]
+                --     ]
+                -- , div
+                --     [ class "space-y-4 px-4 mt-4 max-w-full" ]
+                --     (headers
+                --         |> Array.toList
+                --         |> List.indexedMap (viewGetRequestHeader enabled stepIndex)
+                --     )
                 , div
                     [ class "pr-3 pb-2" ]
                     [ span
