@@ -469,11 +469,7 @@ update msg model =
 
         GotInteractions result ->
             ( { model | interactions = result }
-            , if model.sequenceDiagramVisibility /= FinalInteractionsConcealedForExercise then
-                Process.sleep 100 |> Task.perform (always ScrollToBottomOfSequenceDiagram)
-
-              else
-                Cmd.none
+            , Process.sleep 100 |> Task.perform (always ScrollToBottomOfSequenceDiagram)
             )
 
         ScrollToBottomOfSequenceDiagram ->
@@ -1439,7 +1435,7 @@ viewScenarioForm model =
                         [ text <| "Exercise: " ++ exerciseTitle ]
                     , p
                         [ class "mt-2 max-w-4xl text-gray-500" ]
-                        [ text "Explore the scenario below, then predict what happens after the last client request." ]
+                        [ text "Read through the interactions below, then predict what happens after the last client request." ]
                     ]
 
             Nothing ->
@@ -1451,227 +1447,217 @@ viewScenarioForm model =
                         [ text "/ids/:id" ]
                     , text " — then run it."
                     ]
-        , div
-            [ class "mt-8 grid grid-cols-1 lg:gap-12 lg:grid-cols-2" ]
-            [ div
-                [ class "space-y-8" ]
-                [ h2
-                    [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" ]
-                    [ text "Client" ]
-                , Extras.Html.showIf
-                    (model.scenarioForm
-                        |> ScenarioForm.clientActions
-                        |> Array.isEmpty
-                    )
-                  <|
-                    p
-                        [ class "mt-4 text-red-800" ]
-                        [ text "[Add one or more steps to create a scenario.]" ]
-                , ul
-                    [ Html.Attributes.attribute "role" "list"
-                    , class "space-y-4"
-                    ]
-                    (model.scenarioForm
-                        |> ScenarioForm.clientActions
-                        |> Array.toList
-                        |> List.indexedMap
-                            (\index action ->
-                                viewClientAction (not model.scenarioIsRunning || model.sequenceDiagramVisibility == FinalInteractionsConcealedForExercise) index action
-                            )
-                    )
-                , div
-                    []
-                    [ button
-                        [ class "btn mr-4 mb-4"
-                        , Html.Attributes.disabled <|
-                            ((model.scenarioIsRunning
-                                || ScenarioForm.hasTenClientActions model.scenarioForm
-                             )
-                                && model.sequenceDiagramVisibility
-                                /= FinalInteractionsConcealedForExercise
-                            )
-                        , Html.Events.onClick AddMakeGetRequest
-                        ]
-                        [ Icons.plus [ Svg.Attributes.class "h-5 w-5" ]
-                        , text "Add GET request step"
-                        ]
-                    , button
-                        [ class "btn"
-                        , Html.Attributes.disabled <|
-                            ((model.scenarioIsRunning
-                                || (Array.isEmpty <| ScenarioForm.clientActions model.scenarioForm)
-                                || ScenarioForm.hasTenClientActions model.scenarioForm
-                             )
-                                && model.sequenceDiagramVisibility
-                                /= FinalInteractionsConcealedForExercise
-                            )
-                        , Html.Events.onClick AddSleepForTwoSeconds
-                        ]
-                        [ Icons.plus [ Svg.Attributes.class "h-5 w-5" ]
-                        , text "Add sleep step"
-                        ]
-                    ]
+        , Extras.Html.showIf (ScenarioForm.exerciseTitle model.scenarioForm /= Nothing && ScenarioForm.originReturn304ForConditionalRequests model.scenarioForm) <|
+            div
+                [ class "mt-8" ]
+                [ text "⚠ In this scenario, the origin will return a 304 and empty body for "
+                , em [] [ text "all" ]
+                , text " conditional requests."
                 ]
-            , div
-                [ class "space-y-4 mt-8 lg:mt-0" ]
-                [ h2
-                    [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-8" ]
-                    [ text "Origin" ]
-                , div
-                    [ class "space-y-4" ]
+        , Extras.Html.showIf (ScenarioForm.exerciseTitle model.scenarioForm == Nothing) <|
+            div
+                [ class "mt-8 grid grid-cols-1 lg:gap-12 lg:grid-cols-2" ]
+                [ div
+                    [ class "space-y-8" ]
                     [ h2
-                        [ class "font-medium text-gray-900 dark:text-gray-100" ]
-                        [ text "Response headers"
-                        , span
-                            [ class "font-normal text-gray-700" ]
-                            [ text " for " ]
-                        , span
-                            [ class "font-mono text-gray-700" ]
-                            [ text "/ids/:id" ]
-                        ]
-                    , div
-                        [ class "space-y-4" ]
+                        [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" ]
+                        [ text "Client" ]
+                    , Extras.Html.showIf
                         (model.scenarioForm
-                            |> ScenarioForm.originHeaders
-                            |> List.indexedMap (viewOriginHeader <| not model.scenarioIsRunning || model.sequenceDiagramVisibility == FinalInteractionsConcealedForExercise)
+                            |> ScenarioForm.clientActions
+                            |> Array.isEmpty
+                        )
+                      <|
+                        p
+                            [ class "mt-4 text-red-800" ]
+                            [ text "[Add one or more steps to create a scenario.]" ]
+                    , ul
+                        [ Html.Attributes.attribute "role" "list"
+                        , class "space-y-4"
+                        ]
+                        (model.scenarioForm
+                            |> ScenarioForm.clientActions
+                            |> Array.toList
+                            |> List.indexedMap
+                                (\index action ->
+                                    viewClientAction (not model.scenarioIsRunning) index action
+                                )
                         )
                     , div
-                        [ class "pt-4" ]
-                        [ viewAddHeaderButton
-                            [ class "mb-3 mr-3" ]
-                            ((not model.scenarioIsRunning
-                                && not (ScenarioForm.hasOriginCacheControlHeader model.scenarioForm)
-                             )
-                                || model.sequenceDiagramVisibility
-                                == FinalInteractionsConcealedForExercise
-                            )
-                            "Add Cache-Control"
-                            AddOriginCacheControlHeader
-                        , viewAddHeaderButton
-                            [ class "mb-3 mr-3" ]
-                            ((not model.scenarioIsRunning
-                                && not (ScenarioForm.hasCustomOriginHeaderWithKey "ETag" model.scenarioForm)
-                             )
-                                || model.sequenceDiagramVisibility
-                                == FinalInteractionsConcealedForExercise
-                            )
-                            "Add ETag"
-                            (AddOriginResponseHeaderWithKeyAndValue "ETag" "\"some-etag\"")
-                        , viewAddHeaderButton
-                            [ class "mb-3 mr-3" ]
-                            ((not model.scenarioIsRunning
-                                && not (ScenarioForm.hasCustomOriginHeaderWithKey "Last-Modified" model.scenarioForm)
-                             )
-                                || model.sequenceDiagramVisibility
-                                == FinalInteractionsConcealedForExercise
-                            )
-                            "Add Last-Modified"
-                            (AddOriginResponseHeaderWithKeyAndValue "Last-Modified" "Wed, 21 Oct 2015 07:28:00 GMT")
-                        , viewAddHeaderButton
-                            [ class "mb-3 mr-3" ]
-                            ((not model.scenarioIsRunning
-                                && not (ScenarioForm.hasCustomOriginHeaderWithKey "Vary" model.scenarioForm)
-                             )
-                                || model.sequenceDiagramVisibility
-                                == FinalInteractionsConcealedForExercise
-                            )
-                            "Add Vary"
-                            (AddOriginResponseHeaderWithKeyAndValue "Vary" "Accept-Encoding")
-                        , viewAddHeaderButton
-                            [ class "mb-3 mr-3" ]
-                            ((not model.scenarioIsRunning
-                                && not (ScenarioForm.hasCustomOriginHeaderWithKey "Set-Cookie" model.scenarioForm)
-                             )
-                                || model.sequenceDiagramVisibility
-                                == FinalInteractionsConcealedForExercise
-                            )
-                            "Add Set-Cookie"
-                            (AddOriginResponseHeaderWithKeyAndValue "Set-Cookie" "foo=bar")
-                        , viewAddHeaderButton
-                            [ class "mb-3" ]
-                            (not model.scenarioIsRunning || model.sequenceDiagramVisibility == FinalInteractionsConcealedForExercise)
-                            "Add custom"
-                            AddCustomOriginResponseHeader
-                        ]
-                    ]
-                , div [ class "divider" ] []
-                , div
-                    [ class "text-gray-700 space-y-4" ]
-                    [ h2
-                        [ class "font-medium text-gray-900 dark:text-gray-100" ]
-                        [ text "Response code and body"
-                        , span
-                            [ class "font-normal text-gray-700" ]
-                            [ text " for " ]
-                        , span
-                            [ class "font-mono text-gray-700" ]
-                            [ text "/ids/:id" ]
-                        ]
-                    , p
                         []
-                        [ text "By default, the response status code is 200 and the body is the current Unix time (in seconds)." ]
-                    , div
-                        [ Html.Attributes.class "form-control w-fit"
-                        ]
-                        [ label
-                            [ Html.Attributes.class "label cursor-pointer pl-0"
+                        [ button
+                            [ class "btn mr-4 mb-4"
+                            , Html.Attributes.disabled <|
+                                ((model.scenarioIsRunning
+                                    || ScenarioForm.hasTenClientActions model.scenarioForm
+                                 )
+                                    && model.sequenceDiagramVisibility
+                                    /= FinalInteractionsConcealedForExercise
+                                )
+                            , Html.Events.onClick AddMakeGetRequest
                             ]
-                            [ input
-                                [ Html.Attributes.type_ "checkbox"
-                                , Html.Attributes.disabled (model.scenarioIsRunning && model.sequenceDiagramVisibility /= FinalInteractionsConcealedForExercise)
-                                , Html.Attributes.class "toggle"
-                                , Html.Attributes.checked <| ScenarioForm.originReturn304ForConditionalRequests model.scenarioForm
-                                , Html.Attributes.id "toggle-origin-toggle-origin-return-304-for-conditional-requests"
-                                , Html.Events.onClick ToggleOriginReturn304ForConditionalRequests
-                                ]
-                                []
-                            , span
-                                [ Html.Attributes.class "label-text text-base ml-3"
-                                ]
-                                [ text "Return 304 and empty body for "
-                                , em [] [ text "all" ]
-                                , text " conditional requests"
-                                ]
+                            [ Icons.plus [ Svg.Attributes.class "h-5 w-5" ]
+                            , text "Add GET request step"
+                            ]
+                        , button
+                            [ class "btn"
+                            , Html.Attributes.disabled <|
+                                (model.scenarioIsRunning
+                                    || (Array.isEmpty <| ScenarioForm.clientActions model.scenarioForm)
+                                    || ScenarioForm.hasTenClientActions model.scenarioForm
+                                )
+                            , Html.Events.onClick AddSleepForTwoSeconds
+                            ]
+                            [ Icons.plus [ Svg.Attributes.class "h-5 w-5" ]
+                            , text "Add sleep step"
                             ]
                         ]
                     ]
-                , div [ class "divider" ] []
                 , div
-                    [ class "space-y-4" ]
+                    [ class "space-y-4 mt-8 lg:mt-0" ]
                     [ h2
-                        [ class "font-medium text-gray-900 dark:text-gray-100" ]
-                        [ text "Response time"
-                        , span
-                            [ class "font-normal text-gray-700" ]
-                            [ text " for " ]
-                        , span
-                            [ class "font-mono text-gray-700" ]
-                            [ text "/ids/:id" ]
-                        ]
+                        [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-8" ]
+                        [ text "Origin" ]
                     , div
-                        [ Html.Attributes.class "form-control w-fit"
-                        ]
-                        [ label
-                            [ Html.Attributes.class "label cursor-pointer pl-0"
-                            ]
-                            [ input
-                                [ Html.Attributes.type_ "checkbox"
-                                , Html.Attributes.disabled (model.scenarioIsRunning && model.sequenceDiagramVisibility /= FinalInteractionsConcealedForExercise)
-                                , Html.Attributes.class "toggle"
-                                , Html.Attributes.checked <| ScenarioForm.originWait2SecondsBeforeResponding model.scenarioForm
-                                , Html.Attributes.id "toggle-origin-wait-2-seconds-before-responding"
-                                , Html.Events.onClick ToggleOriginWait2SecondsBeforeResponding
-                                ]
-                                []
+                        [ class "space-y-4" ]
+                        [ h2
+                            [ class "font-medium text-gray-900 dark:text-gray-100" ]
+                            [ text "Response headers"
                             , span
-                                [ Html.Attributes.class "label-text text-base ml-3"
+                                [ class "font-normal text-gray-700" ]
+                                [ text " for " ]
+                            , span
+                                [ class "font-mono text-gray-700" ]
+                                [ text "/ids/:id" ]
+                            ]
+                        , div
+                            [ class "space-y-4" ]
+                            (model.scenarioForm
+                                |> ScenarioForm.originHeaders
+                                |> List.indexedMap (viewOriginHeader <| not model.scenarioIsRunning)
+                            )
+                        , div
+                            [ class "pt-4" ]
+                            [ viewAddHeaderButton
+                                [ class "mb-3 mr-3" ]
+                                (not model.scenarioIsRunning
+                                    && not (ScenarioForm.hasOriginCacheControlHeader model.scenarioForm)
+                                )
+                                "Add Cache-Control"
+                                AddOriginCacheControlHeader
+                            , viewAddHeaderButton
+                                [ class "mb-3 mr-3" ]
+                                (not model.scenarioIsRunning
+                                    && not (ScenarioForm.hasCustomOriginHeaderWithKey "ETag" model.scenarioForm)
+                                )
+                                "Add ETag"
+                                (AddOriginResponseHeaderWithKeyAndValue "ETag" "\"some-etag\"")
+                            , viewAddHeaderButton
+                                [ class "mb-3 mr-3" ]
+                                (not model.scenarioIsRunning
+                                    && not (ScenarioForm.hasCustomOriginHeaderWithKey "Last-Modified" model.scenarioForm)
+                                )
+                                "Add Last-Modified"
+                                (AddOriginResponseHeaderWithKeyAndValue "Last-Modified" "Wed, 21 Oct 2015 07:28:00 GMT")
+                            , viewAddHeaderButton
+                                [ class "mb-3 mr-3" ]
+                                (not model.scenarioIsRunning
+                                    && not (ScenarioForm.hasCustomOriginHeaderWithKey "Vary" model.scenarioForm)
+                                )
+                                "Add Vary"
+                                (AddOriginResponseHeaderWithKeyAndValue "Vary" "Accept-Encoding")
+                            , viewAddHeaderButton
+                                [ class "mb-3 mr-3" ]
+                                (not model.scenarioIsRunning
+                                    && not (ScenarioForm.hasCustomOriginHeaderWithKey "Set-Cookie" model.scenarioForm)
+                                )
+                                "Add Set-Cookie"
+                                (AddOriginResponseHeaderWithKeyAndValue "Set-Cookie" "foo=bar")
+                            , viewAddHeaderButton
+                                [ class "mb-3" ]
+                                (not model.scenarioIsRunning)
+                                "Add custom"
+                                AddCustomOriginResponseHeader
+                            ]
+                        ]
+                    , div [ class "divider" ] []
+                    , div
+                        [ class "text-gray-700 space-y-4" ]
+                        [ h2
+                            [ class "font-medium text-gray-900 dark:text-gray-100" ]
+                            [ text "Response code and body"
+                            , span
+                                [ class "font-normal text-gray-700" ]
+                                [ text " for " ]
+                            , span
+                                [ class "font-mono text-gray-700" ]
+                                [ text "/ids/:id" ]
+                            ]
+                        , p
+                            []
+                            [ text "By default, the response status code is 200 and the body is the current Unix time (in seconds)." ]
+                        , div
+                            [ Html.Attributes.class "form-control w-fit"
+                            ]
+                            [ label
+                                [ Html.Attributes.class "label cursor-pointer pl-0"
                                 ]
-                                [ text "Wait 2 seconds before responding" ]
+                                [ input
+                                    [ Html.Attributes.type_ "checkbox"
+                                    , Html.Attributes.disabled model.scenarioIsRunning
+                                    , Html.Attributes.class "toggle"
+                                    , Html.Attributes.checked <| ScenarioForm.originReturn304ForConditionalRequests model.scenarioForm
+                                    , Html.Attributes.id "toggle-origin-toggle-origin-return-304-for-conditional-requests"
+                                    , Html.Events.onClick ToggleOriginReturn304ForConditionalRequests
+                                    ]
+                                    []
+                                , span
+                                    [ Html.Attributes.class "label-text text-base ml-3"
+                                    ]
+                                    [ text "Return 304 and empty body for "
+                                    , em [] [ text "all" ]
+                                    , text " conditional requests"
+                                    ]
+                                ]
+                            ]
+                        ]
+                    , div [ class "divider" ] []
+                    , div
+                        [ class "space-y-4" ]
+                        [ h2
+                            [ class "font-medium text-gray-900 dark:text-gray-100" ]
+                            [ text "Response time"
+                            , span
+                                [ class "font-normal text-gray-700" ]
+                                [ text " for " ]
+                            , span
+                                [ class "font-mono text-gray-700" ]
+                                [ text "/ids/:id" ]
+                            ]
+                        , div
+                            [ Html.Attributes.class "form-control w-fit"
+                            ]
+                            [ label
+                                [ Html.Attributes.class "label cursor-pointer pl-0"
+                                ]
+                                [ input
+                                    [ Html.Attributes.type_ "checkbox"
+                                    , Html.Attributes.disabled model.scenarioIsRunning
+                                    , Html.Attributes.class "toggle"
+                                    , Html.Attributes.checked <| ScenarioForm.originWait2SecondsBeforeResponding model.scenarioForm
+                                    , Html.Attributes.id "toggle-origin-wait-2-seconds-before-responding"
+                                    , Html.Events.onClick ToggleOriginWait2SecondsBeforeResponding
+                                    ]
+                                    []
+                                , span
+                                    [ Html.Attributes.class "label-text text-base ml-3"
+                                    ]
+                                    [ text "Wait 2 seconds before responding" ]
+                                ]
                             ]
                         ]
                     ]
                 ]
-            ]
         ]
 
 
@@ -1750,7 +1736,7 @@ view model =
                                 )
                             ]
                             [ Icons.play [ Svg.Attributes.class "h-5 w-5" ]
-                            , text "Run"
+                            , text "Run scenario"
                             ]
                         , button
                             [ class "btn btn-warning"
@@ -1778,7 +1764,7 @@ view model =
                             div
                                 [ Extras.HtmlAttribute.showIf model.formWasModifiedSinceScenarioRun <| class "opacity-50"
                                 ]
-                                [ Extras.Html.showUnless (Interactions.isEmpty interactionsToShow) <|
+                                [ Extras.Html.showUnless (Interactions.isEmpty interactionsToShow || (ScenarioForm.exerciseTitle model.scenarioForm /= Nothing)) <|
                                     Extras.Html.showMaybe
                                         (\id ->
                                             div
