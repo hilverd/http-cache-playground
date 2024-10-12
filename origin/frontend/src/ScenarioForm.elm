@@ -794,28 +794,6 @@ someExerciseAnswerIsSelected (ScenarioForm form) =
         |> Maybe.withDefault False
 
 
-exerciseMaxAgeAndSMaxage : ScenarioForm
-exerciseMaxAgeAndSMaxage =
-    create
-        [ MakeGetRequest ([] |> Array.fromList)
-        , MakeGetRequest ([] |> Array.fromList)
-        ]
-        False
-        [ CacheControlResponseDirectives.empty
-            |> CacheControlResponseDirectives.updateMaxAge (Just 2)
-            |> CacheControlResponseDirectives.updateSMaxAge (Just 0)
-            |> CacheControl
-        ]
-        False
-        (Just "max-age and s-maxage")
-        ([ { answer = "Varnish returns a cached response without calling the origin", selected = False, correct = False }
-         , { answer = "Varnish requests an up to date response from the origin", selected = False, correct = True }
-         ]
-            |> Array.fromList
-            |> Just
-        )
-
-
 exerciseStaleWhileRevalidate1 : ScenarioForm
 exerciseStaleWhileRevalidate1 =
     create
@@ -1011,8 +989,7 @@ exerciseConditionalRequestsWorkflow3 =
 exercisesById : Dict String ScenarioForm
 exercisesById =
     Dict.fromList
-        [ ( "max-age-and-s-maxage", exerciseMaxAgeAndSMaxage )
-        , ( "stale-while-revalidate-1", exerciseStaleWhileRevalidate1 )
+        [ ( "stale-while-revalidate-1", exerciseStaleWhileRevalidate1 )
         , ( "stale-while-revalidate-2", exerciseStaleWhileRevalidate2 )
         , ( "age-1", exerciseAge1 )
         , ( "age-2", exerciseAge2 )
