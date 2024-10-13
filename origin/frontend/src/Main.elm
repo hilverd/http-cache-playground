@@ -78,33 +78,21 @@ type alias Model =
 
 init : Flags -> Url -> Key -> ( Model, Cmd Msg )
 init _ url key =
-    let
-        scenarioForm =
-            ScenarioForm.fromUrl url
+    defaultModel key
+        |> update (UrlChanged url)
 
-        sequenceDiagramVisibility =
-            if ScenarioForm.exerciseAnswers scenarioForm /= Nothing then
-                FinalInteractionsConcealedForExercise
 
-            else
-                CompletelyRevealed
-    in
-    ( { key = key
-      , id = Nothing
-      , scenarioForm = scenarioForm
-      , scenarioIsRunning = False
-      , interactions = Ok Interactions.empty
-      , formWasModifiedSinceScenarioRun = False
-      , showAllHeaders = False
-      , sequenceDiagramVisibility = sequenceDiagramVisibility
-      }
-    , if sequenceDiagramVisibility == FinalInteractionsConcealedForExercise then
-        Process.sleep 500
-            |> Task.perform (always <| RunScenarioAsExerciseFromForm sequenceDiagramVisibility)
-
-      else
-        Cmd.none
-    )
+defaultModel : Key -> Model
+defaultModel key =
+    { key = key
+    , id = Nothing
+    , scenarioForm = ScenarioForm.empty
+    , scenarioIsRunning = False
+    , interactions = Ok Interactions.empty
+    , formWasModifiedSinceScenarioRun = False
+    , showAllHeaders = False
+    , sequenceDiagramVisibility = CompletelyRevealed
+    }
 
 
 
@@ -171,6 +159,7 @@ type Msg
     | ToggleShowAllHeaders
     | SelectExerciseAnswer Int
     | SubmitExerciseForm
+    | LeaveExercise
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -198,9 +187,34 @@ update msg model =
             let
                 scenarioForm =
                     ScenarioForm.fromUrl url
+
+                exercise =
+                    ScenarioForm.exerciseAnswers scenarioForm /= Nothing
+
+                sequenceDiagramVisibility =
+                    if exercise then
+                        FinalInteractionsConcealedForExercise
+
+                    else
+                        CompletelyRevealed
+
+                model0 =
+                    if exercise then
+                        defaultModel model.key
+
+                    else
+                        model
             in
-            ( { model | scenarioForm = scenarioForm }
-            , Cmd.none
+            ( { model0
+                | scenarioForm = scenarioForm
+                , sequenceDiagramVisibility = sequenceDiagramVisibility
+              }
+            , if sequenceDiagramVisibility == FinalInteractionsConcealedForExercise then
+                Process.sleep 500
+                    |> Task.perform (always <| RunScenarioAsExerciseFromForm sequenceDiagramVisibility)
+
+              else
+                Cmd.none
             )
 
         MakeUrlReflectScenarioForm scenarioForm ->
@@ -549,6 +563,16 @@ update msg model =
               }
             , Process.sleep 200 |> Task.perform (always ScrollToBottomOfSequenceDiagram)
             )
+
+        LeaveExercise ->
+            model.key
+                |> defaultModel
+                |> update (MakeUrlReflectScenarioForm ScenarioForm.empty)
+                |> (\( model_, cmd_ ) ->
+                        ( model_
+                        , Cmd.batch [ cmd_, Extras.BrowserDom.scrollToTop NoOp ]
+                        )
+                   )
 
 
 updateScenarioForm : (ScenarioForm -> ScenarioForm) -> List (Cmd Msg) -> Model -> ( Model, Cmd Msg )
@@ -1897,9 +1921,9 @@ view model =
                             )
                             (ScenarioForm.exerciseAnswers model.scenarioForm)
                         , div
-                            [ class "mt-4" ]
+                            [ class "mt-4 inline-flex items-center" ]
                             [ button
-                                [ class "btn btn-lg btn-outline text-gray-700 border-gray-800"
+                                [ class "btn btn-lg btn-primary"
                                 , disabled <|
                                     ((not <| ScenarioForm.someExerciseAnswerIsSelected model.scenarioForm)
                                         || model.sequenceDiagramVisibility
@@ -1908,6 +1932,11 @@ view model =
                                 , Html.Events.onClick SubmitExerciseForm
                                 ]
                                 [ text "Submit" ]
+                            , button
+                                [ class "ml-3 btn btn-warning btn-lg"
+                                , Html.Events.onClick LeaveExercise
+                                ]
+                                [ text "Leave exercise" ]
                             ]
                         ]
                 ]
