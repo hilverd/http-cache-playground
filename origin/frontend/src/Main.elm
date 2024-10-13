@@ -1470,7 +1470,25 @@ viewScenarioForm model =
             Nothing ->
                 p
                     [ class "mt-8 text-gray-600" ]
-                    [ text "Prepare a scenario, then run it — using a randomly generated "
+                    [ text "Explore how "
+                    , a
+                        [ class "hover:underline"
+                        , href "https://varnish-cache.org/"
+                        , Html.Attributes.target "_blank"
+                        , Html.Attributes.rel "noopener noreferrer"
+                        ]
+                        [ text "Varnish Cache" ]
+                    , text " reacts to "
+                    , a
+                        [ class "hover:underline"
+                        , href "https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching"
+                        , Html.Attributes.target "_blank"
+                        , Html.Attributes.rel "noopener noreferrer"
+                        ]
+                        [ text "HTTP headers" ]
+                    , text "."
+                    , br [] []
+                    , text "Prepare a scenario, then run it — using a randomly generated "
                     , span
                         [ class "font-mono" ]
                         [ text ":id" ]
