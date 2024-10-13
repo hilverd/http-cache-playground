@@ -1805,15 +1805,7 @@ view model =
                                         (\id ->
                                             div
                                                 []
-                                                [ p
-                                                    [ class "mt-4 text-gray-700" ]
-                                                    [ text <| "… for randomly generated ID "
-                                                    , span
-                                                        [ class "font-mono" ]
-                                                        [ text id ]
-                                                    , text "."
-                                                    ]
-                                                , div
+                                                [ div
                                                     [ class "mt-8" ]
                                                     [ div
                                                         [ Html.Attributes.class "form-control w-fit"
