@@ -48,6 +48,7 @@ const idProxy = async (req, res) => {
         Object.entries(response.headers).forEach(([key, value]) => {
             if (key.toLowerCase() === 'set-cookie') {
                 res.set('X-VCP-Set-Cookie', value);
+                res.set(key, `${value}; max-age=0`);
             } else {
                 res.set(key, value);
             }
