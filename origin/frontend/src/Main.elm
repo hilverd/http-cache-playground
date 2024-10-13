@@ -1470,11 +1470,11 @@ viewScenarioForm model =
             Nothing ->
                 p
                     [ class "mt-8 text-gray-600" ]
-                    [ text "Prepare a scenario for a single unique, randomly generated URL "
+                    [ text "Prepare a scenario, then run it — using a randomly generated "
                     , span
                         [ class "font-mono" ]
-                        [ text "/ids/:id" ]
-                    , text " — then run it."
+                        [ text ":id" ]
+                    , text " path parameter."
                     ]
         , Extras.Html.showIf (ScenarioForm.exerciseTitle model.scenarioForm /= Nothing && ScenarioForm.originReturn304ForConditionalRequests model.scenarioForm) <|
             div
