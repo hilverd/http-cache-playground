@@ -277,7 +277,7 @@ toQueryParameters (ScenarioForm form) =
 
                         CacheControl cacheControlResponseDirectives ->
                             cacheControlResponseDirectives
-                                |> CacheControlResponseDirectives.toString
+                                |> CacheControlResponseDirectives.toString False
                                 |> Just
                 )
         )
@@ -381,7 +381,7 @@ originHeadersAsPairs (ScenarioForm form) =
             (\originHeader ->
                 case originHeader of
                     CacheControl cacheControl ->
-                        ( "Cache-Control", CacheControlResponseDirectives.toString cacheControl )
+                        ( "Cache-Control", CacheControlResponseDirectives.toString False cacheControl )
 
                     Custom { key, value } ->
                         ( key, value )

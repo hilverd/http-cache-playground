@@ -1070,7 +1070,7 @@ viewOriginCacheControlHeader enabled index directives =
             CacheControlResponseDirectives.staleWhileRevalidate directives
 
         headerValue =
-            CacheControlResponseDirectives.toString directives
+            CacheControlResponseDirectives.toString False directives
     in
     div
         [ class "w-full" ]
@@ -1454,6 +1454,10 @@ viewSleepForSeconds enabled stepIndex seconds =
 
 viewScenarioForm : Model -> Html Msg
 viewScenarioForm model =
+    let
+        doingAnExercise =
+            ScenarioForm.exerciseTitle model.scenarioForm /= Nothing
+    in
     div []
         [ case ScenarioForm.exerciseTitle model.scenarioForm of
             Just exerciseTitle ->
@@ -1464,7 +1468,7 @@ viewScenarioForm model =
                         [ text <| "Exercise: " ++ exerciseTitle ]
                     , p
                         [ class "mt-2 max-w-4xl text-gray-500" ]
-                        [ text "Read through the interactions below, then predict what happens after the last client request." ]
+                        [ text "Read through the scenario below, then predict what happens after the last client request." ]
                     ]
 
             Nothing ->
@@ -1494,14 +1498,8 @@ viewScenarioForm model =
                         [ text ":id" ]
                     , text " path parameter."
                     ]
-        , Extras.Html.showIf (ScenarioForm.exerciseTitle model.scenarioForm /= Nothing && ScenarioForm.originReturn304ForConditionalRequests model.scenarioForm) <|
-            div
-                [ class "mt-8" ]
-                [ text "⚠ In this scenario, the origin will return a 304 and empty body for "
-                , em [] [ text "all" ]
-                , text " conditional requests."
-                ]
-        , Extras.Html.showIf (ScenarioForm.exerciseTitle model.scenarioForm == Nothing) <|
+        , Extras.Html.showIf doingAnExercise <| viewOriginSettingsForExercise model
+        , Extras.Html.showUnless doingAnExercise <|
             div
                 [ class "mt-8 grid grid-cols-1 lg:gap-12 lg:grid-cols-2" ]
                 [ div
@@ -1706,6 +1704,62 @@ viewScenarioForm model =
                     ]
                 ]
         ]
+
+
+viewOriginSettingsForExercise : Model -> Html Msg
+viewOriginSettingsForExercise model =
+    let
+        originHeaders : List ( String, String )
+        originHeaders =
+            model.scenarioForm
+                |> ScenarioForm.originHeaders
+                |> List.map
+                    (\originHeader ->
+                        case originHeader of
+                            ScenarioForm.CacheControl cacheControlResponseDirectives ->
+                                ( "Cache-Control", CacheControlResponseDirectives.toString True cacheControlResponseDirectives )
+
+                            ScenarioForm.Custom header ->
+                                ( header.key, header.value )
+                    )
+
+        settings : List (Html Msg)
+        settings =
+            ((originHeaders
+                |> List.map
+                    (\( key, value ) ->
+                        span
+                            [ class "font-mono" ]
+                            [ text key
+                            , text ": "
+                            , text value
+                            ]
+                    )
+             )
+                ++ (if ScenarioForm.originReturn304ForConditionalRequests model.scenarioForm then
+                        [ span []
+                            [ text "Return a 304 and empty body for "
+                            , em [] [ text "all" ]
+                            , text " conditional requests."
+                            ]
+                        ]
+
+                    else
+                        []
+                   )
+            )
+                |> List.map (\body -> li [] [ body ])
+    in
+    Extras.Html.showUnless (List.isEmpty settings) <|
+        div
+            [ class "mt-8" ]
+            [ h2
+                [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-8" ]
+                [ text "Origin" ]
+            , ul
+                [ class "list-disc list-inside space-y-1" ]
+                settings
+            ]
 
 
 view : Model -> Document Msg

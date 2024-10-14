@@ -131,8 +131,8 @@ fromString string =
         |> List.foldl processDirective empty
 
 
-toString : CacheControlResponseDirectives -> String
-toString (CacheControlResponseDirectives directives) =
+toString : Bool -> CacheControlResponseDirectives -> String
+toString spaceAfterComma (CacheControlResponseDirectives directives) =
     [ directives.maxAge
         |> Maybe.map (\maxAge_ -> "max-age=" ++ String.fromInt maxAge_)
     , directives.sMaxAge
@@ -154,4 +154,10 @@ toString (CacheControlResponseDirectives directives) =
             )
     ]
         |> List.filterMap identity
-        |> String.join ","
+        |> String.join
+            (if spaceAfterComma then
+                ", "
+
+             else
+                ","
+            )
