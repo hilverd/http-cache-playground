@@ -63,6 +63,50 @@ const sanitisingProxy = async (req, res) => {
     return res;
 };
 
+const sanitisingPurgeProxy = async (req, res) => {
+    const id = req.params.id;
+    const protocol = req.protocol;
+    const query = { ...req.query };
+    delete query['headers-to-send'];
+
+    const targetUrl = url.format({
+        protocol: protocol,
+        host: originHost,
+        pathname: `/sanitised/ids/${id}`,
+        query: query
+    });
+
+    try {
+        const headers = requestHeadersBasedOnQueryParameters(req);
+
+        const response = await axios({
+            method: 'purge',
+            url: targetUrl,
+            headers: headers,
+            validateStatus: () => true, // don't throw on 4xx and 5xx
+        });
+
+        // Ignore the actual response status
+        res.status(200);
+
+        Object.entries(response.headers).forEach(([key, value]) => {
+            if (key.toLowerCase() === 'set-cookie') {
+                res.set('X-VCP-Set-Cookie', value);
+                res.set(key, `${value}; max-age=0`);
+            } else {
+                res.set(key, value);
+            }
+        });
+
+        res.send(`${response.data}`);
+    } catch (error) {
+        console.error('Proxy error:', error);
+        res.status(500).send('An error occurred while proxying the request.');
+    }
+
+    return res;
+};
+
 app.use((req, res, next) => {
     if (req.path === '/') {
         res.setHeader('Cache-Control', 'no-store, max-age=0');
@@ -78,6 +122,8 @@ app.get('/internal/status', (req, res) => {
 });
 
 app.get('/ids/:id', sanitisingProxy);
+
+app.post('/purge/ids/:id', sanitisingPurgeProxy);
 
 app.get("/sanitised/ids/:id", (req, res) => {
     const unixTime = Math.floor(new Date().getTime() / 1000);

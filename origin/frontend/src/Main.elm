@@ -165,8 +165,23 @@ type Msg
         , auto304 : Bool
         }
         (Result Http.Error ())
-    | GotResponseToPurgeRequest Scenario (Result Http.Error ( Http.Metadata, String ))
-    | RecordedResponseToPurgeRequest Scenario (Result Http.Error ())
+    | GotResponseToPurgeRequest
+        Scenario
+        { path : String
+        , desiredResponseHeaders : List ( String, String )
+        , respondSlowly : Bool
+        , auto304 : Bool
+        }
+        (Result Http.Error ( Http.Metadata, String ))
+    | RecordedResponseToPurgeRequest
+        Scenario
+        { path : String
+        , desiredResponseHeaders : List ( String, String )
+        , respondSlowly : Bool
+        , auto304 : Bool
+        }
+        (Result Http.Error ())
+    | GotResponseToSanitisedPurgeRequest Scenario (Result Http.Error ( Http.Metadata, String ))
     | ToggleShowAllHeaders
     | SelectExerciseAnswer Int
     | SubmitExerciseForm
@@ -525,8 +540,10 @@ update msg model =
             ( model
             , Cmd.batch
                 [ getInteractions <| Scenario.id restOfScenario
-                , makeGetRequest restOfScenario
-                    { path = path
+                , makeRequest
+                    (GotResponseToGetRequest restOfScenario)
+                    { method = "GET"
+                    , path = path
                     , headers = headers
                     , desiredResponseHeaders = desiredResponseHeaders
                     , respondSlowly = respondSlowly
@@ -560,8 +577,18 @@ update msg model =
             ( model
             , Cmd.batch
                 [ getInteractions <| Scenario.id restOfScenario
-                , makePurgeRequest restOfScenario
-                    { path = path
+                , makeRequest
+                    (GotResponseToPurgeRequest
+                        restOfScenario
+                        { path = path
+                        , desiredResponseHeaders = desiredResponseHeaders
+                        , respondSlowly = respondSlowly
+                        , auto304 = auto304
+                        }
+                    )
+                    { method = "PURGE"
+                    , path = path
+                    , headers = []
                     , desiredResponseHeaders = desiredResponseHeaders
                     , respondSlowly = respondSlowly
                     , auto304 = auto304
@@ -569,25 +596,46 @@ update msg model =
                 ]
             )
 
-        GotResponseToPurgeRequest restOfScenario result ->
+        GotResponseToPurgeRequest restOfScenario { path, desiredResponseHeaders, respondSlowly, auto304 } result ->
             ( model
             , Cmd.batch
                 [ getInteractions <| Scenario.id restOfScenario
                 , result
                     |> Result.map
                         (\( metadata, responseBody ) ->
-                            recordResponseToPurgeRequest restOfScenario metadata responseBody
+                            recordResponseToPurgeRequest
+                                restOfScenario
+                                { path = path
+                                , desiredResponseHeaders = desiredResponseHeaders
+                                , respondSlowly = respondSlowly
+                                , auto304 = auto304
+                                }
+                                metadata
+                                responseBody
                         )
                     |> Result.withDefault Cmd.none
                 ]
             )
 
-        RecordedResponseToPurgeRequest restOfScenario _ ->
+        RecordedResponseToPurgeRequest restOfScenario { path, desiredResponseHeaders, respondSlowly, auto304 } _ ->
             ( model
             , Cmd.batch
                 [ getInteractions <| Scenario.id restOfScenario
-                , runScenario restOfScenario
+                , makeRequest
+                    (GotResponseToSanitisedPurgeRequest restOfScenario)
+                    { method = "POST"
+                    , path = "/purge" ++ path
+                    , headers = []
+                    , desiredResponseHeaders = desiredResponseHeaders
+                    , respondSlowly = respondSlowly
+                    , auto304 = auto304
+                    }
                 ]
+            )
+
+        GotResponseToSanitisedPurgeRequest restOfScenario _ ->
+            ( model
+            , runScenario restOfScenario
             )
 
         ResetScenarioForm ->
@@ -797,17 +845,18 @@ recordMakeGetRequest restOfScenario stepIndex { path, headers, desiredResponseHe
         }
 
 
-makeGetRequest :
-    Scenario
+makeRequest :
+    (Result Http.Error ( Http.Metadata, String ) -> Msg)
     ->
-        { path : String
+        { method : String
+        , path : String
         , headers : List ( String, String )
         , desiredResponseHeaders : List ( String, String )
         , respondSlowly : Bool
         , auto304 : Bool
         }
     -> Cmd Msg
-makeGetRequest restOfScenario { path, headers, desiredResponseHeaders, respondSlowly, auto304 } =
+makeRequest onResponse { method, path, headers, desiredResponseHeaders, respondSlowly, auto304 } =
     let
         queryParametersForHeadersToSend : List Url.Builder.QueryParameter
         queryParametersForHeadersToSend =
@@ -866,11 +915,11 @@ makeGetRequest restOfScenario { path, headers, desiredResponseHeaders, respondSl
                 |> List.map (\( key, value ) -> Http.header key value)
     in
     Http.request
-        { method = "GET"
+        { method = method
         , headers = headerToAvoidBrowserCaching :: httpHeaders
         , url = url
         , body = Http.emptyBody
-        , expect = expectWhateverResponse <| GotResponseToGetRequest restOfScenario
+        , expect = expectWhateverResponse onResponse
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -946,7 +995,7 @@ recordMakePurgeRequest restOfScenario stepIndex { path, desiredResponseHeaders, 
         }
 
 
-makePurgeRequest :
+recordResponseToPurgeRequest :
     Scenario
     ->
         { path : String
@@ -954,62 +1003,10 @@ makePurgeRequest :
         , respondSlowly : Bool
         , auto304 : Bool
         }
+    -> Http.Metadata
+    -> String
     -> Cmd Msg
-makePurgeRequest restOfScenario { path, desiredResponseHeaders, respondSlowly, auto304 } =
-    let
-        queryParametersForHeadersToReturn : List Url.Builder.QueryParameter
-        queryParametersForHeadersToReturn =
-            desiredResponseHeaders
-                |> List.map
-                    (\( key, value ) ->
-                        (key ++ ":" ++ value)
-                            |> Base64.encode
-                            |> Url.Builder.string "headers-to-return"
-                    )
-
-        url : String
-        url =
-            let
-                leadingSlashRegex =
-                    Maybe.withDefault Regex.never <|
-                        Regex.fromString "^/"
-
-                pathWithoutLeadingSlash =
-                    Regex.replace leadingSlashRegex (always "") path
-            in
-            originUrl
-                [ pathWithoutLeadingSlash ]
-                (queryParametersForHeadersToReturn
-                    ++ (if respondSlowly then
-                            [ Url.Builder.string "respond-slowly" "" ]
-
-                        else
-                            []
-                       )
-                    ++ (if auto304 then
-                            [ Url.Builder.string "auto-304" "" ]
-
-                        else
-                            []
-                       )
-                )
-
-        headerToAvoidBrowserCaching =
-            Http.header "Cache-Control" "no-cache, no-store"
-    in
-    Http.request
-        { method = "PURGE"
-        , headers = [ headerToAvoidBrowserCaching ]
-        , url = url
-        , body = Http.emptyBody
-        , expect = expectWhateverResponse <| GotResponseToPurgeRequest restOfScenario
-        , timeout = Nothing
-        , tracker = Nothing
-        }
-
-
-recordResponseToPurgeRequest : Scenario -> Http.Metadata -> String -> Cmd Msg
-recordResponseToPurgeRequest restOfScenario metadata responseBody =
+recordResponseToPurgeRequest restOfScenario { path, desiredResponseHeaders, respondSlowly, auto304 } metadata responseBody =
     let
         id =
             Scenario.id restOfScenario
@@ -1036,7 +1033,15 @@ recordResponseToPurgeRequest restOfScenario metadata responseBody =
                 }
                 |> Codec.encodeToValue Interaction.codec
                 |> Http.jsonBody
-        , expect = Http.expectWhatever <| RecordedResponseToPurgeRequest restOfScenario
+        , expect =
+            Http.expectWhatever <|
+                RecordedResponseToPurgeRequest
+                    restOfScenario
+                    { path = path
+                    , desiredResponseHeaders = desiredResponseHeaders
+                    , respondSlowly = respondSlowly
+                    , auto304 = auto304
+                    }
         }
 
 
