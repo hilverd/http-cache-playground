@@ -735,7 +735,7 @@ toScenario ((ScenarioForm form) as scenarioForm) id =
     let
         path : String
         path =
-            "/from-browser/ids/" ++ id
+            "/ids/" ++ id
 
         desiredResponseHeaders : List ( String, String )
         desiredResponseHeaders =

@@ -19,7 +19,7 @@ app.set('etag', false); // Disable automatic ETag generation
 // app.use(cors()); // Only needed for development
 app.use(morgan('combined'));
 
-const idProxy = async (req, res) => {
+const sanitisingProxy = async (req, res) => {
     const id = req.params.id;
     const protocol = req.protocol;
     const query = { ...req.query };
@@ -28,7 +28,7 @@ const idProxy = async (req, res) => {
     const targetUrl = url.format({
         protocol: protocol,
         host: originHost,
-        pathname: `/ids/${id}`,
+        pathname: `/sanitised/ids/${id}`,
         query: query
     });
 
@@ -76,16 +76,19 @@ app.get('/', (req, res) => {
     res.sendFile('dist/index.html', { root: __dirname });
 });
 
-app.get('/internal/status', (req, res) => res.json({ "status": "ok" }));
+app.get('/internal/status', (req, res) => {
+    res.setHeader("cache-control", "no-cache");
+    res.json({ "status": "ok" })
+});
 
-app.use('/from-browser/ids/:id', idProxy);
+app.get('/ids/:id', sanitisingProxy);
 
-app.get("/ids/:id", (req, res) => {
+app.get("/sanitised/ids/:id", (req, res) => {
     const unixTime = Math.floor(new Date().getTime() / 1000);
 
     const id = req.params.id;
 
-    addInteraction(id, interactionEntryForRequest(req.path, req.headers))
+    addInteraction(id, interactionEntryForRequest(req.path.replace("/sanitised/", "/"), req.headers))
 
     let body = `${unixTime}`;
 

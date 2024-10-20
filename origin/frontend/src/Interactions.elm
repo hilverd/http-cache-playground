@@ -406,7 +406,7 @@ viewClientToVarnishInteraction showAllHeaders stepIndex method path extraKeysOfH
             [ class "col-span-3 border-l-2 border-l-gray-300 border-b-2 border-b-gray-700 p-2 pt-4 relative text-gray-700" ]
             [ div
                 [ class "font-mono text-ellipsis text-nowrap overflow-hidden max-w-44" ]
-                [ text <| method ++ " " ++ String.replace "/from-browser" "" path ]
+                [ text <| method ++ " " ++ path ]
             , ul
                 [ class "list-disc list-inside mt-2 space-y-1" ]
                 (viewRequestHeaders showAllHeaders extraKeysOfHeadersToShow headers)

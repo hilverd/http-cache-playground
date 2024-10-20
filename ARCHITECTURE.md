@@ -4,7 +4,7 @@
 
 The diagram below shows the front end making two subsequent requests, the second of which results in a cached response being served.
 
-The origin server has two main endpoints: and `/from-browser/ids/:id` and `/ids/:id`. The former proxies requests to the latter after removing the request headers sent by the browser and instead using those that are encoded in `headers-to-send`. The `/ids/:id` endpoint returns headers that are encoded in `headers-to-return`.
+The origin server has two main endpoints: and `/ids/:id` and `/sanitised/ids/:id`. The former proxies requests to the latter after removing the request headers sent by the browser and instead using those that are encoded in `headers-to-send`. The `/sanitised/ids/:id` endpoint returns headers that are encoded in `headers-to-return`.
 
 ```mermaid
 sequenceDiagram
@@ -13,10 +13,10 @@ sequenceDiagram
     participant O as Origin
     FE ->> V: record upcoming GET request in log
     V ->> O: record GET request in log
-    FE ->>+ V: GET /from-browser/ids/:id?headers-to-send=...&headers-to-return=...<br><br>Cache-Control: no-cache,no-store
-    V ->>+ O: GET /from-browser/ids/:id?headers-to-return=...<br><br>Cache-Control: no-cache,no-store
-    O ->> V: GET /ids/:id?headers-to-return=...
-    V ->> O: GET /ids/:id?headers-to-return=...
+    FE ->>+ V: GET /ids/:id?headers-to-send=...&headers-to-return=...<br><br>Cache-Control: no-cache,no-store
+    V ->>+ O: GET /ids/:id?headers-to-return=...<br><br>Cache-Control: no-cache,no-store
+    O ->> V: GET /sanitised/ids/:id?headers-to-return=...
+    V ->> O: GET /sanitised/ids/:id?headers-to-return=...
     O ->> O: record incoming request and response in log
     O ->>- V: 200 OK<br><br>Cache-Control: s-maxage=5
     V ->>- FE: 200 OK<br><br>Cache-Control: s-maxage=5
@@ -24,7 +24,7 @@ sequenceDiagram
     V ->> O: record response in log
     FE ->> V: record upcoming GET request in log
     V ->> O: record GET request in log
-    FE ->>+ V: GET /from-browser/ids/:id?headers-to-return=...<br><br>Cache-Control: no-cache,no-store
+    FE ->>+ V: GET /ids/:id?headers-to-return=...<br><br>Cache-Control: no-cache,no-store
     V ->>- FE: 200 OK<br><br>Cache-Control: s-maxage=5
     FE ->> V: record response in log
     V ->> O: record response in log
