@@ -72,12 +72,8 @@ app.use((req, res, next) => {
     }
 });
 
-app.get('/', (req, res) => {
-    res.sendFile('dist/index.html', { root: __dirname });
-});
-
 app.get('/internal/status', (req, res) => {
-    res.setHeader("cache-control", "no-cache");
+    res.setHeader("cache-control", "no-store");
     res.json({ "status": "ok" })
 });
 
@@ -120,7 +116,7 @@ app.get("/sanitised/ids/:id", (req, res) => {
 
 app.get("/interactions/:id", (req, res) => {
     const id = req.params.id;
-    res.setHeader("cache-control", "no-cache");
+    res.setHeader("cache-control", "no-store");
     res.json(interactions[id] ? interactions[id].data : []);
 });
 
