@@ -16,7 +16,7 @@ const interactions = {};
 
 app.disable('x-powered-by');
 app.set('etag', false); // Disable automatic ETag generation
-app.use(cors());
+// app.use(cors()); // Only needed for development
 app.use(morgan('combined'));
 
 const idProxy = async (req, res) => {
