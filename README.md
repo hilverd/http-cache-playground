@@ -9,7 +9,7 @@ This project lets you explore how [Varnish Cache](https://varnish-cache.org/) re
 
 ## Disclaimer
 
-This project is not affiliated with Varnish Cache.
+This project is not affiliated with Varnish Software or its related projects.
 
 ## Acknowledgments
 
