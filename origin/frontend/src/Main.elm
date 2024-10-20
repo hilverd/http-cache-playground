@@ -157,7 +157,14 @@ type Msg
         (Result Http.Error ())
     | GotResponseToGetRequest Scenario (Result Http.Error ( Http.Metadata, String ))
     | RecordedResponseToGetRequest Scenario (Result Http.Error ())
-    | RecordedMakePurgeRequest Scenario { path : String } (Result Http.Error ())
+    | RecordedMakePurgeRequest
+        Scenario
+        { path : String
+        , desiredResponseHeaders : List ( String, String )
+        , respondSlowly : Bool
+        , auto304 : Bool
+        }
+        (Result Http.Error ())
     | GotResponseToPurgeRequest Scenario (Result Http.Error ( Http.Metadata, String ))
     | RecordedResponseToPurgeRequest Scenario (Result Http.Error ())
     | ToggleShowAllHeaders
@@ -549,11 +556,16 @@ update msg model =
                 ]
             )
 
-        RecordedMakePurgeRequest restOfScenario { path } _ ->
+        RecordedMakePurgeRequest restOfScenario { path, desiredResponseHeaders, respondSlowly, auto304 } _ ->
             ( model
             , Cmd.batch
                 [ getInteractions <| Scenario.id restOfScenario
-                , makePurgeRequest restOfScenario { path = path }
+                , makePurgeRequest restOfScenario
+                    { path = path
+                    , desiredResponseHeaders = desiredResponseHeaders
+                    , respondSlowly = respondSlowly
+                    , auto304 = auto304
+                    }
                 ]
             )
 
@@ -709,10 +721,14 @@ runScenario scenario =
                             , auto304 = auto304
                             }
 
-                    Scenario.MakePurgeRequest { path } ->
+                    Scenario.MakePurgeRequest { path, desiredResponseHeaders, respondSlowly, auto304 } ->
                         recordMakePurgeRequest restOfScenario
                             stepIndex
-                            { path = path }
+                            { path = path
+                            , desiredResponseHeaders = desiredResponseHeaders
+                            , respondSlowly = respondSlowly
+                            , auto304 = auto304
+                            }
             )
         |> Maybe.withDefault
             (Process.sleep 2500
@@ -892,8 +908,17 @@ recordResponseToGetRequest restOfScenario metadata responseBody =
         }
 
 
-recordMakePurgeRequest : Scenario -> Int -> { path : String } -> Cmd Msg
-recordMakePurgeRequest restOfScenario stepIndex { path } =
+recordMakePurgeRequest :
+    Scenario
+    -> Int
+    ->
+        { path : String
+        , desiredResponseHeaders : List ( String, String )
+        , respondSlowly : Bool
+        , auto304 : Bool
+        }
+    -> Cmd Msg
+recordMakePurgeRequest restOfScenario stepIndex { path, desiredResponseHeaders, respondSlowly, auto304 } =
     let
         id =
             Scenario.id restOfScenario
@@ -913,13 +938,35 @@ recordMakePurgeRequest restOfScenario stepIndex { path } =
         , expect =
             Http.expectWhatever <|
                 RecordedMakePurgeRequest restOfScenario
-                    { path = path }
+                    { path = path
+                    , desiredResponseHeaders = desiredResponseHeaders
+                    , respondSlowly = respondSlowly
+                    , auto304 = auto304
+                    }
         }
 
 
-makePurgeRequest : Scenario -> { path : String } -> Cmd Msg
-makePurgeRequest restOfScenario { path } =
+makePurgeRequest :
+    Scenario
+    ->
+        { path : String
+        , desiredResponseHeaders : List ( String, String )
+        , respondSlowly : Bool
+        , auto304 : Bool
+        }
+    -> Cmd Msg
+makePurgeRequest restOfScenario { path, desiredResponseHeaders, respondSlowly, auto304 } =
     let
+        queryParametersForHeadersToReturn : List Url.Builder.QueryParameter
+        queryParametersForHeadersToReturn =
+            desiredResponseHeaders
+                |> List.map
+                    (\( key, value ) ->
+                        (key ++ ":" ++ value)
+                            |> Base64.encode
+                            |> Url.Builder.string "headers-to-return"
+                    )
+
         url : String
         url =
             let
@@ -932,7 +979,20 @@ makePurgeRequest restOfScenario { path } =
             in
             originUrl
                 [ pathWithoutLeadingSlash ]
-                []
+                (queryParametersForHeadersToReturn
+                    ++ (if respondSlowly then
+                            [ Url.Builder.string "respond-slowly" "" ]
+
+                        else
+                            []
+                       )
+                    ++ (if auto304 then
+                            [ Url.Builder.string "auto-304" "" ]
+
+                        else
+                            []
+                       )
+                )
 
         headerToAvoidBrowserCaching =
             Http.header "Cache-Control" "no-cache, no-store"

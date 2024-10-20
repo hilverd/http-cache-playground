@@ -762,7 +762,12 @@ toScenario ((ScenarioForm form) as scenarioForm) id =
                             }
 
                     MakePurgeRequest ->
-                        Scenario.MakePurgeRequest { path = path }
+                        Scenario.MakePurgeRequest
+                            { path = path
+                            , desiredResponseHeaders = desiredResponseHeaders
+                            , respondSlowly = form.originWait2SecondsBeforeResponding
+                            , auto304 = form.originReturn304ForConditionalRequests
+                            }
 
                     SleepForOneSecond ->
                         Scenario.SleepForSeconds 1

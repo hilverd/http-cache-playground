@@ -12,7 +12,12 @@ type Action
         , respondSlowly : Bool
         , auto304 : Bool
         }
-    | MakePurgeRequest { path : String }
+    | MakePurgeRequest
+        { path : String
+        , desiredResponseHeaders : List ( String, String )
+        , respondSlowly : Bool
+        , auto304 : Bool
+        }
 
 
 type Scenario
