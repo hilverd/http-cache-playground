@@ -313,8 +313,8 @@ viewInteraction showAllHeaders extraKeysOfRequestHeadersToShow extraKeysOfRespon
         ClientSleepingForSeconds stepIndex seconds ->
             viewClientSleepingForSeconds stepIndex seconds
 
-        ClientToVarnish stepIndex { path, headers } ->
-            viewClientToVarnishInteraction showAllHeaders stepIndex path extraKeysOfRequestHeadersToShow headers
+        ClientToVarnish stepIndex { method, path, headers } ->
+            viewClientToVarnishInteraction showAllHeaders stepIndex method path extraKeysOfRequestHeadersToShow headers
 
         VarnishToOrigin { path, headers } ->
             viewVarnishToOriginInteraction showAllHeaders path extraKeysOfRequestHeadersToShow headers
@@ -388,8 +388,8 @@ viewOriginSleepingForSeconds seconds =
         ]
 
 
-viewClientToVarnishInteraction : Bool -> Int -> String -> List String -> List ( String, String ) -> Html msg
-viewClientToVarnishInteraction showAllHeaders stepIndex path extraKeysOfHeadersToShow headers =
+viewClientToVarnishInteraction : Bool -> Int -> String -> String -> List String -> List ( String, String ) -> Html msg
+viewClientToVarnishInteraction showAllHeaders stepIndex method path extraKeysOfHeadersToShow headers =
     div
         [ class "grid grid-cols-8" ]
         [ div
@@ -406,7 +406,7 @@ viewClientToVarnishInteraction showAllHeaders stepIndex path extraKeysOfHeadersT
             [ class "col-span-3 border-l-2 border-l-gray-300 border-b-2 border-b-gray-700 p-2 pt-4 relative text-gray-700" ]
             [ div
                 [ class "font-mono text-ellipsis text-nowrap overflow-hidden max-w-44" ]
-                [ text <| "GET " ++ String.replace "/from-browser" "" path ]
+                [ text <| method ++ " " ++ String.replace "/from-browser" "" path ]
             , ul
                 [ class "list-disc list-inside mt-2 space-y-1" ]
                 (viewRequestHeaders showAllHeaders extraKeysOfHeadersToShow headers)

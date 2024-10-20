@@ -12,6 +12,7 @@ type Action
         , respondSlowly : Bool
         , auto304 : Bool
         }
+    | MakePurgeRequest { path : String }
 
 
 type Scenario

@@ -112,6 +112,7 @@ type Msg
     | UrlChanged Url
     | MakeUrlReflectScenarioForm ScenarioForm
     | AddMakeGetRequest
+    | AddMakePurgeRequest
     | AddGetRequestHeader Int
     | AddGetRequestHeaderWithKey Int String
     | AddGetRequestHeaderWithKeyAndValue Int String String
@@ -156,6 +157,9 @@ type Msg
         (Result Http.Error ())
     | GotResponseToGetRequest Scenario (Result Http.Error ( Http.Metadata, String ))
     | RecordedResponseToGetRequest Scenario (Result Http.Error ())
+    | RecordedMakePurgeRequest Scenario { path : String } (Result Http.Error ())
+    | GotResponseToPurgeRequest Scenario (Result Http.Error ( Http.Metadata, String ))
+    | RecordedResponseToPurgeRequest Scenario (Result Http.Error ())
     | ToggleShowAllHeaders
     | SelectExerciseAnswer Int
     | SubmitExerciseForm
@@ -231,6 +235,12 @@ update msg model =
         AddMakeGetRequest ->
             updateScenarioForm
                 ScenarioForm.addMakeGetRequest
+                []
+                model
+
+        AddMakePurgeRequest ->
+            updateScenarioForm
+                ScenarioForm.addMakePurgeRequest
                 []
                 model
 
@@ -539,6 +549,35 @@ update msg model =
                 ]
             )
 
+        RecordedMakePurgeRequest restOfScenario { path } _ ->
+            ( model
+            , Cmd.batch
+                [ getInteractions <| Scenario.id restOfScenario
+                , makePurgeRequest restOfScenario { path = path }
+                ]
+            )
+
+        GotResponseToPurgeRequest restOfScenario result ->
+            ( model
+            , Cmd.batch
+                [ getInteractions <| Scenario.id restOfScenario
+                , result
+                    |> Result.map
+                        (\( metadata, responseBody ) ->
+                            recordResponseToPurgeRequest restOfScenario metadata responseBody
+                        )
+                    |> Result.withDefault Cmd.none
+                ]
+            )
+
+        RecordedResponseToPurgeRequest restOfScenario _ ->
+            ( model
+            , Cmd.batch
+                [ getInteractions <| Scenario.id restOfScenario
+                , runScenario restOfScenario
+                ]
+            )
+
         ResetScenarioForm ->
             updateScenarioForm
                 (always ScenarioForm.empty)
@@ -669,6 +708,11 @@ runScenario scenario =
                             , respondSlowly = respondSlowly
                             , auto304 = auto304
                             }
+
+                    Scenario.MakePurgeRequest { path } ->
+                        recordMakePurgeRequest restOfScenario
+                            stepIndex
+                            { path = path }
             )
         |> Maybe.withDefault
             (Process.sleep 2500
@@ -722,7 +766,7 @@ recordMakeGetRequest restOfScenario stepIndex { path, headers, desiredResponseHe
         { url = url
         , body =
             Interaction.ClientToVarnish stepIndex
-                { path = path, headers = headers }
+                { method = "GET", path = path, headers = headers }
                 |> Codec.encodeToValue Interaction.codec
                 |> Http.jsonBody
         , expect =
@@ -845,6 +889,94 @@ recordResponseToGetRequest restOfScenario metadata responseBody =
                 |> Codec.encodeToValue Interaction.codec
                 |> Http.jsonBody
         , expect = Http.expectWhatever <| RecordedResponseToGetRequest restOfScenario
+        }
+
+
+recordMakePurgeRequest : Scenario -> Int -> { path : String } -> Cmd Msg
+recordMakePurgeRequest restOfScenario stepIndex { path } =
+    let
+        id =
+            Scenario.id restOfScenario
+
+        url =
+            originUrl
+                [ "interactions", id, "new" ]
+                []
+    in
+    Http.post
+        { url = url
+        , body =
+            Interaction.ClientToVarnish stepIndex
+                { method = "PURGE", path = path, headers = [] }
+                |> Codec.encodeToValue Interaction.codec
+                |> Http.jsonBody
+        , expect =
+            Http.expectWhatever <|
+                RecordedMakePurgeRequest restOfScenario
+                    { path = path }
+        }
+
+
+makePurgeRequest : Scenario -> { path : String } -> Cmd Msg
+makePurgeRequest restOfScenario { path } =
+    let
+        url : String
+        url =
+            let
+                leadingSlashRegex =
+                    Maybe.withDefault Regex.never <|
+                        Regex.fromString "^/"
+
+                pathWithoutLeadingSlash =
+                    Regex.replace leadingSlashRegex (always "") path
+            in
+            originUrl
+                [ pathWithoutLeadingSlash ]
+                []
+
+        headerToAvoidBrowserCaching =
+            Http.header "Cache-Control" "no-cache, no-store"
+    in
+    Http.request
+        { method = "PURGE"
+        , headers = [ headerToAvoidBrowserCaching ]
+        , url = url
+        , body = Http.emptyBody
+        , expect = expectWhateverResponse <| GotResponseToPurgeRequest restOfScenario
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+recordResponseToPurgeRequest : Scenario -> Http.Metadata -> String -> Cmd Msg
+recordResponseToPurgeRequest restOfScenario metadata responseBody =
+    let
+        id =
+            Scenario.id restOfScenario
+
+        url =
+            originUrl
+                [ "interactions", id, "new" ]
+                []
+
+        leadingXVcp =
+            Maybe.withDefault Regex.never <|
+                Regex.fromString "^x-vcp-"
+    in
+    Http.post
+        { url = url
+        , body =
+            Interaction.VarnishToClient
+                { statusCode = metadata.statusCode
+                , headers =
+                    metadata.headers
+                        |> Dict.toList
+                        |> List.map (Tuple.mapFirst (Regex.replace leadingXVcp <| always ""))
+                , body = responseBody
+                }
+                |> Codec.encodeToValue Interaction.codec
+                |> Http.jsonBody
+        , expect = Http.expectWhatever <| RecordedResponseToPurgeRequest restOfScenario
         }
 
 
@@ -1378,6 +1510,53 @@ viewClientAction enabled stepIndex clientAction =
                     ]
                 ]
 
+        ScenarioForm.MakePurgeRequest ->
+            li
+                [ class "rounded-lg bg-white border border-gray-300 shadow" ]
+                [ div
+                    [ class "px-4 pt-3 text-gray-600" ]
+                    [ span
+                        [ class "badge badge-ghost text-base" ]
+                        [ span
+                            [ class "hidden sm:inline sm:mr-1" ]
+                            [ text "Step" ]
+                        , text <| String.fromInt <| stepIndex + 1
+                        ]
+                    , span
+                        [ class "ml-2 font-mono" ]
+                        [ text "PURGE /ids/:id" ]
+                    ]
+                , div
+                    [ class "pr-3 pb-2" ]
+                    [ span
+                        [ class "flex justify-end group" ]
+                        [ Components.Button.text
+                            enabled
+                            [ Accessibility.Key.tabbable <| enabled
+                            , Html.Events.onClick <| DeleteClientAction stepIndex
+                            ]
+                            [ Icons.trash
+                                [ Svg.Attributes.class "h-5 w-5 text-gray-400 dark:text-gray-300"
+                                , if enabled then
+                                    Svg.Attributes.class "group-hover:text-gray-500 dark:group-hover:text-gray-400"
+
+                                  else
+                                    Svg.Attributes.class ""
+                                ]
+                            , span
+                                [ class "font-medium text-gray-600 dark:text-gray-300"
+                                , if enabled then
+                                    class "group-hover:text-gray-700 dark:group-hover:text-gray-400"
+
+                                  else
+                                    class ""
+                                ]
+                                [ text "Delete" ]
+                            ]
+                        ]
+                    ]
+                ]
+
         ScenarioForm.SleepForOneSecond ->
             viewSleepForSeconds enabled stepIndex 1
 
@@ -1545,7 +1724,7 @@ viewScenarioForm model =
                             , text "Add GET request step"
                             ]
                         , button
-                            [ class "btn"
+                            [ class "btn mr-4 mb-4"
                             , Html.Attributes.disabled <|
                                 (model.scenarioIsRunning
                                     || (Array.isEmpty <| ScenarioForm.clientActions model.scenarioForm)
@@ -1555,6 +1734,21 @@ viewScenarioForm model =
                             ]
                             [ Icons.plus [ Svg.Attributes.class "h-5 w-5" ]
                             , text "Add sleep step"
+                            ]
+                        , button
+                            [ class "btn"
+                            , Extras.HtmlAttribute.showUnless Config.showButtonForAddingPurgeRequestStep <| class "hidden"
+                            , Html.Attributes.disabled <|
+                                ((model.scenarioIsRunning
+                                    || ScenarioForm.hasTenClientActions model.scenarioForm
+                                 )
+                                    && model.sequenceDiagramVisibility
+                                    /= FinalInteractionsConcealedForExercise
+                                )
+                            , Html.Events.onClick AddMakePurgeRequest
+                            ]
+                            [ Icons.plus [ Svg.Attributes.class "h-5 w-5" ]
+                            , text "Add PURGE request step"
                             ]
                         ]
                     ]

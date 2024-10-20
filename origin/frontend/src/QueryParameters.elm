@@ -9,6 +9,7 @@ import Url.Parser.Query
 
 type ClientActionWithoutDetails
     = MakeGetRequest
+    | MakePurgeRequest
     | SleepForOneSecond
     | SleepForTwoSeconds
     | SleepForThreeSeconds
@@ -77,6 +78,9 @@ clientActionsWithoutDetailsFromQuery stepIndex =
                 [ "get" ] ->
                     Just MakeGetRequest
 
+                [ "purge" ] ->
+                    Just MakePurgeRequest
+
                 [ "s-1" ] ->
                     Just SleepForOneSecond
 
@@ -101,6 +105,9 @@ clientActionWithoutDetailsToQuery stepIndex clientActionWithoutDetails_ =
     (case clientActionWithoutDetails_ of
         MakeGetRequest ->
             "get"
+
+        MakePurgeRequest ->
+            "purge"
 
         SleepForOneSecond ->
             "s-1"

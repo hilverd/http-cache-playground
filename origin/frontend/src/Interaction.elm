@@ -11,7 +11,8 @@ type Interaction
     = ClientSleepingForSeconds StepIndex Int
     | ClientToVarnish
         StepIndex
-        { path : String
+        { method : String
+        , path : String
         , headers : List ( String, String )
         }
     | VarnishToOrigin
@@ -58,7 +59,8 @@ codec =
         |> Codec.variant2 "ClientToVarnish"
             ClientToVarnish
             Codec.int
-            (Codec.object (\path headers -> { path = path, headers = headers })
+            (Codec.object (\method path headers -> { method = method, path = path, headers = headers })
+                |> Codec.field "method" .method Codec.string
                 |> Codec.field "path" .path Codec.string
                 |> Codec.field "headers"
                     .headers

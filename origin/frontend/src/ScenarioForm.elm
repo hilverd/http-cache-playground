@@ -5,6 +5,7 @@ module ScenarioForm exposing
     , ScenarioForm
     , addGetRequestHeader
     , addMakeGetRequest
+    , addMakePurgeRequest
     , addOriginCacheControlHeader
     , addOriginCustomHeader
     , addSleepForTwoSeconds
@@ -84,6 +85,7 @@ type alias Header =
 
 type ClientAction
     = MakeGetRequest (Array Header)
+    | MakePurgeRequest
     | SleepForOneSecond
     | SleepForTwoSeconds
     | SleepForThreeSeconds
@@ -140,6 +142,9 @@ fromQueryParameters queryParameters =
                                         |> Array.fromList
                             in
                             MakeGetRequest headers
+
+                        QueryParameters.MakePurgeRequest ->
+                            MakePurgeRequest
 
                         QueryParameters.SleepForOneSecond ->
                             SleepForOneSecond
@@ -209,6 +214,9 @@ toQueryParameters (ScenarioForm form) =
                     case clientAction of
                         MakeGetRequest _ ->
                             QueryParameters.MakeGetRequest
+
+                        MakePurgeRequest ->
+                            QueryParameters.MakePurgeRequest
 
                         SleepForOneSecond ->
                             QueryParameters.SleepForOneSecond
@@ -594,6 +602,14 @@ addMakeGetRequest (ScenarioForm form) =
         }
 
 
+addMakePurgeRequest : ScenarioForm -> ScenarioForm
+addMakePurgeRequest (ScenarioForm form) =
+    ScenarioForm
+        { form
+            | clientActions = Array.push MakePurgeRequest form.clientActions
+        }
+
+
 addGetRequestHeader : Int -> String -> String -> ScenarioForm -> ScenarioForm
 addGetRequestHeader index key value (ScenarioForm form) =
     ScenarioForm
@@ -744,6 +760,9 @@ toScenario ((ScenarioForm form) as scenarioForm) id =
                             , respondSlowly = form.originWait2SecondsBeforeResponding
                             , auto304 = form.originReturn304ForConditionalRequests
                             }
+
+                    MakePurgeRequest ->
+                        Scenario.MakePurgeRequest { path = path }
 
                     SleepForOneSecond ->
                         Scenario.SleepForSeconds 1
