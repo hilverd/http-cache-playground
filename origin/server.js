@@ -1,5 +1,6 @@
 const express = require('express');
 const morgan = require('morgan');
+const bunyan = require('bunyan');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 const url = require('url');
@@ -20,6 +21,11 @@ app.use(morgan('combined'));
 // Uncomment these for development
 // const cors = require('cors');
 // app.use(cors());
+
+const log = bunyan.createLogger({
+    name: 'web-cache-playground',
+    stream: process.stdout
+});
 
 const sanitisingProxy = async (req, res) => {
     const id = req.params.id;
@@ -58,7 +64,7 @@ const sanitisingProxy = async (req, res) => {
 
         res.send(`${response.data}`);
     } catch (error) {
-        console.error('Proxy error:', error);
+        log.error('Proxy error:', error);
         res.status(500).send('An error occurred while proxying the request.');
     }
 
@@ -102,7 +108,7 @@ const sanitisingPurgeProxy = async (req, res) => {
 
         res.send(`${response.data}`);
     } catch (error) {
-        console.error('Proxy error:', error);
+        log.error('Proxy error:', error);
         res.status(500).send('An error occurred while proxying the request.');
     }
 
@@ -279,4 +285,4 @@ function addResponseHeadersBasedOnQueryParameters(req, res, body) {
 // Clean up interactions every minute
 setInterval(cleanupInteractions, 60 * 1000);
 
-app.listen(port, () => console.log('Listening on port ' + port));
+app.listen(port, () => log.info('Listening on port ' + port));
