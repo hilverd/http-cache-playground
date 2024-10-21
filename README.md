@@ -1,4 +1,4 @@
-# Cache Playground
+# Web Cache Playground
 
 This project lets you explore how [Varnish Cache](https://varnish-cache.org/) reacts to HTTP headers.
 

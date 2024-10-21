@@ -2053,7 +2053,7 @@ view model =
                 |> Maybe.map (\exerciseTitle overallTitle -> exerciseTitle ++ " · " ++ overallTitle)
                 |> Maybe.withDefault identity
     in
-    { title = pageTitle "Cache Playground"
+    { title = pageTitle "Web Cache Playground"
     , body =
         [ div
             [ class "min-h-full pt-4 pb-10 sm:pt-6 md:pt-10" ]
@@ -2066,7 +2066,7 @@ view model =
                             [ class "min-w-0 flex-1" ]
                             [ h1
                                 [ class "text-3xl font-bold leading-tight tracking-tight text-gray-900" ]
-                                [ text "Cache Playground" ]
+                                [ text "Web Cache Playground" ]
                             ]
                         , div
                             [ class "mt-4 flex sm:ml-4 sm:mt-0" ]
@@ -2078,7 +2078,7 @@ view model =
                                 ]
                                 [ span
                                     [ class "sr-only" ]
-                                    [ text "Cache Playground on GitHub" ]
+                                    [ text "Web Cache Playground on GitHub" ]
                                 , Icons.gitHubLogo
                                     [ Svg.Attributes.class "h-6 w-6" ]
                                 ]
