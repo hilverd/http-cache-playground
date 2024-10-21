@@ -1,6 +1,5 @@
 const express = require('express');
 const morgan = require('morgan');
-const cors = require('cors');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 const url = require('url');
@@ -16,8 +15,11 @@ const interactions = {};
 
 app.disable('x-powered-by');
 app.set('etag', false); // Disable automatic ETag generation
-// app.use(cors()); // Only needed for development
 app.use(morgan('combined'));
+
+// Uncomment these for development
+// const cors = require('cors');
+// app.use(cors());
 
 const sanitisingProxy = async (req, res) => {
     const id = req.params.id;
