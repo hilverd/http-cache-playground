@@ -1736,7 +1736,7 @@ viewScenarioForm model =
                         [ text "HTTP headers" ]
                     , text "."
                     , br [] []
-                    , text "Prepare a scenario, then run it — using a randomly generated "
+                    , text "Prepare a scenario, then run it with a randomly generated "
                     , span
                         [ class "font-mono" ]
                         [ text ":id" ]
