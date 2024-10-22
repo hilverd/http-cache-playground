@@ -13,6 +13,6 @@ services:
     depends_on:
       - "origin"
   origin:
-    image: hilverd/web-cache-playground
+    image: hilverd/web-cache-playground:0.0.1
     restart: on-failure
     container_name: origin
