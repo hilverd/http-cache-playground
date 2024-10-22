@@ -4,8 +4,13 @@ This project lets you explore how [Varnish Cache](https://varnish-cache.org/) re
 
 ## Getting Started
 
-1. `docker compose up`
-2. Open http://localhost:8080/.
+```
+git clone https://github.com/hilverd/web-cache-playground.git
+cd web-cache-playground
+docker compose up
+```
+
+Then open http://localhost:8080/.
 
 ## Disclaimer
 
