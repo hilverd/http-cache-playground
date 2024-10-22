@@ -2071,7 +2071,7 @@ view model =
                         , div
                             [ class "mt-4 flex sm:ml-4 sm:mt-0" ]
                             [ a
-                                [ href "https://github.com/hilverd/varnish-cache-playground"
+                                [ href "https://github.com/hilverd/web-cache-playground"
                                 , Html.Attributes.target "_blank"
                                 , Html.Attributes.rel "noopener noreferrer"
                                 , class "mb-6 sm:mb-0 block text-slate-400 dark:text-slate-200 hover:text-slate-500 dark:hover:text-slate-400"

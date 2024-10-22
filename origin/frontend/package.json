@@ -1,5 +1,5 @@
 {
-  "name": "varnish-cache-playground",
+  "name": "web-cache-playground",
   "version": "0.0.1",
   "private": true,
   "scripts": {
