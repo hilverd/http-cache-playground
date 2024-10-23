@@ -1,6 +1,6 @@
 # Web Cache Playground
 
-This project lets you explore how [Varnish Cache](https://varnish-cache.org/) reacts to HTTP headers.
+This project lets you explore how [Varnish Cache](https://varnish-cache.org/) reacts to [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching).
 
 ## Getting Started
 
