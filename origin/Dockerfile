@@ -1,4 +1,9 @@
-FROM node:20.16.0
+FROM node:20.11.1-bookworm-slim
+
+RUN apt-get update && \
+    apt-get install -y \
+    ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
 
