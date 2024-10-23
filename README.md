@@ -12,6 +12,27 @@ docker compose up
 
 Then open http://localhost:8080/.
 
+### Changing the Varnish configuration
+
+You can change the Varnish configuration by editing [`default.vcl`](default.vcl) and restarting the Varnish container.
+
+### Adding support for purging
+
+To add support for [purging](https://www.varnish-software.com/developers/tutorials/purge/) you will need to
+
+1. edit the Varnish configuration as described above,
+2. set `showButtonForAddingPurgeRequestStep` to `True` in [`Config.elm`](origin/frontend/src/Config.elm), and
+3. use `docker compose -f docker-compose-dev.yml up --build` to recompile and run the project.
+
+### Using a different HTTP cache
+
+I haven't tried this yet, but in principle you should be able to use a different cache (nginx maybe?) by
+
+1. modifying `docker-compose-dev.yml` to use something other than the `varnish` image, and
+2. changing `originHost` in [`server.js`](origin/server.js).
+
+See also the `backend default` section in [`default.vcl`](default.vcl).
+
 ## Disclaimer
 
 This project is not affiliated with Varnish Software or its related projects.
