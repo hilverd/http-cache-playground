@@ -14,7 +14,7 @@ Then open http://localhost:8080/.
 
 ### Screenshot
 
-![⠀](img/web-caching-playground-screenshot.jpg)
+![Screenshot of the web user interface](img/web-caching-playground-screenshot.jpg)
 
 ### Changing the Varnish configuration
 
@@ -30,10 +30,11 @@ To add support for [purging](https://www.varnish-software.com/developers/tutoria
 
 ### Using a different HTTP cache
 
-I haven't tried this yet, but in principle you should be able to use a different cache (nginx maybe?) by
+I haven't tried this yet, but in principle you should be able to use a different cache (nginx maybe?) as follows.
 
-1. modifying `docker-compose-dev.yml` to use something other than the `varnish` image, and
-2. changing `originHost` in [`server.js`](origin/server.js).
+1. Modify `docker-compose-dev.yml` to use something other than the `varnish` image,
+2. change `originHost` in [`server.js`](origin/server.js), and
+3. use `docker compose -f docker-compose-dev.yml up --build` to recompile and run the project.
 
 See also the `backend default` section in [`default.vcl`](default.vcl).
 
