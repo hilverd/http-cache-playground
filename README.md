@@ -12,6 +12,10 @@ docker compose up
 
 Then open http://localhost:8080/.
 
+## Screenshot
+
+![⠀](img/web-caching-playground-screenshot.jpg)
+
 ### Changing the Varnish configuration
 
 You can change the Varnish configuration by editing [`default.vcl`](default.vcl) and restarting the Varnish container.
