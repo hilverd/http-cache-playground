@@ -12,7 +12,7 @@ docker compose up
 
 Then open http://localhost:8080/.
 
-## Screenshot
+### Screenshot
 
 ![⠀](img/web-caching-playground-screenshot.jpg)
 
