@@ -20,6 +20,7 @@ module ScenarioForm exposing
     , deleteGetRequestHeader
     , deleteOriginHeader
     , empty
+    , exampleLinksByTitle
     , exerciseAnswers
     , exerciseTitle
     , fromUrl
@@ -50,6 +51,7 @@ import Array exposing (Array)
 import Data.CacheControlResponseDirectives as CacheControlResponseDirectives exposing (CacheControlResponseDirectives)
 import Dict exposing (Dict)
 import Extras.Array
+import Html exposing (Html, text)
 import QueryParameters exposing (QueryParameters)
 import Scenario exposing (Action(..), Scenario)
 import Url exposing (Url)
@@ -838,6 +840,10 @@ someExerciseAnswerIsSelected (ScenarioForm form) =
         |> Maybe.withDefault False
 
 
+
+-- EXERCISES
+
+
 exerciseStaleWhileRevalidate1 : ScenarioForm
 exerciseStaleWhileRevalidate1 =
     create
@@ -1042,3 +1048,45 @@ exercisesById =
         , ( "conditional-requests-workflow-2", exerciseConditionalRequestsWorkflow2 )
         , ( "conditional-requests-workflow-3", exerciseConditionalRequestsWorkflow3 )
         ]
+
+
+
+-- EXAMPLES
+
+
+example200CacheableByDefault : ScenarioForm
+example200CacheableByDefault =
+    create
+        [ MakeGetRequest Array.empty
+        , SleepForOneSecond
+        , MakeGetRequest Array.empty
+        ]
+        False
+        []
+        False
+        Nothing
+        Nothing
+
+
+eaxmpleStaleResponsesAreRevalidatedByDefault : ScenarioForm
+eaxmpleStaleResponsesAreRevalidatedByDefault =
+    create
+        [ MakeGetRequest ([] |> Array.fromList)
+        , SleepForOneSecond
+        , MakeGetRequest ([] |> Array.fromList)
+        ]
+        True
+        [ CacheControlResponseDirectives.empty
+            |> CacheControlResponseDirectives.updateMaxAge (Just 1)
+            |> CacheControl
+        ]
+        False
+        Nothing
+        Nothing
+
+
+exampleLinksByTitle : List ( Html msg, String )
+exampleLinksByTitle =
+    [ ( text "200 OK responses are cacheable by default", toRelativeUrl example200CacheableByDefault )
+    , ( text "Stale responses are revalidated by default", toRelativeUrl eaxmpleStaleResponsesAreRevalidatedByDefault )
+    ]

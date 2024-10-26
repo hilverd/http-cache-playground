@@ -1778,6 +1778,29 @@ viewScenarioForm model =
                         [ text ":id" ]
                     , text " path parameter."
                     ]
+        , Extras.Html.showUnless doingAnExercise <|
+            details
+                [ class "mt-6" ]
+                [ summary
+                    [ class "select-none" ]
+                    [ span
+                        [ class "ml-2 font-medium text-gray-700" ]
+                        [ text "Examples" ]
+                    ]
+                , ul
+                    [ class "mt-4 space-y-1.5" ]
+                    (ScenarioForm.exampleLinksByTitle
+                        |> List.map
+                            (\( title, link ) ->
+                                a
+                                    [ class "text-gray-800 hover:underline"
+                                    , href link
+                                    ]
+                                    [ title ]
+                            )
+                        |> List.intersperse (span [ class "mx-2.5" ] [ text "·" ])
+                    )
+                ]
         , Extras.Html.showIf doingAnExercise <| viewOriginSettingsForExercise model
         , Extras.Html.showUnless doingAnExercise <|
             div
