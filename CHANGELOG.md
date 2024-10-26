@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- Add text input field for custom cache control directive(s).
+
 ### Changed
 ### Fixed
 ### Removed
