@@ -2,6 +2,12 @@
 
 This project lets you explore how [Varnish Cache](https://varnish-cache.org/) reacts to [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching).
 
+<details>
+  <summary>Screenshot</summary>
+
+  ![Screenshot of the web user interface](img/web-caching-playground-screenshot.jpg)
+</details>
+
 ## Getting Started
 
 ```
@@ -11,10 +17,6 @@ docker compose up
 ```
 
 Then open http://localhost:8080/.
-
-### Screenshot
-
-![Screenshot of the web user interface](img/web-caching-playground-screenshot.jpg)
 
 ### Changing the Varnish configuration
 
