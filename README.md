@@ -20,7 +20,7 @@ Then open http://localhost:8080/.
 
 ### Changing the Varnish configuration
 
-You can change the Varnish configuration by editing [`default.vcl`](default.vcl) and restarting the Varnish container.
+You can change the Varnish configuration by editing [`default.vcl`](default.vcl) and restarting the `varnish` container.
 
 ### Adding support for purging
 
