@@ -1,4 +1,4 @@
-module ElementIds exposing (getRequestHeaderKey, getRequestHeaderValue, originCacheControlMaxAge, originCacheControlNoStore, originCacheControlPrivate, originCacheControlSMaxAge, originCacheControlStaleWhileRevalidate, originCustomHeaderKey, originCustomHeaderValue)
+module ElementIds exposing (getRequestHeaderKey, getRequestHeaderValue, originCacheControlCustomDirectives, originCacheControlMaxAge, originCacheControlNoStore, originCacheControlPrivate, originCacheControlSMaxAge, originCacheControlStaleWhileRevalidate, originCustomHeaderKey, originCustomHeaderValue)
 
 
 getRequestHeaderKey : Int -> Int -> String
@@ -44,3 +44,8 @@ originCacheControlPrivate index =
 originCacheControlStaleWhileRevalidate : Int -> String
 originCacheControlStaleWhileRevalidate index =
     "origin-cache-control-stale-while-revalidate-" ++ String.fromInt index
+
+
+originCacheControlCustomDirectives : Int -> String
+originCacheControlCustomDirectives index =
+    "origin-cache-control-custom-directives-" ++ String.fromInt index

@@ -133,6 +133,7 @@ type Msg
     | ToggleNoStore Int
     | TogglePrivate Int
     | ChangeStaleWhileRevalidate Int (Maybe Int)
+    | ChangeCustomCacheControlDirectives Int String
     | DeleteCustomOriginResponseHeader Int
     | UpdateCustomOriginResponseHeaderKey Int String
     | UpdateCustomOriginResponseHeaderValue Int String
@@ -449,6 +450,12 @@ update msg model =
         ChangeStaleWhileRevalidate index maybeValue ->
             updateScenarioForm
                 (ScenarioForm.changeStaleWhileRevalidate index maybeValue)
+                []
+                model
+
+        ChangeCustomCacheControlDirectives index value ->
+            updateScenarioForm
+                (ScenarioForm.changeCustomCacheControlDirectives index value)
                 []
                 model
 
@@ -1266,6 +1273,9 @@ viewOriginCacheControlHeader enabled index directives =
         staleWhileRevalidate =
             CacheControlResponseDirectives.staleWhileRevalidate directives
 
+        customDirectives =
+            CacheControlResponseDirectives.custom directives
+
         headerValue =
             CacheControlResponseDirectives.toString False directives
     in
@@ -1283,6 +1293,7 @@ viewOriginCacheControlHeader enabled index directives =
                 , viewOriginCacheControlNoStoreDirective enabled index noStore
                 , viewOriginCacheControlPrivateDirective enabled index private
                 , viewOriginCacheControlStaleWhileRevalidateDirective enabled index staleWhileRevalidate
+                , viewCustomDirectives enabled index customDirectives
                 ]
             , div
                 [ class "mt-4 mb-2 text-gray-700 text-ellipsis text-nowrap overflow-hidden max-w-52 sm:max-w-96 md:max-w-96 text-sm" ]
@@ -1300,6 +1311,31 @@ viewOriginCacheControlHeader enabled index directives =
                     [ class "font-mono" ]
                     [ text headerValue ]
                 ]
+            ]
+        ]
+
+
+viewCustomDirectives : Bool -> Int -> String -> Html Msg
+viewCustomDirectives enabled index value =
+    div
+        [ class "" ]
+        [ div
+            [ class "ml-1 mt-4 max-w-full" ]
+            [ input
+                [ Html.Attributes.type_ "text"
+                , Html.Attributes.placeholder "custom directives"
+                , Html.Attributes.class "input input-bordered w-full"
+                , Html.Attributes.id <| ElementIds.originCacheControlCustomDirectives index
+                , Html.Attributes.attribute "autocorrect" "off"
+                , Html.Attributes.attribute "autocapitalize" "off"
+                , Html.Attributes.spellcheck False
+                , Html.Attributes.autocomplete False
+                , Html.Attributes.disabled <| not enabled
+                , Html.Attributes.value value
+                , Html.Events.onInput (ChangeCustomCacheControlDirectives index)
+                , Extras.HtmlEvents.onEnter NoOp
+                ]
+                []
             ]
         ]
 

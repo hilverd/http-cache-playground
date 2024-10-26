@@ -10,6 +10,7 @@ module ScenarioForm exposing
     , addOriginCustomHeader
     , addSleepForTwoSeconds
     , changeClientAction
+    , changeCustomCacheControlDirectives
     , changeMaxAge
     , changeSMaxAge
     , changeStaleWhileRevalidate
@@ -585,6 +586,25 @@ changeStaleWhileRevalidate index staleWhileRevalidate (ScenarioForm form) =
                         case header of
                             CacheControl cacheControl ->
                                 CacheControl <| CacheControlResponseDirectives.updateStaleWhileRevalidate staleWhileRevalidate cacheControl
+
+                            _ ->
+                                header
+                    )
+                    index
+                    form.originHeaders
+        }
+
+
+changeCustomCacheControlDirectives : Int -> String -> ScenarioForm -> ScenarioForm
+changeCustomCacheControlDirectives index value (ScenarioForm form) =
+    ScenarioForm
+        { form
+            | originHeaders =
+                Extras.Array.update
+                    (\header ->
+                        case header of
+                            CacheControl cacheControl ->
+                                CacheControl <| CacheControlResponseDirectives.updateCustom value cacheControl
 
                             _ ->
                                 header

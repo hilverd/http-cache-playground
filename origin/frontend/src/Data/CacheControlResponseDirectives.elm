@@ -1,4 +1,4 @@
-module Data.CacheControlResponseDirectives exposing (CacheControlResponseDirectives, empty, fromString, maxAge, noStore, private, sMaxAge, staleWhileRevalidate, toString, updateMaxAge, updateNoStore, updatePrivate, updateSMaxAge, updateStaleWhileRevalidate)
+module Data.CacheControlResponseDirectives exposing (CacheControlResponseDirectives, addToCustom, custom, empty, fromString, maxAge, noStore, private, sMaxAge, staleWhileRevalidate, toString, updateCustom, updateMaxAge, updateNoStore, updatePrivate, updateSMaxAge, updateStaleWhileRevalidate)
 
 
 type CacheControlResponseDirectives
@@ -8,6 +8,7 @@ type CacheControlResponseDirectives
         , noStore : Bool
         , private : Bool
         , staleWhileRevalidate : Maybe Int
+        , custom : String
         }
 
 
@@ -19,6 +20,7 @@ empty =
         , noStore = False
         , private = False
         , staleWhileRevalidate = Nothing
+        , custom = ""
         }
 
 
@@ -47,6 +49,11 @@ staleWhileRevalidate (CacheControlResponseDirectives directives) =
     directives.staleWhileRevalidate
 
 
+custom : CacheControlResponseDirectives -> String
+custom (CacheControlResponseDirectives directives) =
+    directives.custom
+
+
 updateMaxAge : Maybe Int -> CacheControlResponseDirectives -> CacheControlResponseDirectives
 updateMaxAge maxAge_ (CacheControlResponseDirectives directives) =
     CacheControlResponseDirectives { directives | maxAge = maxAge_ }
@@ -70,6 +77,24 @@ updateStaleWhileRevalidate staleWhileRevalidate_ (CacheControlResponseDirectives
 updateSMaxAge : Maybe Int -> CacheControlResponseDirectives -> CacheControlResponseDirectives
 updateSMaxAge sMaxAge_ (CacheControlResponseDirectives directives) =
     CacheControlResponseDirectives { directives | sMaxAge = sMaxAge_ }
+
+
+updateCustom : String -> CacheControlResponseDirectives -> CacheControlResponseDirectives
+updateCustom custom_ (CacheControlResponseDirectives directives) =
+    CacheControlResponseDirectives { directives | custom = custom_ }
+
+
+addToCustom : String -> CacheControlResponseDirectives -> CacheControlResponseDirectives
+addToCustom custom_ (CacheControlResponseDirectives directives) =
+    CacheControlResponseDirectives
+        { directives
+            | custom =
+                if directives.custom |> String.isEmpty then
+                    custom_
+
+                else
+                    directives.custom ++ "," ++ custom_
+        }
 
 
 fromString : String -> CacheControlResponseDirectives
@@ -123,7 +148,7 @@ fromString string =
                     directives
 
             else
-                directives
+                addToCustom directive directives
     in
     string
         |> String.split ","
@@ -152,6 +177,11 @@ toString spaceAfterComma (CacheControlResponseDirectives directives) =
             (\staleWhileRevalidate_ ->
                 "stale-while-revalidate=" ++ String.fromInt staleWhileRevalidate_
             )
+    , if String.isEmpty directives.custom then
+        Nothing
+
+      else
+        Just directives.custom
     ]
         |> List.filterMap identity
         |> String.join
