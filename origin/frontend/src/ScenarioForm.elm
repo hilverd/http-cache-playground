@@ -96,8 +96,14 @@ type ClientAction
     | SleepForEightSeconds
 
 
-create : List ClientAction -> Bool -> List OriginHeader -> Bool -> Maybe String -> Maybe (Array ExerciseAnswer) -> ScenarioForm
-create clientActions_ originWait2SecondsBeforeResponding_ originHeaders_ originReturn304ForConditionalRequests_ exerciseTitle_ exerciseAnswers_ =
+create :
+    { originWait2SecondsBeforeResponding_ : Bool, originReturn304ForConditionalRequests_ : Bool }
+    -> List ClientAction
+    -> List OriginHeader
+    -> Maybe String
+    -> Maybe (Array ExerciseAnswer)
+    -> ScenarioForm
+create { originWait2SecondsBeforeResponding_, originReturn304ForConditionalRequests_ } clientActions_ originHeaders_ exerciseTitle_ exerciseAnswers_ =
     ScenarioForm
         { clientActions = Array.fromList clientActions_
         , originWait2SecondsBeforeResponding = originWait2SecondsBeforeResponding_
@@ -120,6 +126,9 @@ fromQueryParameters queryParameters =
             QueryParameters.clientMakeGetRequestHeaderValues queryParameters
     in
     create
+        { originWait2SecondsBeforeResponding_ = QueryParameters.originWait2SecondsBeforeResponding queryParameters
+        , originReturn304ForConditionalRequests_ = QueryParameters.originReturn304ForConditionalRequests queryParameters
+        }
         (queryParameters
             |> QueryParameters.clientActionsWithoutDetails
             |> List.indexedMap
@@ -165,7 +174,6 @@ fromQueryParameters queryParameters =
                             SleepForEightSeconds
                 )
         )
-        (QueryParameters.originWait2SecondsBeforeResponding queryParameters)
         (let
             headerKeys : List String
             headerKeys =
@@ -190,7 +198,6 @@ fromQueryParameters queryParameters =
          in
          headers
         )
-        (QueryParameters.originReturn304ForConditionalRequests queryParameters)
         Nothing
         Nothing
 
@@ -311,7 +318,14 @@ toRelativeUrl scenarioForm =
 
 empty : ScenarioForm
 empty =
-    create [] False [] False Nothing Nothing
+    create
+        { originWait2SecondsBeforeResponding_ = False
+        , originReturn304ForConditionalRequests_ = False
+        }
+        []
+        []
+        Nothing
+        Nothing
 
 
 isEmpty : ScenarioForm -> Bool
@@ -847,17 +861,18 @@ someExerciseAnswerIsSelected (ScenarioForm form) =
 exerciseStaleWhileRevalidate1 : ScenarioForm
 exerciseStaleWhileRevalidate1 =
     create
+        { originWait2SecondsBeforeResponding_ = True
+        , originReturn304ForConditionalRequests_ = False
+        }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForTwoSeconds
         , MakeGetRequest ([] |> Array.fromList)
         ]
-        True
         [ CacheControlResponseDirectives.empty
             |> CacheControlResponseDirectives.updateSMaxAge (Just 1)
             |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 5)
             |> CacheControl
         ]
-        False
         (Just "stale-while-revalidate (1)")
         ([ { answer = "Varnish returns a response with the same body as before", selected = False, correct = True }
          , { answer = "Varnish returns a different response body", selected = False, correct = False }
@@ -870,17 +885,18 @@ exerciseStaleWhileRevalidate1 =
 exerciseStaleWhileRevalidate2 : ScenarioForm
 exerciseStaleWhileRevalidate2 =
     create
+        { originWait2SecondsBeforeResponding_ = False
+        , originReturn304ForConditionalRequests_ = False
+        }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForThreeSeconds
         , MakeGetRequest ([] |> Array.fromList)
         ]
-        False
         [ CacheControlResponseDirectives.empty
             |> CacheControlResponseDirectives.updateSMaxAge (Just 1)
             |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 1)
             |> CacheControl
         ]
-        False
         (Just "stale-while-revalidate (2)")
         ([ { answer = "Varnish returns a response with the same body as before", selected = False, correct = False }
          , { answer = "Varnish returns a different response body", selected = False, correct = True }
@@ -893,15 +909,16 @@ exerciseStaleWhileRevalidate2 =
 exerciseAge1 : ScenarioForm
 exerciseAge1 =
     create
+        { originWait2SecondsBeforeResponding_ = False
+        , originReturn304ForConditionalRequests_ = False
+        }
         [ MakeGetRequest ([] |> Array.fromList)
         ]
-        False
         [ CacheControlResponseDirectives.empty
             |> CacheControlResponseDirectives.updateSMaxAge (Just 5)
             |> CacheControl
         , Custom { key = "Age", value = "4" }
         ]
-        False
         (Just "The Age header (1)")
         ([ { answer = "Varnish returns a 200 with an age of 4", selected = False, correct = True }
          , { answer = "Varnish returns a 200 with an age of 0", selected = False, correct = False }
@@ -914,18 +931,19 @@ exerciseAge1 =
 exerciseAge2 : ScenarioForm
 exerciseAge2 =
     create
+        { originWait2SecondsBeforeResponding_ = False
+        , originReturn304ForConditionalRequests_ = False
+        }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForTwoSeconds
         , MakeGetRequest ([] |> Array.fromList)
         ]
-        False
         [ CacheControlResponseDirectives.empty
             |> CacheControlResponseDirectives.updateSMaxAge (Just 5)
             |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 5)
             |> CacheControl
         , Custom { key = "Age", value = "4" }
         ]
-        False
         (Just "The Age header (2)")
         ([ { answer = "Varnish returns a response with the same body as before, with an age of 1", selected = False, correct = False }
          , { answer = "Varnish returns a response with the same body as before, with an age of 6", selected = False, correct = True }
@@ -939,18 +957,19 @@ exerciseAge2 =
 exerciseAge3 : ScenarioForm
 exerciseAge3 =
     create
+        { originWait2SecondsBeforeResponding_ = False
+        , originReturn304ForConditionalRequests_ = False
+        }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForOneSecond
         , MakeGetRequest ([] |> Array.fromList)
         ]
-        False
         [ CacheControlResponseDirectives.empty
             |> CacheControlResponseDirectives.updateSMaxAge (Just 5)
             |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 5)
             |> CacheControl
         , Custom { key = "Age", value = "5" }
         ]
-        False
         (Just "The Age header (3)")
         ([ { answer = "Varnish returns a response with the same body as before", selected = False, correct = False }
          , { answer = "Varnish returns a different response body", selected = False, correct = True }
@@ -963,18 +982,19 @@ exerciseAge3 =
 exerciseConditionalRequestsWorkflow1 : ScenarioForm
 exerciseConditionalRequestsWorkflow1 =
     create
+        { originWait2SecondsBeforeResponding_ = True
+        , originReturn304ForConditionalRequests_ = True
+        }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForThreeSeconds
         , MakeGetRequest ([] |> Array.fromList)
         ]
-        True
         [ CacheControlResponseDirectives.empty
             |> CacheControlResponseDirectives.updateSMaxAge (Just 2)
             |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 5)
             |> CacheControl
         , Custom { key = "ETag", value = "\"some-etag\"" }
         ]
-        True
         (Just "Workflow for conditional requests (1)")
         ([ { answer = "Varnish returns a 200 with an age of 0 and the same body as before", selected = False, correct = False }
          , { answer = "Varnish returns a 200 with an age of 3 and the same body as before", selected = False, correct = True }
@@ -988,20 +1008,21 @@ exerciseConditionalRequestsWorkflow1 =
 exerciseConditionalRequestsWorkflow2 : ScenarioForm
 exerciseConditionalRequestsWorkflow2 =
     create
+        { originWait2SecondsBeforeResponding_ = False
+        , originReturn304ForConditionalRequests_ = True
+        }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForThreeSeconds
         , MakeGetRequest ([] |> Array.fromList)
         , SleepForOneSecond
         , MakeGetRequest ([] |> Array.fromList)
         ]
-        False
         [ CacheControlResponseDirectives.empty
             |> CacheControlResponseDirectives.updateSMaxAge (Just 2)
             |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 5)
             |> CacheControl
         , Custom { key = "ETag", value = "\"some-etag\"" }
         ]
-        True
         (Just "Workflow for conditional requests (2)")
         ([ { answer = "Varnish returns a 200 and also makes a revalidation request", selected = False, correct = False }
          , { answer = "Varnish returns a 200 and does not make a revalidation request", selected = False, correct = True }
@@ -1014,17 +1035,18 @@ exerciseConditionalRequestsWorkflow2 =
 exerciseConditionalRequestsWorkflow3 : ScenarioForm
 exerciseConditionalRequestsWorkflow3 =
     create
+        { originWait2SecondsBeforeResponding_ = False
+        , originReturn304ForConditionalRequests_ = False
+        }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForOneSecond
         , MakeGetRequest ([ { key = "If-None-Match", value = "\"some-etag\"" } ] |> Array.fromList)
         ]
-        False
         [ CacheControlResponseDirectives.empty
             |> CacheControlResponseDirectives.updateSMaxAge (Just 5)
             |> CacheControl
         , Custom { key = "ETag", value = "\"some-etag\"" }
         ]
-        False
         (Just "Workflow for conditional requests (3)")
         ([ { answer = "Varnish returns a 200 and also makes a revalidation request", selected = False, correct = False }
          , { answer = "Varnish returns a 200 and does not make a revalidation request", selected = False, correct = False }
@@ -1057,13 +1079,14 @@ exercisesById =
 example200CacheableByDefault : ScenarioForm
 example200CacheableByDefault =
     create
+        { originWait2SecondsBeforeResponding_ = False
+        , originReturn304ForConditionalRequests_ = False
+        }
         [ MakeGetRequest Array.empty
         , SleepForOneSecond
         , MakeGetRequest Array.empty
         ]
-        False
         []
-        False
         Nothing
         Nothing
 
@@ -1071,16 +1094,17 @@ example200CacheableByDefault =
 eaxmpleStaleResponsesAreRevalidatedByDefault : ScenarioForm
 eaxmpleStaleResponsesAreRevalidatedByDefault =
     create
+        { originWait2SecondsBeforeResponding_ = True
+        , originReturn304ForConditionalRequests_ = False
+        }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForOneSecond
         , MakeGetRequest ([] |> Array.fromList)
         ]
-        True
         [ CacheControlResponseDirectives.empty
             |> CacheControlResponseDirectives.updateMaxAge (Just 1)
             |> CacheControl
         ]
-        False
         Nothing
         Nothing
 
