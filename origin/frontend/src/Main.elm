@@ -236,7 +236,7 @@ update msg model =
                 | scenarioForm = scenarioForm
                 , sequenceDiagramVisibility = sequenceDiagramVisibility
               }
-            , if sequenceDiagramVisibility == FinalInteractionsConcealedForExercise then
+            , if ScenarioForm.autoRun scenarioForm then
                 Process.sleep 500
                     |> Task.perform (always <| RunScenarioAsExerciseFromForm sequenceDiagramVisibility)
 
@@ -693,7 +693,9 @@ updateScenarioForm f commands model =
     else
         let
             updatedScenarioForm =
-                f model.scenarioForm
+                model.scenarioForm
+                    |> f
+                    |> ScenarioForm.updateAutoRun False
         in
         ( { model
             | scenarioForm = updatedScenarioForm

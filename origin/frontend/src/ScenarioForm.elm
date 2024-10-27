@@ -9,6 +9,7 @@ module ScenarioForm exposing
     , addOriginCacheControlHeader
     , addOriginCustomHeader
     , addSleepForTwoSeconds
+    , autoRun
     , changeClientAction
     , changeCustomCacheControlDirectives
     , changeMaxAge
@@ -41,6 +42,7 @@ module ScenarioForm exposing
     , toggleOriginReturn304ForConditionalRequests
     , toggleOriginWait2SecondsBeforeResponding
     , togglePrivate
+    , updateAutoRun
     , updateGetRequestHeaderKey
     , updateGetRequestHeaderValue
     , updateOriginCustomHeaderKey
@@ -72,6 +74,7 @@ type ScenarioForm
         , originReturn304ForConditionalRequests : Bool
         , exerciseTitle : Maybe String
         , exerciseAnswers : Maybe (Array ExerciseAnswer)
+        , autoRun : Bool
         }
 
 
@@ -97,13 +100,16 @@ type ClientAction
 
 
 create :
-    { originWait2SecondsBeforeResponding_ : Bool, originReturn304ForConditionalRequests_ : Bool }
+    { originWait2SecondsBeforeResponding_ : Bool
+    , originReturn304ForConditionalRequests_ : Bool
+    , autoRun_ : Bool
+    }
     -> List ClientAction
     -> List OriginHeader
     -> Maybe String
     -> Maybe (Array ExerciseAnswer)
     -> ScenarioForm
-create { originWait2SecondsBeforeResponding_, originReturn304ForConditionalRequests_ } clientActions_ originHeaders_ exerciseTitle_ exerciseAnswers_ =
+create { originWait2SecondsBeforeResponding_, originReturn304ForConditionalRequests_, autoRun_ } clientActions_ originHeaders_ exerciseTitle_ exerciseAnswers_ =
     ScenarioForm
         { clientActions = Array.fromList clientActions_
         , originWait2SecondsBeforeResponding = originWait2SecondsBeforeResponding_
@@ -111,6 +117,7 @@ create { originWait2SecondsBeforeResponding_, originReturn304ForConditionalReque
         , originReturn304ForConditionalRequests = originReturn304ForConditionalRequests_
         , exerciseTitle = exerciseTitle_
         , exerciseAnswers = exerciseAnswers_
+        , autoRun = autoRun_
         }
 
 
@@ -128,6 +135,7 @@ fromQueryParameters queryParameters =
     create
         { originWait2SecondsBeforeResponding_ = QueryParameters.originWait2SecondsBeforeResponding queryParameters
         , originReturn304ForConditionalRequests_ = QueryParameters.originReturn304ForConditionalRequests queryParameters
+        , autoRun_ = QueryParameters.autoRun queryParameters
         }
         (queryParameters
             |> QueryParameters.clientActionsWithoutDetails
@@ -300,6 +308,7 @@ toQueryParameters (ScenarioForm form) =
                 )
         )
         form.originReturn304ForConditionalRequests
+        form.autoRun
 
 
 toRelativeUrl : ScenarioForm -> String
@@ -321,6 +330,7 @@ empty =
     create
         { originWait2SecondsBeforeResponding_ = False
         , originReturn304ForConditionalRequests_ = False
+        , autoRun_ = False
         }
         []
         []
@@ -388,6 +398,11 @@ toggleOriginWait2SecondsBeforeResponding (ScenarioForm form) =
 originReturn304ForConditionalRequests : ScenarioForm -> Bool
 originReturn304ForConditionalRequests (ScenarioForm form) =
     form.originReturn304ForConditionalRequests
+
+
+autoRun : ScenarioForm -> Bool
+autoRun (ScenarioForm form) =
+    form.autoRun
 
 
 toggleOriginReturn304ForConditionalRequests : ScenarioForm -> ScenarioForm
@@ -766,6 +781,11 @@ changeClientAction index newClientAction (ScenarioForm form) =
         }
 
 
+updateAutoRun : Bool -> ScenarioForm -> ScenarioForm
+updateAutoRun autoRun_ (ScenarioForm form) =
+    ScenarioForm { form | autoRun = autoRun_ }
+
+
 toScenario : ScenarioForm -> String -> Scenario
 toScenario ((ScenarioForm form) as scenarioForm) id =
     let
@@ -863,6 +883,7 @@ exerciseStaleWhileRevalidate1 =
     create
         { originWait2SecondsBeforeResponding_ = True
         , originReturn304ForConditionalRequests_ = False
+        , autoRun_ = True
         }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForTwoSeconds
@@ -887,6 +908,7 @@ exerciseStaleWhileRevalidate2 =
     create
         { originWait2SecondsBeforeResponding_ = False
         , originReturn304ForConditionalRequests_ = False
+        , autoRun_ = True
         }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForThreeSeconds
@@ -911,6 +933,7 @@ exerciseAge1 =
     create
         { originWait2SecondsBeforeResponding_ = False
         , originReturn304ForConditionalRequests_ = False
+        , autoRun_ = True
         }
         [ MakeGetRequest ([] |> Array.fromList)
         ]
@@ -933,6 +956,7 @@ exerciseAge2 =
     create
         { originWait2SecondsBeforeResponding_ = False
         , originReturn304ForConditionalRequests_ = False
+        , autoRun_ = True
         }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForTwoSeconds
@@ -959,6 +983,7 @@ exerciseAge3 =
     create
         { originWait2SecondsBeforeResponding_ = False
         , originReturn304ForConditionalRequests_ = False
+        , autoRun_ = True
         }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForOneSecond
@@ -984,6 +1009,7 @@ exerciseConditionalRequestsWorkflow1 =
     create
         { originWait2SecondsBeforeResponding_ = True
         , originReturn304ForConditionalRequests_ = True
+        , autoRun_ = True
         }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForThreeSeconds
@@ -1010,6 +1036,7 @@ exerciseConditionalRequestsWorkflow2 =
     create
         { originWait2SecondsBeforeResponding_ = False
         , originReturn304ForConditionalRequests_ = True
+        , autoRun_ = True
         }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForThreeSeconds
@@ -1037,6 +1064,7 @@ exerciseConditionalRequestsWorkflow3 =
     create
         { originWait2SecondsBeforeResponding_ = False
         , originReturn304ForConditionalRequests_ = False
+        , autoRun_ = True
         }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForOneSecond
@@ -1081,6 +1109,7 @@ example200CacheableByDefault =
     create
         { originWait2SecondsBeforeResponding_ = False
         , originReturn304ForConditionalRequests_ = False
+        , autoRun_ = True
         }
         [ MakeGetRequest Array.empty
         , SleepForOneSecond
@@ -1096,6 +1125,7 @@ eaxmpleStaleResponsesAreRevalidatedByDefault =
     create
         { originWait2SecondsBeforeResponding_ = True
         , originReturn304ForConditionalRequests_ = False
+        , autoRun_ = True
         }
         [ MakeGetRequest ([] |> Array.fromList)
         , SleepForOneSecond
