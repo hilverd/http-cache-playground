@@ -1540,8 +1540,13 @@ viewClientAction enabled stepIndex clientAction =
                         , text <| String.fromInt <| stepIndex + 1
                         ]
                     , span
-                        [ class "ml-2 font-mono" ]
-                        [ text "GET /ids/:id" ]
+                        [ class "tooltip tooltip-bottom"
+                        , Html.Attributes.attribute "data-tip" "A scenario-wide value for :id is randomly generated when run."
+                        ]
+                        [ span
+                            [ class "ml-2 font-mono" ]
+                            [ text "GET /ids/:id" ]
+                        ]
                     ]
                 , details
                     [ class "px-4 mt-6"
