@@ -66,15 +66,28 @@ type alias ExerciseAnswer =
     }
 
 
+type Mode
+    = Normal
+    | Example
+        { title : String
+        , interactionsJson : String
+        }
+    | Exercise
+        { title : String
+        , answers : Array ExerciseAnswer
+        }
+
+
 type ScenarioForm
     = ScenarioForm
         { clientActions : Array ClientAction
         , originWait2SecondsBeforeResponding : Bool
         , originHeaders : Array OriginHeader
         , originReturn304ForConditionalRequests : Bool
-        , exerciseTitle : Maybe String
-        , exerciseAnswers : Maybe (Array ExerciseAnswer)
+        , deprecatedExerciseTitle : Maybe String
+        , deprecatedExerciseAnswers : Maybe (Array ExerciseAnswer)
         , autoRun : Bool
+        , mode : Mode
         }
 
 
@@ -108,16 +121,18 @@ create :
     -> List OriginHeader
     -> Maybe String
     -> Maybe (Array ExerciseAnswer)
+    -> Mode
     -> ScenarioForm
-create { originWait2SecondsBeforeResponding_, originReturn304ForConditionalRequests_, autoRun_ } clientActions_ originHeaders_ exerciseTitle_ exerciseAnswers_ =
+create { originWait2SecondsBeforeResponding_, originReturn304ForConditionalRequests_, autoRun_ } clientActions_ originHeaders_ exerciseTitle_ exerciseAnswers_ mode_ =
     ScenarioForm
         { clientActions = Array.fromList clientActions_
         , originWait2SecondsBeforeResponding = originWait2SecondsBeforeResponding_
         , originHeaders = Array.fromList originHeaders_
         , originReturn304ForConditionalRequests = originReturn304ForConditionalRequests_
-        , exerciseTitle = exerciseTitle_
-        , exerciseAnswers = exerciseAnswers_
+        , deprecatedExerciseTitle = exerciseTitle_
+        , deprecatedExerciseAnswers = exerciseAnswers_
         , autoRun = autoRun_
+        , mode = mode_
         }
 
 
@@ -208,6 +223,7 @@ fromQueryParameters queryParameters =
         )
         Nothing
         Nothing
+        Normal
 
 
 fromUrl : Url -> ScenarioForm
@@ -336,6 +352,7 @@ empty =
         []
         Nothing
         Nothing
+        Normal
 
 
 isEmpty : ScenarioForm -> Bool
@@ -352,12 +369,12 @@ hasTenClientActions (ScenarioForm form) =
 
 exerciseTitle : ScenarioForm -> Maybe String
 exerciseTitle (ScenarioForm form) =
-    form.exerciseTitle
+    form.deprecatedExerciseTitle
 
 
 exerciseAnswers : ScenarioForm -> Maybe (Array ExerciseAnswer)
 exerciseAnswers (ScenarioForm form) =
-    form.exerciseAnswers
+    form.deprecatedExerciseAnswers
 
 
 clientActions : ScenarioForm -> Array ClientAction
@@ -848,7 +865,7 @@ selectExerciseAnswer : Int -> ScenarioForm -> ScenarioForm
 selectExerciseAnswer index (ScenarioForm form) =
     let
         updatedExerciseAnswers =
-            form.exerciseAnswers
+            form.deprecatedExerciseAnswers
                 |> Maybe.map
                     (\answers ->
                         answers
@@ -859,12 +876,12 @@ selectExerciseAnswer index (ScenarioForm form) =
                     )
     in
     ScenarioForm
-        { form | exerciseAnswers = updatedExerciseAnswers }
+        { form | deprecatedExerciseAnswers = updatedExerciseAnswers }
 
 
 someExerciseAnswerIsSelected : ScenarioForm -> Bool
 someExerciseAnswerIsSelected (ScenarioForm form) =
-    form.exerciseAnswers
+    form.deprecatedExerciseAnswers
         |> Maybe.map
             (\answers ->
                 answers
@@ -901,6 +918,15 @@ exerciseStaleWhileRevalidate1 =
             |> Array.fromList
             |> Just
         )
+        (Exercise
+            { title = "stale-while-revalidate (1)"
+            , answers =
+                [ { answer = "Varnish returns a response with the same body as before", selected = False, correct = True }
+                , { answer = "Varnish returns a different response body", selected = False, correct = False }
+                ]
+                    |> Array.fromList
+            }
+        )
 
 
 exerciseStaleWhileRevalidate2 : ScenarioForm
@@ -926,6 +952,15 @@ exerciseStaleWhileRevalidate2 =
             |> Array.fromList
             |> Just
         )
+        (Exercise
+            { title = "stale-while-revalidate (2)"
+            , answers =
+                [ { answer = "Varnish returns a response with the same body as before", selected = False, correct = False }
+                , { answer = "Varnish returns a different response body", selected = False, correct = True }
+                ]
+                    |> Array.fromList
+            }
+        )
 
 
 exerciseAge1 : ScenarioForm
@@ -948,6 +983,15 @@ exerciseAge1 =
          ]
             |> Array.fromList
             |> Just
+        )
+        (Exercise
+            { title = "The Age header (1)"
+            , answers =
+                [ { answer = "Varnish returns a 200 with an age of 4", selected = False, correct = True }
+                , { answer = "Varnish returns a 200 with an age of 0", selected = False, correct = False }
+                ]
+                    |> Array.fromList
+            }
         )
 
 
@@ -976,6 +1020,16 @@ exerciseAge2 =
             |> Array.fromList
             |> Just
         )
+        (Exercise
+            { title = "The Age header (2)"
+            , answers =
+                [ { answer = "Varnish returns a response with the same body as before, with an age of 1", selected = False, correct = False }
+                , { answer = "Varnish returns a response with the same body as before, with an age of 6", selected = False, correct = True }
+                , { answer = "Varnish returns a different response body", selected = False, correct = False }
+                ]
+                    |> Array.fromList
+            }
+        )
 
 
 exerciseAge3 : ScenarioForm
@@ -1001,6 +1055,15 @@ exerciseAge3 =
          ]
             |> Array.fromList
             |> Just
+        )
+        (Exercise
+            { title = "The Age header (3)"
+            , answers =
+                [ { answer = "Varnish returns a response with the same body as before", selected = False, correct = False }
+                , { answer = "Varnish returns a different response body", selected = False, correct = True }
+                ]
+                    |> Array.fromList
+            }
         )
 
 
@@ -1028,6 +1091,16 @@ exerciseConditionalRequestsWorkflow1 =
          ]
             |> Array.fromList
             |> Just
+        )
+        (Exercise
+            { title = "Workflow for conditional requests (1)"
+            , answers =
+                [ { answer = "Varnish returns a 200 with an age of 0 and the same body as before", selected = False, correct = False }
+                , { answer = "Varnish returns a 200 with an age of 3 and the same body as before", selected = False, correct = True }
+                , { answer = "Varnish returns a 304 with an empty body", selected = False, correct = False }
+                ]
+                    |> Array.fromList
+            }
         )
 
 
@@ -1057,6 +1130,15 @@ exerciseConditionalRequestsWorkflow2 =
             |> Array.fromList
             |> Just
         )
+        (Exercise
+            { title = "Workflow for conditional requests (2)"
+            , answers =
+                [ { answer = "Varnish returns a 200 and also makes a revalidation request", selected = False, correct = False }
+                , { answer = "Varnish returns a 200 and does not make a revalidation request", selected = False, correct = True }
+                ]
+                    |> Array.fromList
+            }
+        )
 
 
 exerciseConditionalRequestsWorkflow3 : ScenarioForm
@@ -1083,6 +1165,17 @@ exerciseConditionalRequestsWorkflow3 =
          ]
             |> Array.fromList
             |> Just
+        )
+        (Exercise
+            { title = "Workflow for conditional requests (3)"
+            , answers =
+                [ { answer = "Varnish returns a 200 and also makes a revalidation request", selected = False, correct = False }
+                , { answer = "Varnish returns a 200 and does not make a revalidation request", selected = False, correct = False }
+                , { answer = "Varnish returns a 304 and also makes a revalidation request", selected = False, correct = False }
+                , { answer = "Varnish returns a 304 and does not make a revalidation request", selected = False, correct = True }
+                ]
+                    |> Array.fromList
+            }
         )
 
 
@@ -1118,10 +1211,15 @@ example200CacheableByDefault =
         []
         Nothing
         Nothing
+        (Example
+            { title = "200 OK responses are cacheable by default"
+            , interactionsJson = "TODO"
+            }
+        )
 
 
-eaxmpleStaleResponsesAreRevalidatedByDefault : ScenarioForm
-eaxmpleStaleResponsesAreRevalidatedByDefault =
+exampleStaleResponsesAreRevalidatedByDefault : ScenarioForm
+exampleStaleResponsesAreRevalidatedByDefault =
     create
         { originWait2SecondsBeforeResponding_ = True
         , originReturn304ForConditionalRequests_ = False
@@ -1137,10 +1235,15 @@ eaxmpleStaleResponsesAreRevalidatedByDefault =
         ]
         Nothing
         Nothing
+        (Example
+            { title = "Stale responses are revalidated by default"
+            , interactionsJson = "TODO"
+            }
+        )
 
 
 exampleLinksByTitle : List ( Html msg, String )
 exampleLinksByTitle =
     [ ( text "200 OK responses are cacheable by default", toRelativeUrl example200CacheableByDefault )
-    , ( text "Stale responses are revalidated by default", toRelativeUrl eaxmpleStaleResponsesAreRevalidatedByDefault )
+    , ( text "Stale responses are revalidated by default", toRelativeUrl exampleStaleResponsesAreRevalidatedByDefault )
     ]
