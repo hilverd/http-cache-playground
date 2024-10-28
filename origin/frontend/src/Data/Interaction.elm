@@ -1,4 +1,4 @@
-module Interaction exposing (Interaction(..), codec)
+module Data.Interaction exposing (Interaction(..), codec)
 
 import Codec exposing (Codec)
 

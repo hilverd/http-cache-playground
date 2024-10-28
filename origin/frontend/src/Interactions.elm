@@ -1,6 +1,7 @@
 module Interactions exposing (Interactions, codec, empty, isEmpty, view, withoutInteractionsAfterFinalClientAction)
 
 import Codec exposing (Codec)
+import Data.Interaction as Interaction exposing (Interaction(..))
 import Data.SequenceDiagramVisibility exposing (SequenceDiagramVisibility(..))
 import Dict exposing (Dict)
 import Extras.Html
@@ -8,7 +9,6 @@ import Extras.HtmlAttribute
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Icons
-import Interaction exposing (Interaction(..))
 import Language
 import Svg.Attributes
 

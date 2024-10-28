@@ -12,6 +12,7 @@ import Components.Button
 import Components.RangeSlider
 import Config
 import Data.CacheControlResponseDirectives as CacheControlResponseDirectives exposing (CacheControlResponseDirectives)
+import Data.Interaction as Interaction
 import Data.SequenceDiagramVisibility exposing (SequenceDiagramVisibility(..))
 import Dict
 import ElementIds
@@ -24,7 +25,6 @@ import Html.Attributes exposing (checked, class, disabled, href, id, name, type_
 import Html.Events
 import Http
 import Icons
-import Interaction
 import Interactions exposing (Interactions)
 import Language
 import Process
