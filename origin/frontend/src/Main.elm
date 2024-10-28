@@ -1791,7 +1791,7 @@ viewScenarioForm model =
                 [ summary
                     [ class "select-none" ]
                     [ span
-                        [ class "ml-2 font-medium text-gray-700" ]
+                        [ class "ml-2 text-lg leading-6 font-medium text-gray-900" ]
                         [ text "Examples" ]
                     ]
                 , ul
@@ -1800,7 +1800,7 @@ viewScenarioForm model =
                         |> List.map
                             (\( title, link ) ->
                                 a
-                                    [ class "text-gray-800 hover:underline"
+                                    [ class "text-gray-700 underline"
                                     , href link
                                     ]
                                     [ title ]
