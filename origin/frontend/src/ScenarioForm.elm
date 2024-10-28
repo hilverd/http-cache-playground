@@ -1,6 +1,7 @@
 module ScenarioForm exposing
     ( ClientAction(..)
     , Header
+    , Mode(..)
     , OriginHeader(..)
     , ScenarioForm
     , addGetRequestHeader
@@ -22,14 +23,14 @@ module ScenarioForm exposing
     , deleteOriginHeader
     , empty
     , exampleLinksByTitle
-    , exerciseAnswers
-    , exerciseTitle
     , fromUrl
     , hasCustomOriginHeaderWithKey
     , hasOriginCacheControlHeader
     , hasTenClientActions
     , indexOfLastCustomHeaderInGetRequest
     , isEmpty
+    , isExercise
+    , mode
     , originHeaders
     , originHeadersAsPairs
     , originReturn304ForConditionalRequests
@@ -84,8 +85,6 @@ type ScenarioForm
         , originWait2SecondsBeforeResponding : Bool
         , originHeaders : Array OriginHeader
         , originReturn304ForConditionalRequests : Bool
-        , deprecatedExerciseTitle : Maybe String
-        , deprecatedExerciseAnswers : Maybe (Array ExerciseAnswer)
         , autoRun : Bool
         , mode : Mode
         }
@@ -119,18 +118,14 @@ create :
     }
     -> List ClientAction
     -> List OriginHeader
-    -> Maybe String
-    -> Maybe (Array ExerciseAnswer)
     -> Mode
     -> ScenarioForm
-create { originWait2SecondsBeforeResponding_, originReturn304ForConditionalRequests_, autoRun_ } clientActions_ originHeaders_ exerciseTitle_ exerciseAnswers_ mode_ =
+create { originWait2SecondsBeforeResponding_, originReturn304ForConditionalRequests_, autoRun_ } clientActions_ originHeaders_ mode_ =
     ScenarioForm
         { clientActions = Array.fromList clientActions_
         , originWait2SecondsBeforeResponding = originWait2SecondsBeforeResponding_
         , originHeaders = Array.fromList originHeaders_
         , originReturn304ForConditionalRequests = originReturn304ForConditionalRequests_
-        , deprecatedExerciseTitle = exerciseTitle_
-        , deprecatedExerciseAnswers = exerciseAnswers_
         , autoRun = autoRun_
         , mode = mode_
         }
@@ -221,8 +216,6 @@ fromQueryParameters queryParameters =
          in
          headers
         )
-        Nothing
-        Nothing
         Normal
 
 
@@ -350,8 +343,6 @@ empty =
         }
         []
         []
-        Nothing
-        Nothing
         Normal
 
 
@@ -365,16 +356,6 @@ hasTenClientActions (ScenarioForm form) =
     form.clientActions
         |> Array.length
         |> (==) 10
-
-
-exerciseTitle : ScenarioForm -> Maybe String
-exerciseTitle (ScenarioForm form) =
-    form.deprecatedExerciseTitle
-
-
-exerciseAnswers : ScenarioForm -> Maybe (Array ExerciseAnswer)
-exerciseAnswers (ScenarioForm form) =
-    form.deprecatedExerciseAnswers
 
 
 clientActions : ScenarioForm -> Array ClientAction
@@ -420,6 +401,21 @@ originReturn304ForConditionalRequests (ScenarioForm form) =
 autoRun : ScenarioForm -> Bool
 autoRun (ScenarioForm form) =
     form.autoRun
+
+
+mode : ScenarioForm -> Mode
+mode (ScenarioForm form) =
+    form.mode
+
+
+isExercise : ScenarioForm -> Bool
+isExercise (ScenarioForm form) =
+    case form.mode of
+        Exercise _ ->
+            True
+
+        _ ->
+            False
 
 
 toggleOriginReturn304ForConditionalRequests : ScenarioForm -> ScenarioForm
@@ -864,31 +860,40 @@ toScenario ((ScenarioForm form) as scenarioForm) id =
 selectExerciseAnswer : Int -> ScenarioForm -> ScenarioForm
 selectExerciseAnswer index (ScenarioForm form) =
     let
-        updatedExerciseAnswers =
-            form.deprecatedExerciseAnswers
-                |> Maybe.map
-                    (\answers ->
-                        answers
-                            |> Array.indexedMap
-                                (\index_ answer ->
-                                    { answer | selected = index_ == index }
-                                )
-                    )
+        mode0 =
+            form.mode
+
+        mode_ : Mode
+        mode_ =
+            case mode0 of
+                Exercise ({ answers } as exercise) ->
+                    Exercise
+                        { exercise
+                            | answers =
+                                answers
+                                    |> Array.indexedMap
+                                        (\index_ answer ->
+                                            { answer | selected = index_ == index }
+                                        )
+                        }
+
+                _ ->
+                    mode0
     in
     ScenarioForm
-        { form | deprecatedExerciseAnswers = updatedExerciseAnswers }
+        { form | mode = mode_ }
 
 
 someExerciseAnswerIsSelected : ScenarioForm -> Bool
 someExerciseAnswerIsSelected (ScenarioForm form) =
-    form.deprecatedExerciseAnswers
-        |> Maybe.map
-            (\answers ->
-                answers
-                    |> Array.toList
-                    |> List.any (\answer -> answer.selected)
-            )
-        |> Maybe.withDefault False
+    case form.mode of
+        Exercise { answers } ->
+            answers
+                |> Array.toList
+                |> List.any .selected
+
+        _ ->
+            False
 
 
 
@@ -911,13 +916,6 @@ exerciseStaleWhileRevalidate1 =
             |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 5)
             |> CacheControl
         ]
-        (Just "stale-while-revalidate (1)")
-        ([ { answer = "Varnish returns a response with the same body as before", selected = False, correct = True }
-         , { answer = "Varnish returns a different response body", selected = False, correct = False }
-         ]
-            |> Array.fromList
-            |> Just
-        )
         (Exercise
             { title = "stale-while-revalidate (1)"
             , answers =
@@ -945,13 +943,6 @@ exerciseStaleWhileRevalidate2 =
             |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 1)
             |> CacheControl
         ]
-        (Just "stale-while-revalidate (2)")
-        ([ { answer = "Varnish returns a response with the same body as before", selected = False, correct = False }
-         , { answer = "Varnish returns a different response body", selected = False, correct = True }
-         ]
-            |> Array.fromList
-            |> Just
-        )
         (Exercise
             { title = "stale-while-revalidate (2)"
             , answers =
@@ -977,13 +968,6 @@ exerciseAge1 =
             |> CacheControl
         , Custom { key = "Age", value = "4" }
         ]
-        (Just "The Age header (1)")
-        ([ { answer = "Varnish returns a 200 with an age of 4", selected = False, correct = True }
-         , { answer = "Varnish returns a 200 with an age of 0", selected = False, correct = False }
-         ]
-            |> Array.fromList
-            |> Just
-        )
         (Exercise
             { title = "The Age header (1)"
             , answers =
@@ -1012,14 +996,6 @@ exerciseAge2 =
             |> CacheControl
         , Custom { key = "Age", value = "4" }
         ]
-        (Just "The Age header (2)")
-        ([ { answer = "Varnish returns a response with the same body as before, with an age of 1", selected = False, correct = False }
-         , { answer = "Varnish returns a response with the same body as before, with an age of 6", selected = False, correct = True }
-         , { answer = "Varnish returns a different response body", selected = False, correct = False }
-         ]
-            |> Array.fromList
-            |> Just
-        )
         (Exercise
             { title = "The Age header (2)"
             , answers =
@@ -1049,13 +1025,6 @@ exerciseAge3 =
             |> CacheControl
         , Custom { key = "Age", value = "5" }
         ]
-        (Just "The Age header (3)")
-        ([ { answer = "Varnish returns a response with the same body as before", selected = False, correct = False }
-         , { answer = "Varnish returns a different response body", selected = False, correct = True }
-         ]
-            |> Array.fromList
-            |> Just
-        )
         (Exercise
             { title = "The Age header (3)"
             , answers =
@@ -1084,14 +1053,6 @@ exerciseConditionalRequestsWorkflow1 =
             |> CacheControl
         , Custom { key = "ETag", value = "\"some-etag\"" }
         ]
-        (Just "Workflow for conditional requests (1)")
-        ([ { answer = "Varnish returns a 200 with an age of 0 and the same body as before", selected = False, correct = False }
-         , { answer = "Varnish returns a 200 with an age of 3 and the same body as before", selected = False, correct = True }
-         , { answer = "Varnish returns a 304 with an empty body", selected = False, correct = False }
-         ]
-            |> Array.fromList
-            |> Just
-        )
         (Exercise
             { title = "Workflow for conditional requests (1)"
             , answers =
@@ -1123,13 +1084,6 @@ exerciseConditionalRequestsWorkflow2 =
             |> CacheControl
         , Custom { key = "ETag", value = "\"some-etag\"" }
         ]
-        (Just "Workflow for conditional requests (2)")
-        ([ { answer = "Varnish returns a 200 and also makes a revalidation request", selected = False, correct = False }
-         , { answer = "Varnish returns a 200 and does not make a revalidation request", selected = False, correct = True }
-         ]
-            |> Array.fromList
-            |> Just
-        )
         (Exercise
             { title = "Workflow for conditional requests (2)"
             , answers =
@@ -1157,15 +1111,6 @@ exerciseConditionalRequestsWorkflow3 =
             |> CacheControl
         , Custom { key = "ETag", value = "\"some-etag\"" }
         ]
-        (Just "Workflow for conditional requests (3)")
-        ([ { answer = "Varnish returns a 200 and also makes a revalidation request", selected = False, correct = False }
-         , { answer = "Varnish returns a 200 and does not make a revalidation request", selected = False, correct = False }
-         , { answer = "Varnish returns a 304 and also makes a revalidation request", selected = False, correct = False }
-         , { answer = "Varnish returns a 304 and does not make a revalidation request", selected = False, correct = True }
-         ]
-            |> Array.fromList
-            |> Just
-        )
         (Exercise
             { title = "Workflow for conditional requests (3)"
             , answers =
@@ -1209,8 +1154,6 @@ example200CacheableByDefault =
         , MakeGetRequest Array.empty
         ]
         []
-        Nothing
-        Nothing
         (Example
             { title = "200 OK responses are cacheable by default"
             , interactionsJson = "TODO"
@@ -1233,8 +1176,6 @@ exampleStaleResponsesAreRevalidatedByDefault =
             |> CacheControlResponseDirectives.updateMaxAge (Just 1)
             |> CacheControl
         ]
-        Nothing
-        Nothing
         (Example
             { title = "Stale responses are revalidated by default"
             , interactionsJson = "TODO"

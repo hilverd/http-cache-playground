@@ -215,18 +215,18 @@ update msg model =
                 scenarioForm =
                     ScenarioForm.fromUrl url
 
-                exercise =
-                    ScenarioForm.exerciseAnswers scenarioForm /= Nothing
+                isExercise =
+                    ScenarioForm.isExercise scenarioForm
 
                 sequenceDiagramVisibility =
-                    if exercise then
+                    if isExercise then
                         FinalInteractionsConcealedForExercise
 
                     else
                         CompletelyRevealed
 
                 model0 =
-                    if exercise then
+                    if isExercise then
                         defaultModel model.key
 
                     else
@@ -685,7 +685,7 @@ updateScenarioForm : (ScenarioForm -> ScenarioForm) -> List (Cmd Msg) -> Model -
 updateScenarioForm f commands model =
     let
         doNotAllowMakingChanges =
-            ScenarioForm.exerciseAnswers model.scenarioForm /= Nothing
+            ScenarioForm.isExercise model.scenarioForm
     in
     if doNotAllowMakingChanges then
         ( model, Cmd.none )
@@ -1743,22 +1743,22 @@ viewScenarioForm : Model -> Html Msg
 viewScenarioForm model =
     let
         doingAnExercise =
-            ScenarioForm.exerciseTitle model.scenarioForm /= Nothing
+            ScenarioForm.isExercise model.scenarioForm
     in
     div []
-        [ case ScenarioForm.exerciseTitle model.scenarioForm of
-            Just exerciseTitle ->
+        [ case ScenarioForm.mode model.scenarioForm of
+            ScenarioForm.Exercise { title } ->
                 div
                     [ class "mt-8" ]
                     [ h3
                         [ class "text-lg font-semibold leading-6 text-gray-900" ]
-                        [ text <| "Exercise: " ++ exerciseTitle ]
+                        [ text <| "Exercise: " ++ title ]
                     , p
                         [ class "mt-2 max-w-4xl text-gray-500" ]
                         [ text "Read through the scenario below, then predict what happens after the last client request." ]
                     ]
 
-            Nothing ->
+            _ ->
                 p
                     [ class "mt-8 text-gray-600" ]
                     [ text "Explore how "
@@ -2113,11 +2113,16 @@ view model =
                    )
 
         pageTitle : String -> String
-        pageTitle =
-            model.scenarioForm
-                |> ScenarioForm.exerciseTitle
-                |> Maybe.map (\exerciseTitle overallTitle -> exerciseTitle ++ " · " ++ overallTitle)
-                |> Maybe.withDefault identity
+        pageTitle overallTitle =
+            case ScenarioForm.mode model.scenarioForm of
+                ScenarioForm.Exercise { title } ->
+                    title ++ " · " ++ overallTitle
+
+                ScenarioForm.Example { title } ->
+                    title ++ " · " ++ overallTitle
+
+                ScenarioForm.Normal ->
+                    overallTitle
     in
     { title = pageTitle "Web Cache Playground"
     , body =
@@ -2195,9 +2200,8 @@ view model =
                                             interactions
                             in
                             div
-                                [ Extras.HtmlAttribute.showIf model.formWasModifiedSinceScenarioRun <| class "opacity-50"
-                                ]
-                                [ Extras.Html.showUnless (Interactions.isEmpty interactionsToShow || (ScenarioForm.exerciseTitle model.scenarioForm /= Nothing)) <|
+                                [ Extras.HtmlAttribute.showIf model.formWasModifiedSinceScenarioRun <| class "opacity-50" ]
+                                [ Extras.Html.showUnless (Interactions.isEmpty interactionsToShow || ScenarioForm.isExercise model.scenarioForm) <|
                                     Extras.Html.showMaybe
                                         (\id ->
                                             div
@@ -2244,16 +2248,16 @@ view model =
                             [ text "Error while retrieving interaction log." ]
                         )
                 , Extras.Html.showIf userShouldSeeExerciseForm <|
-                    div
-                        [ class "mt-6 flex flex-col justify-center items-center" ]
-                        [ div
-                            [ class "text-gray-700 font-medium text-lg" ]
-                            [ text "What do you think happens next?" ]
-                        , Extras.Html.showMaybe
-                            (\exerciseAnswers ->
-                                div
+                    case ScenarioForm.mode model.scenarioForm of
+                        ScenarioForm.Exercise { answers } ->
+                            div
+                                [ class "mt-6 flex flex-col justify-center items-center" ]
+                                [ div
+                                    [ class "text-gray-700 font-medium text-lg" ]
+                                    [ text "What do you think happens next?" ]
+                                , div
                                     [ class "mt-4" ]
-                                    (exerciseAnswers
+                                    (answers
                                         |> Array.toList
                                         |> List.indexedMap
                                             (\index exerciseAnswer ->
@@ -2307,27 +2311,28 @@ view model =
                                                     ]
                                             )
                                     )
-                            )
-                            (ScenarioForm.exerciseAnswers model.scenarioForm)
-                        , div
-                            [ class "mt-4 inline-flex items-center" ]
-                            [ button
-                                [ class "btn btn-lg btn-primary"
-                                , disabled <|
-                                    ((not <| ScenarioForm.someExerciseAnswerIsSelected model.scenarioForm)
-                                        || model.sequenceDiagramVisibility
-                                        /= FinalInteractionsConcealedForExercise
-                                    )
-                                , Html.Events.onClick SubmitExerciseForm
+                                , div
+                                    [ class "mt-4 inline-flex items-center" ]
+                                    [ button
+                                        [ class "btn btn-lg btn-primary"
+                                        , disabled <|
+                                            ((not <| ScenarioForm.someExerciseAnswerIsSelected model.scenarioForm)
+                                                || model.sequenceDiagramVisibility
+                                                /= FinalInteractionsConcealedForExercise
+                                            )
+                                        , Html.Events.onClick SubmitExerciseForm
+                                        ]
+                                        [ text "Submit" ]
+                                    , button
+                                        [ class "ml-3 btn btn-warning btn-lg"
+                                        , Html.Events.onClick LeaveExercise
+                                        ]
+                                        [ text "Leave exercise" ]
+                                    ]
                                 ]
-                                [ text "Submit" ]
-                            , button
-                                [ class "ml-3 btn btn-warning btn-lg"
-                                , Html.Events.onClick LeaveExercise
-                                ]
-                                [ text "Leave exercise" ]
-                            ]
-                        ]
+
+                        _ ->
+                            Extras.Html.nothing
                 ]
             ]
         ]
