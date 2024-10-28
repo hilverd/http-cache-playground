@@ -10,8 +10,8 @@ import Browser.Navigation exposing (Key)
 import Codec
 import Components.Button
 import Components.RangeSlider
-import Config
 import Data.CacheControlResponseDirectives as CacheControlResponseDirectives exposing (CacheControlResponseDirectives)
+import Data.Config as Config
 import Data.Interaction as Interaction
 import Data.SequenceDiagramVisibility exposing (SequenceDiagramVisibility(..))
 import Dict

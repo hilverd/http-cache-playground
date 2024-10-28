@@ -1,4 +1,4 @@
-module Config exposing (originBaseUrl, showButtonForAddingPurgeRequestStep)
+module Data.Config exposing (originBaseUrl, showButtonForAddingPurgeRequestStep)
 
 
 originBaseUrl : String

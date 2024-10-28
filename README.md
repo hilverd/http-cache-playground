@@ -29,7 +29,7 @@ You can change the Varnish configuration by editing [`default.vcl`](default.vcl)
 To add support for [purging](https://www.varnish-software.com/developers/tutorials/purge/) you will need to
 
 1. edit the Varnish configuration as described above,
-2. set `showButtonForAddingPurgeRequestStep` to `True` in [`Config.elm`](origin/frontend/src/Config.elm), and
+2. set `showButtonForAddingPurgeRequestStep` to `True` in [`Config.elm`](origin/frontend/src/Data/Config.elm), and
 3. use `docker compose -f docker-compose-dev.yml up --build` to recompile and run the project.
 
 ### Using a different HTTP cache
