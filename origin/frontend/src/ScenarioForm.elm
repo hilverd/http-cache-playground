@@ -51,11 +51,11 @@ module ScenarioForm exposing
 
 import Array exposing (Array)
 import Data.CacheControlResponseDirectives as CacheControlResponseDirectives exposing (CacheControlResponseDirectives)
+import Data.Scenario as Scenario exposing (Action(..), Scenario)
 import Dict exposing (Dict)
 import Extras.Array
 import Html exposing (Html, text)
 import QueryParameters exposing (QueryParameters)
-import Scenario exposing (Action(..), Scenario)
 import Url exposing (Url)
 
 

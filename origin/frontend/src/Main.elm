@@ -13,6 +13,7 @@ import Components.RangeSlider
 import Data.CacheControlResponseDirectives as CacheControlResponseDirectives exposing (CacheControlResponseDirectives)
 import Data.Config as Config
 import Data.Interaction as Interaction
+import Data.Scenario as Scenario exposing (Scenario, allRequestHeaderKeys, allResponseHeaderKeys)
 import Data.SequenceDiagramVisibility exposing (SequenceDiagramVisibility(..))
 import Dict
 import ElementIds
@@ -30,7 +31,6 @@ import Language
 import Process
 import Random
 import Regex
-import Scenario exposing (Scenario, allRequestHeaderKeys, allResponseHeaderKeys)
 import ScenarioForm exposing (ScenarioForm)
 import Svg.Attributes
 import Task

@@ -1,4 +1,4 @@
-module Scenario exposing (Action(..), Scenario, actions, allRequestHeaderKeys, allResponseHeaderKeys, create, id, isEmpty, length, nextAction)
+module Data.Scenario exposing (Action(..), Scenario, actions, allRequestHeaderKeys, allResponseHeaderKeys, create, id, isEmpty, length, nextAction)
 
 import Set
 
