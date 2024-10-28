@@ -15,6 +15,7 @@ import Data.Config as Config
 import Data.Interaction as Interaction
 import Data.Scenario as Scenario exposing (Scenario, allRequestHeaderKeys, allResponseHeaderKeys)
 import Data.SequenceDiagramVisibility exposing (SequenceDiagramVisibility(..))
+import Data.Uuid as Uuid
 import Dict
 import ElementIds
 import Extras.BrowserDom
@@ -37,7 +38,6 @@ import Task
 import Time
 import Url exposing (Url)
 import Url.Builder
-import Uuid
 
 
 

@@ -1,4 +1,4 @@
-module Uuid exposing (uuidStringGenerator)
+module Data.Uuid exposing (uuidStringGenerator)
 
 {-
    Adapted from https://github.com/danyx23/elm-uuid which is copyright (c) 2015, Daniel Bachler.
