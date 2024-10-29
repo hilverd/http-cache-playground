@@ -225,7 +225,10 @@ update msg model =
                     else
                         model
             in
-            ( { model0 | scenarioForm = scenarioForm }
+            ( { model0
+                | scenarioForm = scenarioForm
+                , formWasModifiedSinceScenarioRun = not model.scenarioIsRunning
+              }
             , if isExercise then
                 Process.sleep 0
                     |> Task.perform (always RunScenarioFromForm)
@@ -1816,32 +1819,7 @@ viewScenarioForm model =
                     ]
 
             _ ->
-                p
-                    [ class "mt-8 text-gray-600" ]
-                    [ text "Explore how "
-                    , a
-                        [ class "hover:underline"
-                        , href "https://varnish-cache.org/"
-                        , Html.Attributes.target "_blank"
-                        , Html.Attributes.rel "noopener noreferrer"
-                        ]
-                        [ text "Varnish Cache" ]
-                    , text " reacts to "
-                    , a
-                        [ class "hover:underline"
-                        , href "https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching"
-                        , Html.Attributes.target "_blank"
-                        , Html.Attributes.rel "noopener noreferrer"
-                        ]
-                        [ text "HTTP headers" ]
-                    , text "."
-                    , br [] []
-                    , text "Prepare a scenario, then run it with a randomly generated "
-                    , span
-                        [ class "font-mono" ]
-                        [ text ":id" ]
-                    , text " path parameter."
-                    ]
+                Extras.Html.nothing
         , Extras.Html.showUnless doingAnExercise <|
             viewExamples Config.demoMode ScenarioForm.exampleLinksByTitle
         , Extras.Html.showIf doingAnExercise <| viewOriginSettingsForExercise model
@@ -1863,7 +1841,10 @@ viewScenarioForm model =
                       <|
                         p
                             [ class "mt-4 text-red-800" ]
-                            [ text "[Add one or more steps to create a scenario.]" ]
+                            [ text "[Create a "
+                            , strong [ class "font-medium" ] [ em [] [ text "scenario" ] ]
+                            , text " by adding one or more steps.]"
+                            ]
                     , ul
                         [ Html.Attributes.attribute "role" "list"
                         , class "space-y-4"
@@ -2166,16 +2147,37 @@ view model =
     , body =
         [ div
             [ class "min-h-full pt-4 pb-10 sm:pt-6 md:pt-10" ]
-            [ header []
+            [ header
+                [ class "sm:mb-8" ]
                 [ div
                     [ class "mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8" ]
                     [ div
-                        [ class "sm:flex sm:items-center sm:justify-between" ]
+                        [ class "sm:flex sm:items-start sm:justify-between" ]
                         [ div
                             [ class "min-w-0 flex-1" ]
                             [ h1
                                 [ class "text-3xl font-bold leading-tight tracking-tight text-gray-900" ]
                                 [ text "Web Cache Playground" ]
+                            , p
+                                [ class "mt-2 max-w-4xl text-gray-500" ]
+                                [ text "Explore how "
+                                , a
+                                    [ class "hover:underline"
+                                    , href "https://varnish-cache.org/"
+                                    , Html.Attributes.target "_blank"
+                                    , Html.Attributes.rel "noopener noreferrer"
+                                    ]
+                                    [ text "Varnish Cache" ]
+                                , text " reacts to "
+                                , a
+                                    [ class "hover:underline"
+                                    , href "https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching"
+                                    , Html.Attributes.target "_blank"
+                                    , Html.Attributes.rel "noopener noreferrer"
+                                    ]
+                                    [ text "HTTP headers" ]
+                                , text "."
+                                ]
                             ]
                         , div
                             [ class "mt-4 flex sm:ml-4 sm:mt-0" ]
@@ -2204,18 +2206,19 @@ view model =
                     div
                         [ class "inline-flex items-center mt-8" ]
                         [ button
-                            [ class "btn btn-primary mr-4"
+                            [ class "btn btn-primary mr-4 text-white"
                             , Html.Events.onClick RunScenarioFromForm
                             , Html.Attributes.disabled <|
                                 (model.scenarioIsRunning
                                     || (model.scenarioForm |> ScenarioForm.clientActions |> Array.isEmpty)
                                 )
                             ]
-                            [ Icons.play [ Svg.Attributes.class "h-5 w-5" ]
+                            [ Icons.play
+                                [ Svg.Attributes.class "h-5 w-5" ]
                             , text "Run scenario"
                             ]
                         , button
-                            [ class "btn btn-warning"
+                            [ class "btn"
                             , Html.Events.onClick ResetScenarioForm
                             , Html.Attributes.disabled <| (model.scenarioIsRunning || ScenarioForm.isEmpty model.scenarioForm)
                             ]
