@@ -1,4 +1,4 @@
-module Data.Config exposing (originBaseUrl, showButtonForAddingPurgeRequestStep)
+module Data.Config exposing (demoMode, originBaseUrl, showButtonForAddingPurgeRequestStep)
 
 
 originBaseUrl : String
@@ -8,4 +8,9 @@ originBaseUrl =
 
 showButtonForAddingPurgeRequestStep : Bool
 showButtonForAddingPurgeRequestStep =
+    False
+
+
+demoMode : Bool
+demoMode =
     False

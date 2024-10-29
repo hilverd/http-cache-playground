@@ -1739,6 +1739,54 @@ viewSleepForSeconds enabled stepIndex seconds =
         ]
 
 
+viewExamples : Bool -> List ( Html Msg, String ) -> Html Msg
+viewExamples alwaysExpanded examples =
+    if alwaysExpanded then
+        div
+            [ class "mt-6" ]
+            [ h2
+                [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" ]
+                [ text "Examples" ]
+            , ul
+                [ class "mt-4 space-y-1.5" ]
+                (examples
+                    |> List.map
+                        (\( title, link ) ->
+                            a
+                                [ class "text-gray-700 underline"
+                                , href link
+                                ]
+                                [ title ]
+                        )
+                    |> List.intersperse (span [ class "mx-2.5" ] [ text "·" ])
+                )
+            ]
+
+    else
+        details
+            [ class "mt-6" ]
+            [ summary
+                [ class "select-none" ]
+                [ span
+                    [ class "ml-2 text-lg leading-6 font-medium text-gray-900" ]
+                    [ text "Examples" ]
+                ]
+            , ul
+                [ class "mt-4 space-y-1.5" ]
+                (examples
+                    |> List.map
+                        (\( title, link ) ->
+                            a
+                                [ class "text-gray-700 underline"
+                                , href link
+                                ]
+                                [ title ]
+                        )
+                    |> List.intersperse (span [ class "mx-2.5" ] [ text "·" ])
+                )
+            ]
+
+
 viewScenarioForm : Model -> Html Msg
 viewScenarioForm model =
     let
@@ -1786,28 +1834,7 @@ viewScenarioForm model =
                     , text " path parameter."
                     ]
         , Extras.Html.showUnless doingAnExercise <|
-            details
-                [ class "mt-6" ]
-                [ summary
-                    [ class "select-none" ]
-                    [ span
-                        [ class "ml-2 text-lg leading-6 font-medium text-gray-900" ]
-                        [ text "Examples" ]
-                    ]
-                , ul
-                    [ class "mt-4 space-y-1.5" ]
-                    (ScenarioForm.exampleLinksByTitle
-                        |> List.map
-                            (\( title, link ) ->
-                                a
-                                    [ class "text-gray-700 underline"
-                                    , href link
-                                    ]
-                                    [ title ]
-                            )
-                        |> List.intersperse (span [ class "mx-2.5" ] [ text "·" ])
-                    )
-                ]
+            viewExamples Config.demoMode ScenarioForm.exampleLinksByTitle
         , Extras.Html.showIf doingAnExercise <| viewOriginSettingsForExercise model
         , Extras.Html.showUnless doingAnExercise <|
             div
