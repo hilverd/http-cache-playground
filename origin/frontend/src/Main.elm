@@ -138,7 +138,6 @@ type Msg
     | UpdateCustomOriginResponseHeaderKey Int String
     | UpdateCustomOriginResponseHeaderValue Int String
     | RunScenarioFromForm
-    | RunScenarioAsExerciseFromForm SequenceDiagramVisibility
     | ResetScenarioForm
     | NewUuid String
     | GetInteractions Time.Posix
@@ -218,13 +217,6 @@ update msg model =
                 isExercise =
                     ScenarioForm.isExercise scenarioForm
 
-                sequenceDiagramVisibility =
-                    if isExercise then
-                        FinalInteractionsConcealedForExercise
-
-                    else
-                        CompletelyRevealed
-
                 model0 =
                     if isExercise then
                         defaultModel model.key
@@ -232,13 +224,10 @@ update msg model =
                     else
                         model
             in
-            ( { model0
-                | scenarioForm = scenarioForm
-                , sequenceDiagramVisibility = sequenceDiagramVisibility
-              }
+            ( { model0 | scenarioForm = scenarioForm }
             , if ScenarioForm.autoRun scenarioForm then
-                Process.sleep 500
-                    |> Task.perform (always <| RunScenarioAsExerciseFromForm sequenceDiagramVisibility)
+                Process.sleep 0
+                    |> Task.perform (always RunScenarioFromForm)
 
               else
                 Cmd.none
@@ -478,23 +467,26 @@ update msg model =
                 model
 
         RunScenarioFromForm ->
-            ( { model
-                | scenarioIsRunning = True
-                , interactions = Ok Interactions.empty
-                , formWasModifiedSinceScenarioRun = False
-              }
-            , Random.generate NewUuid Uuid.uuidStringGenerator
-            )
+            let
+                sequenceDiagramVisibility =
+                    if ScenarioForm.isExercise model.scenarioForm then
+                        FinalInteractionsConcealedForExercise
 
-        RunScenarioAsExerciseFromForm sequenceDiagramVisibility ->
-            ( { model
-                | scenarioIsRunning = True
-                , interactions = Ok Interactions.empty
-                , formWasModifiedSinceScenarioRun = False
-                , sequenceDiagramVisibility = sequenceDiagramVisibility
-              }
-            , Random.generate NewUuid Uuid.uuidStringGenerator
-            )
+                    else
+                        CompletelyRevealed
+            in
+            if Config.demoMode then
+                ( model, Cmd.none )
+
+            else
+                ( { model
+                    | scenarioIsRunning = True
+                    , interactions = Ok Interactions.empty
+                    , formWasModifiedSinceScenarioRun = False
+                    , sequenceDiagramVisibility = sequenceDiagramVisibility
+                  }
+                , Random.generate NewUuid Uuid.uuidStringGenerator
+                )
 
         NewUuid uuid ->
             let
