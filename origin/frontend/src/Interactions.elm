@@ -351,7 +351,16 @@ viewClientSleepingForSeconds stepIndex seconds =
                     [ Svg.Attributes.class "w-5 h-5 -ml-3" ]
                 , span
                     [ class "ml-3" ]
-                    [ text <| "Sleep " ++ Language.seconds seconds ]
+                    [ text <| "Sleep "
+                    , span
+                        [ class "hidden sm:inline" ]
+                        [ text <| Language.seconds seconds ]
+                    , span
+                        [ class "sm:hidden" ]
+                        [ text <| String.fromInt seconds
+                        , text "s"
+                        ]
+                    ]
                 ]
             ]
         , div
@@ -372,19 +381,28 @@ viewOriginSleepingForSeconds seconds =
             [ class "border-l-2 border-l-gray-300 col-span-3" ]
             []
         , div
-            [ class "col-span-3 border-l-2 border-l-gray-300 p-2" ]
-            []
-        , div
-            [ class "border-l-2 border-l-gray-300 pt-4" ]
+            [ class "col-span-3 border-l-2 border-l-gray-300 p-2 text-right" ]
             [ span
-                [ class "-ml-2 my-2 inline-flex items-center text-gray-700 z-10" ]
-                [ Icons.hourglass
-                    [ Svg.Attributes.class "w-5 h-5 -ml-1 shrink-0" ]
-                , span
-                    [ class "ml-3" ]
-                    [ text <| "Sleep " ++ Language.seconds seconds ]
+                [ class "-mr-5 my-2 inline-flex items-center text-gray-700" ]
+                [ span
+                    [ class "mr-3" ]
+                    [ text <| "Sleep "
+                    , span
+                        [ class "hidden sm:inline" ]
+                        [ text <| Language.seconds seconds ]
+                    , span
+                        [ class "sm:hidden" ]
+                        [ text <| String.fromInt seconds
+                        , text "s"
+                        ]
+                    ]
+                , Icons.hourglass
+                    [ Svg.Attributes.class "w-5 h-5 -ml-1 shrink-0 z-10" ]
                 ]
             ]
+        , div
+            [ class "border-l-2 border-l-gray-300 pt-4" ]
+            []
         ]
 
 
