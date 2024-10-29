@@ -22,6 +22,7 @@ module ScenarioForm exposing
     , deleteGetRequestHeader
     , deleteOriginHeader
     , empty
+    , exampleInteractionsByRelativeUrl
     , exampleLinksByTitle
     , fromUrl
     , hasCustomOriginHeaderWithKey
@@ -51,11 +52,13 @@ module ScenarioForm exposing
     )
 
 import Array exposing (Array)
+import Codec
 import Data.CacheControlResponseDirectives as CacheControlResponseDirectives exposing (CacheControlResponseDirectives)
 import Data.Scenario as Scenario exposing (Action(..), Scenario)
 import Dict exposing (Dict)
 import Extras.Array
 import Html exposing (Html, text)
+import Interactions exposing (Interactions)
 import QueryParameters exposing (QueryParameters)
 import Url exposing (Url)
 
@@ -1567,8 +1570,43 @@ exampleStaleResponsesAreRevalidatedByDefault =
         )
 
 
+examples : List ScenarioForm
+examples =
+    [ example200CacheableByDefault
+    , exampleStaleResponsesAreRevalidatedByDefault
+    ]
+
+
 exampleLinksByTitle : List ( Html msg, String )
 exampleLinksByTitle =
-    [ ( text "200 OK responses are cacheable by default", toRelativeUrl example200CacheableByDefault )
-    , ( text "Stale responses are revalidated by default", toRelativeUrl exampleStaleResponsesAreRevalidatedByDefault )
-    ]
+    examples
+        |> List.filterMap
+            (\example ->
+                case mode example of
+                    Example { title } ->
+                        Just ( text title, toRelativeUrl example )
+
+                    _ ->
+                        Nothing
+            )
+
+
+exampleInteractionsByRelativeUrl : Dict String Interactions
+exampleInteractionsByRelativeUrl =
+    examples
+        |> List.filterMap
+            (\example ->
+                case mode example of
+                    Example { interactionsJson } ->
+                        interactionsJson
+                            |> Codec.decodeString Interactions.codec
+                            |> Result.toMaybe
+                            |> Maybe.map
+                                (\interactions1 ->
+                                    ( toRelativeUrl example, interactions1 )
+                                )
+
+                    _ ->
+                        Nothing
+            )
+        |> Dict.fromList

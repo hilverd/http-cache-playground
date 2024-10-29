@@ -476,7 +476,19 @@ update msg model =
                         CompletelyRevealed
             in
             if Config.demoMode then
-                ( model, Cmd.none )
+                ScenarioForm.exampleInteractionsByRelativeUrl
+                    |> Dict.get (ScenarioForm.toRelativeUrl model.scenarioForm)
+                    |> Maybe.map
+                        (\interactions ->
+                            { model
+                                | scenarioIsRunning = False
+                                , interactions = Ok Interactions.empty
+                                , formWasModifiedSinceScenarioRun = False
+                                , sequenceDiagramVisibility = sequenceDiagramVisibility
+                            }
+                                |> update (GotInteractions <| Ok interactions)
+                        )
+                    |> Maybe.withDefault ( model, Cmd.none )
 
             else
                 ( { model
