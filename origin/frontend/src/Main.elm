@@ -2144,6 +2144,15 @@ view model =
 
                 ScenarioForm.Normal ->
                     overallTitle
+
+        scenarioCannotBeRunBecauseOfDemoMode : Bool
+        scenarioCannotBeRunBecauseOfDemoMode =
+            Config.demoMode
+                && not
+                    (Dict.member
+                        (ScenarioForm.toRelativeUrl model.scenarioForm)
+                        ScenarioForm.exampleInteractionsByRelativeUrl
+                    )
     in
     { title = pageTitle "Web Cache Playground"
     , body =
@@ -2202,6 +2211,24 @@ view model =
             , main_
                 [ class "mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8" ]
                 [ viewScenarioForm model
+                , Extras.Html.showIf
+                    ((model.scenarioForm |> ScenarioForm.clientActions |> Array.isEmpty |> not)
+                        && scenarioCannotBeRunBecauseOfDemoMode
+                    )
+                  <|
+                    div
+                        [ class "mt-8 max-w-prose" ]
+                        [ text "⚠ This scenario cannot be run on this demo website. Please either try one of the examples at the top of this page, or "
+                        , a
+                            [ class "underline"
+                            , href "https://github.com/hilverd/web-cache-playground?tab=readme-ov-file#getting-started"
+                            , Html.Attributes.target "_blank"
+                            , Html.Attributes.rel "noopener noreferrer"
+                            ]
+                            [ text "run the application locally"
+                            ]
+                        , text "."
+                        ]
                 , Extras.Html.showUnless
                     (model.sequenceDiagramVisibility == FinalInteractionsConcealedForExercise || model.sequenceDiagramVisibility == FinalInteractionsRevealedForExercise)
                   <|
@@ -2213,6 +2240,7 @@ view model =
                             , Html.Attributes.disabled <|
                                 (model.scenarioIsRunning
                                     || (model.scenarioForm |> ScenarioForm.clientActions |> Array.isEmpty)
+                                    || scenarioCannotBeRunBecauseOfDemoMode
                                 )
                             ]
                             [ Icons.play
