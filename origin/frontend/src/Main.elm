@@ -102,6 +102,9 @@ defaultModel key =
 port scrollToBottomOfSequenceDiagram : () -> Cmd msg
 
 
+port scrollToClientSettings : () -> Cmd msg
+
+
 
 -- UPDATE
 
@@ -689,9 +692,7 @@ update msg model =
                    )
 
         ScrollClientSettingsIntoView ->
-            ( model
-            , Extras.BrowserDom.scrollElementIntoView NoOp ElementIds.clientSettings
-            )
+            ( model, scrollToClientSettings () )
 
 
 updateScenarioForm : (ScenarioForm -> ScenarioForm) -> List (Cmd Msg) -> Model -> ( Model, Cmd Msg )
@@ -1791,6 +1792,7 @@ viewExamples alwaysExpanded examples =
                             a
                                 [ class "text-gray-700 underline"
                                 , href link
+                                , Html.Events.onClick ScrollClientSettingsIntoView
                                 ]
                                 [ title ]
                         )
