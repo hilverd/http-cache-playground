@@ -15,6 +15,6 @@ scrollElementIntoView : msg -> String -> Cmd msg
 scrollElementIntoView noOpMsg id =
     id
         |> Dom.getElement
-        |> Task.andThen (\element -> Dom.setViewport 0 element.element.y)
+        |> Task.andThen (\element -> Dom.setViewport 0 <| element.element.y - 10)
         |> Task.onError (always <| Task.succeed ())
         |> Task.attempt (always noOpMsg)
