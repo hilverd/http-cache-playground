@@ -225,7 +225,7 @@ update msg model =
                         model
             in
             ( { model0 | scenarioForm = scenarioForm }
-            , if ScenarioForm.autoRun scenarioForm then
+            , if isExercise then
                 Process.sleep 0
                     |> Task.perform (always RunScenarioFromForm)
 
@@ -697,9 +697,7 @@ updateScenarioForm f commands model =
     else
         let
             updatedScenarioForm =
-                model.scenarioForm
-                    |> f
-                    |> ScenarioForm.updateAutoRun False
+                f model.scenarioForm
         in
         ( { model
             | scenarioForm = updatedScenarioForm
