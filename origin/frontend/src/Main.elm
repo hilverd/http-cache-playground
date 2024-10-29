@@ -23,7 +23,7 @@ import Extras.Html
 import Extras.HtmlAttribute
 import Extras.HtmlEvents
 import Html exposing (..)
-import Html.Attributes exposing (checked, class, disabled, href, id, name, type_)
+import Html.Attributes exposing (checked, class, disabled, href, name, type_)
 import Html.Events
 import Http
 import Icons
@@ -186,6 +186,7 @@ type Msg
     | SelectExerciseAnswer Int
     | SubmitExerciseForm
     | LeaveExercise
+    | ScrollClientSettingsIntoView
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -683,6 +684,11 @@ update msg model =
                         , Cmd.batch [ cmd_, Extras.BrowserDom.scrollToTop NoOp ]
                         )
                    )
+
+        ScrollClientSettingsIntoView ->
+            ( model
+            , Extras.BrowserDom.scrollElementIntoView NoOp ElementIds.clientSettings
+            )
 
 
 updateScenarioForm : (ScenarioForm -> ScenarioForm) -> List (Cmd Msg) -> Model -> ( Model, Cmd Msg )
@@ -1757,6 +1763,7 @@ viewExamples alwaysExpanded examples =
                             a
                                 [ class "text-gray-700 underline"
                                 , href link
+                                , Html.Events.onClick ScrollClientSettingsIntoView
                                 ]
                                 [ title ]
                         )
@@ -1844,7 +1851,9 @@ viewScenarioForm model =
                 [ div
                     [ class "space-y-8" ]
                     [ h2
-                        [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" ]
+                        [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
+                        , Html.Attributes.id ElementIds.clientSettings
+                        ]
                         [ text "Client" ]
                     , Extras.Html.showIf
                         (model.scenarioForm

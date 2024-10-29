@@ -1,4 +1,4 @@
-module ElementIds exposing (getRequestHeaderKey, getRequestHeaderValue, originCacheControlCustomDirectives, originCacheControlMaxAge, originCacheControlNoStore, originCacheControlPrivate, originCacheControlSMaxAge, originCacheControlStaleWhileRevalidate, originCustomHeaderKey, originCustomHeaderValue)
+module ElementIds exposing (clientSettings, getRequestHeaderKey, getRequestHeaderValue, originCacheControlCustomDirectives, originCacheControlMaxAge, originCacheControlNoStore, originCacheControlPrivate, originCacheControlSMaxAge, originCacheControlStaleWhileRevalidate, originCustomHeaderKey, originCustomHeaderValue)
 
 
 getRequestHeaderKey : Int -> Int -> String
@@ -49,3 +49,8 @@ originCacheControlStaleWhileRevalidate index =
 originCacheControlCustomDirectives : Int -> String
 originCacheControlCustomDirectives index =
     "origin-cache-control-custom-directives-" ++ String.fromInt index
+
+
+clientSettings : String
+clientSettings =
+    "client-settings"
