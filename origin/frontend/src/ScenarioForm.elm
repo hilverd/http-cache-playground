@@ -1156,7 +1156,164 @@ example200CacheableByDefault =
         []
         (Example
             { title = "200 OK responses are cacheable by default"
-            , interactionsJson = "TODO"
+            , interactionsJson = """
+[
+    {
+        "tag": "ClientToVarnish",
+        "args": [
+            0,
+            {
+                "method": "GET",
+                "path": "/ids/8b72bbbc-eb7a-4804-8d72-39bf2519f992",
+                "headers": []
+            }
+        ]
+    },
+    {
+        "tag": "VarnishToOrigin",
+        "args": [
+            {
+                "path": "/ids/8b72bbbc-eb7a-4804-8d72-39bf2519f992",
+                "headers": [
+                    [
+                        "accept",
+                        "application/json, text/plain, */*"
+                    ],
+                    [
+                        "user-agent",
+                        "axios/1.7.7"
+                    ],
+                    [
+                        "host",
+                        "varnish"
+                    ],
+                    [
+                        "accept-encoding",
+                        "gzip"
+                    ],
+                    [
+                        "x-varnish",
+                        "65542"
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "tag": "OriginToVarnish",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [],
+                "body": "1730194626"
+            }
+        ]
+    },
+    {
+        "tag": "VarnishToClient",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [
+                    [
+                        "accept-ranges",
+                        "bytes"
+                    ],
+                    [
+                        "age",
+                        "0"
+                    ],
+                    [
+                        "connection",
+                        "keep-alive"
+                    ],
+                    [
+                        "content-length",
+                        "10"
+                    ],
+                    [
+                        "content-type",
+                        "text/html; charset=utf-8"
+                    ],
+                    [
+                        "date",
+                        "Tue, 29 Oct 2024 09:37:06 GMT"
+                    ],
+                    [
+                        "via",
+                        "1.1 varnish (Varnish/6.0), 1.1 varnish (Varnish/6.0)"
+                    ],
+                    [
+                        "x-varnish",
+                        "65541, 32788"
+                    ]
+                ],
+                "body": "1730194626"
+            }
+        ]
+    },
+    {
+        "tag": "ClientSleepingForSeconds",
+        "args": [
+            1,
+            1
+        ]
+    },
+    {
+        "tag": "ClientToVarnish",
+        "args": [
+            2,
+            {
+                "method": "GET",
+                "path": "/ids/8b72bbbc-eb7a-4804-8d72-39bf2519f992",
+                "headers": []
+            }
+        ]
+    },
+    {
+        "tag": "VarnishToClient",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [
+                    [
+                        "accept-ranges",
+                        "bytes"
+                    ],
+                    [
+                        "age",
+                        "1"
+                    ],
+                    [
+                        "connection",
+                        "keep-alive"
+                    ],
+                    [
+                        "content-length",
+                        "10"
+                    ],
+                    [
+                        "content-type",
+                        "text/html; charset=utf-8"
+                    ],
+                    [
+                        "date",
+                        "Tue, 29 Oct 2024 09:37:06 GMT"
+                    ],
+                    [
+                        "via",
+                        "1.1 varnish (Varnish/6.0), 1.1 varnish (Varnish/6.0)"
+                    ],
+                    [
+                        "x-varnish",
+                        "65541, 33 32789"
+                    ]
+                ],
+                "body": "1730194626"
+            }
+        ]
+    }
+]"""
             }
         )
 
@@ -1178,7 +1335,234 @@ exampleStaleResponsesAreRevalidatedByDefault =
         ]
         (Example
             { title = "Stale responses are revalidated by default"
-            , interactionsJson = "TODO"
+            , interactionsJson = """
+[
+    {
+        "tag": "ClientToVarnish",
+        "args": [
+            0,
+            {
+                "method": "GET",
+                "path": "/ids/7be02afd-d560-4e3d-b63f-8542b269772c",
+                "headers": []
+            }
+        ]
+    },
+    {
+        "tag": "VarnishToOrigin",
+        "args": [
+            {
+                "path": "/ids/7be02afd-d560-4e3d-b63f-8542b269772c",
+                "headers": [
+                    [
+                        "accept",
+                        "application/json, text/plain, */*"
+                    ],
+                    [
+                        "user-agent",
+                        "axios/1.7.7"
+                    ],
+                    [
+                        "host",
+                        "varnish"
+                    ],
+                    [
+                        "accept-encoding",
+                        "gzip"
+                    ],
+                    [
+                        "x-varnish",
+                        "65545"
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "tag": "OriginSleepingForSeconds",
+        "args": [
+            2
+        ]
+    },
+    {
+        "tag": "OriginToVarnish",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [
+                    [
+                        "cache-control",
+                        "max-age=1"
+                    ]
+                ],
+                "body": "1730194767"
+            }
+        ]
+    },
+    {
+        "tag": "VarnishToClient",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [
+                    [
+                        "accept-ranges",
+                        "bytes"
+                    ],
+                    [
+                        "age",
+                        "0"
+                    ],
+                    [
+                        "cache-control",
+                        "max-age=1"
+                    ],
+                    [
+                        "connection",
+                        "keep-alive"
+                    ],
+                    [
+                        "content-length",
+                        "10"
+                    ],
+                    [
+                        "content-type",
+                        "text/html; charset=utf-8"
+                    ],
+                    [
+                        "date",
+                        "Tue, 29 Oct 2024 09:39:29 GMT"
+                    ],
+                    [
+                        "via",
+                        "1.1 varnish (Varnish/6.0), 1.1 varnish (Varnish/6.0)"
+                    ],
+                    [
+                        "x-varnish",
+                        "65544, 32803"
+                    ]
+                ],
+                "body": "1730194767"
+            }
+        ]
+    },
+    {
+        "tag": "ClientSleepingForSeconds",
+        "args": [
+            1,
+            1
+        ]
+    },
+    {
+        "tag": "ClientToVarnish",
+        "args": [
+            2,
+            {
+                "method": "GET",
+                "path": "/ids/7be02afd-d560-4e3d-b63f-8542b269772c",
+                "headers": []
+            }
+        ]
+    },
+    {
+        "tag": "VarnishToOrigin",
+        "args": [
+            {
+                "path": "/ids/7be02afd-d560-4e3d-b63f-8542b269772c",
+                "headers": [
+                    [
+                        "accept",
+                        "application/json, text/plain, */*"
+                    ],
+                    [
+                        "user-agent",
+                        "axios/1.7.7"
+                    ],
+                    [
+                        "host",
+                        "varnish"
+                    ],
+                    [
+                        "accept-encoding",
+                        "gzip"
+                    ],
+                    [
+                        "x-varnish",
+                        "46"
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "tag": "OriginSleepingForSeconds",
+        "args": [
+            2
+        ]
+    },
+    {
+        "tag": "VarnishToClient",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [
+                    [
+                        "accept-ranges",
+                        "bytes"
+                    ],
+                    [
+                        "age",
+                        "1"
+                    ],
+                    [
+                        "cache-control",
+                        "max-age=1"
+                    ],
+                    [
+                        "connection",
+                        "keep-alive"
+                    ],
+                    [
+                        "content-length",
+                        "10"
+                    ],
+                    [
+                        "content-type",
+                        "text/html; charset=utf-8"
+                    ],
+                    [
+                        "date",
+                        "Tue, 29 Oct 2024 09:39:29 GMT"
+                    ],
+                    [
+                        "via",
+                        "1.1 varnish (Varnish/6.0), 1.1 varnish (Varnish/6.0)"
+                    ],
+                    [
+                        "x-varnish",
+                        "65544, 98309 32804"
+                    ]
+                ],
+                "body": "1730194767"
+            }
+        ]
+    },
+    {
+        "tag": "OriginToVarnish",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [
+                    [
+                        "cache-control",
+                        "max-age=1"
+                    ]
+                ],
+                "body": "1730194770"
+            }
+        ]
+    }
+]"""
             }
         )
 
