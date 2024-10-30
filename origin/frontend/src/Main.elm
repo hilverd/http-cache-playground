@@ -2218,7 +2218,7 @@ view model =
                   <|
                     div
                         [ class "mt-8 max-w-prose" ]
-                        [ text "⚠ This scenario cannot be run on this demo website. Please either try one of the examples at the top of this page, or "
+                        [ text "⚠ Cannot run this scenario on this demo website. Please either try one of the examples at the top of this page, or "
                         , a
                             [ class "underline"
                             , href "https://github.com/hilverd/web-cache-playground?tab=readme-ov-file#getting-started"
