@@ -64,13 +64,23 @@ main =
 -- MODEL
 
 
+type ScenarioRunState
+    = NothingWasEverRun
+    | CurrentlyRunning
+        { forRelativeUrl : String
+        , interactions : Result Http.Error Interactions
+        }
+    | Finished
+        { forRelativeUrl : String
+        , interactions : Result Http.Error Interactions
+        }
+
+
 type alias Model =
     { key : Key
     , id : Maybe String
     , scenarioForm : ScenarioForm
-    , scenarioIsRunning : Bool
-    , interactions : Result Http.Error Interactions
-    , formWasModifiedSinceScenarioRun : Bool
+    , scenarioRunState : ScenarioRunState
     , showAllHeaders : Bool
     , sequenceDiagramVisibility : SequenceDiagramVisibility
     }
@@ -87,12 +97,53 @@ defaultModel key =
     { key = key
     , id = Nothing
     , scenarioForm = ScenarioForm.empty
-    , scenarioIsRunning = False
-    , interactions = Ok Interactions.empty
-    , formWasModifiedSinceScenarioRun = False
+    , scenarioRunState = NothingWasEverRun
     , showAllHeaders = False
     , sequenceDiagramVisibility = CompletelyRevealed
     }
+
+
+scenarioIsRunning : Model -> Bool
+scenarioIsRunning model =
+    case model.scenarioRunState of
+        CurrentlyRunning _ ->
+            True
+
+        _ ->
+            False
+
+
+formWasModifiedSinceScenarioRun : Model -> Bool
+formWasModifiedSinceScenarioRun model =
+    case model.scenarioRunState of
+        NothingWasEverRun ->
+            model.scenarioForm /= ScenarioForm.empty
+
+        CurrentlyRunning { forRelativeUrl } ->
+            ScenarioForm.toRelativeUrl model.scenarioForm /= forRelativeUrl
+
+        Finished { forRelativeUrl } ->
+            ScenarioForm.toRelativeUrl model.scenarioForm /= forRelativeUrl
+
+
+scenarioHasFinishedAndFormWasNotModifiedSince : Model -> Bool
+scenarioHasFinishedAndFormWasNotModifiedSince model =
+    case model.scenarioRunState of
+        Finished { forRelativeUrl } ->
+            ScenarioForm.toRelativeUrl model.scenarioForm == forRelativeUrl
+
+        _ ->
+            False
+
+
+scenarioHasFinishedAndFormWasModifiedSince : Model -> Bool
+scenarioHasFinishedAndFormWasModifiedSince model =
+    case model.scenarioRunState of
+        Finished { forRelativeUrl } ->
+            ScenarioForm.toRelativeUrl model.scenarioForm /= forRelativeUrl
+
+        _ ->
+            False
 
 
 
@@ -148,7 +199,7 @@ type Msg
     | NewUuid String
     | GetInteractions Time.Posix
     | GetInteractionsAfterScenarioHasFinished
-    | GotInteractions (Result Http.Error Interactions)
+    | GotInteractions Bool (Result Http.Error Interactions)
     | ScrollToBottomOfSequenceDiagram
     | RunScenario Scenario
     | RecordedSleepForSeconds Scenario Int (Result Http.Error ())
@@ -232,10 +283,7 @@ update msg model =
                     else
                         model
             in
-            ( { model0
-                | scenarioForm = scenarioForm
-                , formWasModifiedSinceScenarioRun = not model.scenarioIsRunning
-              }
+            ( { model0 | scenarioForm = scenarioForm }
             , if isExercise then
                 Process.sleep 0
                     |> Task.perform (always RunScenarioFromForm)
@@ -479,6 +527,9 @@ update msg model =
 
         RunScenarioFromForm ->
             let
+                relativeUrlForScenarioForm =
+                    ScenarioForm.toRelativeUrl model.scenarioForm
+
                 sequenceDiagramVisibility =
                     if ScenarioForm.isExercise model.scenarioForm then
                         FinalInteractionsConcealedForExercise
@@ -488,24 +539,28 @@ update msg model =
             in
             if Config.demoMode then
                 ScenarioForm.exampleInteractionsByRelativeUrl
-                    |> Dict.get (ScenarioForm.toRelativeUrl model.scenarioForm)
+                    |> Dict.get relativeUrlForScenarioForm
                     |> Maybe.map
                         (\interactions ->
                             { model
-                                | scenarioIsRunning = False
-                                , interactions = Ok Interactions.empty
-                                , formWasModifiedSinceScenarioRun = False
+                                | scenarioRunState =
+                                    CurrentlyRunning
+                                        { forRelativeUrl = relativeUrlForScenarioForm
+                                        , interactions = Ok Interactions.empty
+                                        }
                                 , sequenceDiagramVisibility = sequenceDiagramVisibility
                             }
-                                |> update (GotInteractions <| Ok interactions)
+                                |> update (GotInteractions True <| Ok interactions)
                         )
                     |> Maybe.withDefault ( model, Cmd.none )
 
             else
                 ( { model
-                    | scenarioIsRunning = True
-                    , interactions = Ok Interactions.empty
-                    , formWasModifiedSinceScenarioRun = False
+                    | scenarioRunState =
+                        CurrentlyRunning
+                            { forRelativeUrl = relativeUrlForScenarioForm
+                            , interactions = Ok Interactions.empty
+                            }
                     , sequenceDiagramVisibility = sequenceDiagramVisibility
                   }
                 , Random.generate NewUuid Uuid.uuidStringGenerator
@@ -524,19 +579,36 @@ update msg model =
         GetInteractions _ ->
             ( model
             , model.id
-                |> Maybe.map getInteractions
+                |> Maybe.map (getInteractions False)
                 |> Maybe.withDefault Cmd.none
             )
 
         GetInteractionsAfterScenarioHasFinished ->
-            ( { model | scenarioIsRunning = False }
+            ( model
             , model.id
-                |> Maybe.map getInteractions
+                |> Maybe.map (getInteractions True)
                 |> Maybe.withDefault Cmd.none
             )
 
-        GotInteractions result ->
-            ( { model | interactions = result }
+        GotInteractions final result ->
+            ( { model
+                | scenarioRunState =
+                    if final then
+                        case model.scenarioRunState of
+                            CurrentlyRunning { forRelativeUrl } ->
+                                Finished { forRelativeUrl = forRelativeUrl, interactions = result }
+
+                            _ ->
+                                model.scenarioRunState
+
+                    else
+                        case model.scenarioRunState of
+                            CurrentlyRunning { forRelativeUrl } ->
+                                CurrentlyRunning { forRelativeUrl = forRelativeUrl, interactions = result }
+
+                            _ ->
+                                model.scenarioRunState
+              }
             , Process.sleep 100 |> Task.perform (always ScrollToBottomOfSequenceDiagram)
             )
 
@@ -549,7 +621,7 @@ update msg model =
         RecordedSleepForSeconds restOfScenario seconds _ ->
             ( model
             , Cmd.batch
-                [ getInteractions <| Scenario.id restOfScenario
+                [ getInteractions False <| Scenario.id restOfScenario
                 , seconds
                     |> toFloat
                     |> (*) 1000
@@ -561,7 +633,7 @@ update msg model =
         RecordedMakeGetRequest restOfScenario { path, headers, desiredResponseHeaders, respondSlowly, auto304 } _ ->
             ( model
             , Cmd.batch
-                [ getInteractions <| Scenario.id restOfScenario
+                [ getInteractions False <| Scenario.id restOfScenario
                 , makeRequest
                     (GotResponseToGetRequest restOfScenario)
                     { method = "GET"
@@ -577,7 +649,7 @@ update msg model =
         GotResponseToGetRequest restOfScenario result ->
             ( model
             , Cmd.batch
-                [ getInteractions <| Scenario.id restOfScenario
+                [ getInteractions False <| Scenario.id restOfScenario
                 , result
                     |> Result.map
                         (\( metadata, responseBody ) ->
@@ -590,7 +662,7 @@ update msg model =
         RecordedResponseToGetRequest restOfScenario _ ->
             ( model
             , Cmd.batch
-                [ getInteractions <| Scenario.id restOfScenario
+                [ getInteractions False <| Scenario.id restOfScenario
                 , runScenario restOfScenario
                 ]
             )
@@ -598,7 +670,7 @@ update msg model =
         RecordedMakePurgeRequest restOfScenario { path, desiredResponseHeaders, respondSlowly, auto304 } _ ->
             ( model
             , Cmd.batch
-                [ getInteractions <| Scenario.id restOfScenario
+                [ getInteractions False <| Scenario.id restOfScenario
                 , makeRequest
                     (GotResponseToPurgeRequest
                         restOfScenario
@@ -621,7 +693,7 @@ update msg model =
         GotResponseToPurgeRequest restOfScenario { path, desiredResponseHeaders, respondSlowly, auto304 } result ->
             ( model
             , Cmd.batch
-                [ getInteractions <| Scenario.id restOfScenario
+                [ getInteractions False <| Scenario.id restOfScenario
                 , result
                     |> Result.map
                         (\( metadata, responseBody ) ->
@@ -642,7 +714,7 @@ update msg model =
         RecordedResponseToPurgeRequest restOfScenario { path, desiredResponseHeaders, respondSlowly, auto304 } _ ->
             ( model
             , Cmd.batch
-                [ getInteractions <| Scenario.id restOfScenario
+                [ getInteractions False <| Scenario.id restOfScenario
                 , makeRequest
                     (GotResponseToSanitisedPurgeRequest restOfScenario)
                     { method = "POST"
@@ -716,10 +788,7 @@ updateScenarioForm f commands model =
             updatedScenarioForm =
                 f model.scenarioForm
         in
-        ( { model
-            | scenarioForm = updatedScenarioForm
-            , formWasModifiedSinceScenarioRun = True
-          }
+        ( { model | scenarioForm = updatedScenarioForm }
         , Cmd.batch
             ((Process.sleep 1000
                 |> Task.perform
@@ -737,8 +806,8 @@ originUrl =
     Url.Builder.crossOrigin Config.originBaseUrl
 
 
-getInteractions : String -> Cmd Msg
-getInteractions id =
+getInteractions : Bool -> String -> Cmd Msg
+getInteractions final id =
     let
         url =
             originUrl
@@ -747,7 +816,7 @@ getInteractions id =
     in
     Http.get
         { url = url
-        , expect = Http.expectJson GotInteractions (Codec.decoder Interactions.codec)
+        , expect = Http.expectJson (GotInteractions final) (Codec.decoder Interactions.codec)
         }
 
 
@@ -1865,7 +1934,7 @@ viewScenarioForm model =
                             |> Array.toList
                             |> List.indexedMap
                                 (\index action ->
-                                    viewClientAction (not model.scenarioIsRunning) index action
+                                    viewClientAction (not <| scenarioIsRunning model) index action
                                 )
                         )
                     , div
@@ -1873,7 +1942,7 @@ viewScenarioForm model =
                         [ button
                             [ class "btn mr-4 mb-4"
                             , Html.Attributes.disabled <|
-                                ((model.scenarioIsRunning
+                                ((scenarioIsRunning model
                                     || ScenarioForm.hasTenClientActions model.scenarioForm
                                  )
                                     && model.sequenceDiagramVisibility
@@ -1887,7 +1956,7 @@ viewScenarioForm model =
                         , button
                             [ class "btn mr-4 mb-4"
                             , Html.Attributes.disabled <|
-                                (model.scenarioIsRunning
+                                (scenarioIsRunning model
                                     || (Array.isEmpty <| ScenarioForm.clientActions model.scenarioForm)
                                     || ScenarioForm.hasTenClientActions model.scenarioForm
                                 )
@@ -1900,7 +1969,7 @@ viewScenarioForm model =
                             [ class "btn"
                             , Extras.HtmlAttribute.showUnless Config.showButtonForAddingPurgeRequestStep <| class "hidden"
                             , Html.Attributes.disabled <|
-                                ((model.scenarioIsRunning
+                                ((scenarioIsRunning model
                                     || ScenarioForm.hasTenClientActions model.scenarioForm
                                  )
                                     && model.sequenceDiagramVisibility
@@ -1934,48 +2003,48 @@ viewScenarioForm model =
                             [ class "space-y-4" ]
                             (model.scenarioForm
                                 |> ScenarioForm.originHeaders
-                                |> List.indexedMap (viewOriginHeader <| not model.scenarioIsRunning)
+                                |> List.indexedMap (viewOriginHeader <| not <| scenarioIsRunning model)
                             )
                         , div
                             [ class "pt-4" ]
                             [ viewAddHeaderButton
                                 [ class "mb-3 mr-3" ]
-                                (not model.scenarioIsRunning
+                                (not (scenarioIsRunning model)
                                     && not (ScenarioForm.hasOriginCacheControlHeader model.scenarioForm)
                                 )
                                 "Add Cache-Control"
                                 AddOriginCacheControlHeader
                             , viewAddHeaderButton
                                 [ class "mb-3 mr-3" ]
-                                (not model.scenarioIsRunning
+                                (not (scenarioIsRunning model)
                                     && not (ScenarioForm.hasCustomOriginHeaderWithKey "ETag" model.scenarioForm)
                                 )
                                 "Add ETag"
                                 (AddOriginResponseHeaderWithKeyAndValue "ETag" "\"some-etag\"")
                             , viewAddHeaderButton
                                 [ class "mb-3 mr-3" ]
-                                (not model.scenarioIsRunning
+                                (not (scenarioIsRunning model)
                                     && not (ScenarioForm.hasCustomOriginHeaderWithKey "Last-Modified" model.scenarioForm)
                                 )
                                 "Add Last-Modified"
                                 (AddOriginResponseHeaderWithKeyAndValue "Last-Modified" "Wed, 21 Oct 2015 07:28:00 GMT")
                             , viewAddHeaderButton
                                 [ class "mb-3 mr-3" ]
-                                (not model.scenarioIsRunning
+                                (not (scenarioIsRunning model)
                                     && not (ScenarioForm.hasCustomOriginHeaderWithKey "Vary" model.scenarioForm)
                                 )
                                 "Add Vary"
                                 (AddOriginResponseHeaderWithKeyAndValue "Vary" "Accept-Encoding")
                             , viewAddHeaderButton
                                 [ class "mb-3 mr-3" ]
-                                (not model.scenarioIsRunning
+                                (not (scenarioIsRunning model)
                                     && not (ScenarioForm.hasCustomOriginHeaderWithKey "Set-Cookie" model.scenarioForm)
                                 )
                                 "Add Set-Cookie"
                                 (AddOriginResponseHeaderWithKeyAndValue "Set-Cookie" "foo=bar")
                             , viewAddHeaderButton
                                 [ class "mb-3" ]
-                                (not model.scenarioIsRunning)
+                                (not <| scenarioIsRunning model)
                                 "Add custom"
                                 AddCustomOriginResponseHeader
                             ]
@@ -2004,7 +2073,7 @@ viewScenarioForm model =
                                 ]
                                 [ input
                                     [ Html.Attributes.type_ "checkbox"
-                                    , Html.Attributes.disabled model.scenarioIsRunning
+                                    , Html.Attributes.disabled <| scenarioIsRunning model
                                     , Html.Attributes.class "toggle"
                                     , Html.Attributes.checked <| ScenarioForm.originReturn304ForConditionalRequests model.scenarioForm
                                     , Html.Attributes.id "toggle-origin-toggle-origin-return-304-for-conditional-requests"
@@ -2042,7 +2111,7 @@ viewScenarioForm model =
                                 ]
                                 [ input
                                     [ Html.Attributes.type_ "checkbox"
-                                    , Html.Attributes.disabled model.scenarioIsRunning
+                                    , Html.Attributes.disabled <| scenarioIsRunning model
                                     , Html.Attributes.class "toggle"
                                     , Html.Attributes.checked <| ScenarioForm.originWait2SecondsBeforeResponding model.scenarioForm
                                     , Html.Attributes.id "toggle-origin-wait-2-seconds-before-responding"
@@ -2134,8 +2203,13 @@ view model =
 
         userShouldSeeExerciseForm : Bool
         userShouldSeeExerciseForm =
-            not (model.interactions |> Result.map Interactions.isEmpty |> Result.withDefault True)
-                && not model.scenarioIsRunning
+            (case model.scenarioRunState of
+                Finished _ ->
+                    True
+
+                _ ->
+                    False
+            )
                 && (model.sequenceDiagramVisibility
                         == FinalInteractionsConcealedForExercise
                         || model.sequenceDiagramVisibility
@@ -2253,26 +2327,49 @@ view model =
                             [ class "btn btn-primary mr-4 text-white"
                             , Html.Events.onClick RunScenarioFromForm
                             , Html.Attributes.disabled <|
-                                (model.scenarioIsRunning
+                                (scenarioIsRunning model
                                     || (model.scenarioForm |> ScenarioForm.clientActions |> Array.isEmpty)
                                     || scenarioCannotBeRunBecauseOfDemoMode
+                                    || (Config.demoMode && scenarioHasFinishedAndFormWasNotModifiedSince model)
                                 )
                             ]
                             [ Icons.play
                                 [ Svg.Attributes.class "h-5 w-5" ]
-                            , text "Run scenario"
+                            , text
+                                (if not Config.demoMode && not scenarioCannotBeRunBecauseOfDemoMode && scenarioHasFinishedAndFormWasNotModifiedSince model then
+                                    "Rerun scenario"
+
+                                 else
+                                    "Run scenario"
+                                )
                             ]
                         , button
                             [ class "btn"
                             , Html.Events.onClick ResetScenarioForm
-                            , Html.Attributes.disabled <| (model.scenarioIsRunning || ScenarioForm.isEmpty model.scenarioForm)
+                            , Html.Attributes.disabled <| (scenarioIsRunning model || ScenarioForm.isEmpty model.scenarioForm)
                             ]
                             [ text "Reset form" ]
                         ]
                 , h2
-                    [ class "mt-8 text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" ]
-                    [ text "Interactions" ]
-                , model.interactions
+                    [ class "mt-8 text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
+                    , Extras.HtmlAttribute.showIf (scenarioHasFinishedAndFormWasModifiedSince model) <| class "opacity-50"
+                    ]
+                    [ text "Interactions"
+                    , Extras.Html.showIf (scenarioHasFinishedAndFormWasModifiedSince model) <| text " for previous scenario"
+                    ]
+                , let
+                    interactions_ =
+                        case model.scenarioRunState of
+                            CurrentlyRunning { interactions } ->
+                                interactions
+
+                            Finished { interactions } ->
+                                interactions
+
+                            _ ->
+                                Ok Interactions.empty
+                  in
+                  interactions_
                     |> Result.map
                         (\interactions ->
                             let
@@ -2286,12 +2383,12 @@ view model =
                                             interactions
                             in
                             div
-                                [ Extras.HtmlAttribute.showIf model.formWasModifiedSinceScenarioRun <| class "opacity-50"
-                                , Extras.HtmlAttribute.showIf model.scenarioIsRunning <| class "cursor-progress"
+                                [ Extras.HtmlAttribute.showIf (formWasModifiedSinceScenarioRun model) <| class "opacity-50"
+                                , Extras.HtmlAttribute.showIf (scenarioIsRunning model) <| class "cursor-progress"
                                 ]
                                 [ Extras.Html.showUnless (Interactions.isEmpty interactionsToShow || ScenarioForm.isExercise model.scenarioForm) <|
                                     Extras.Html.showMaybe
-                                        (\id ->
+                                        (\_ ->
                                             div
                                                 []
                                                 [ div
@@ -2321,7 +2418,7 @@ view model =
                                         )
                                         model.id
                                 , Interactions.view
-                                    { scenarioIsRunning = model.scenarioIsRunning
+                                    { scenarioIsRunning = scenarioIsRunning model
                                     , showAllHeaders = model.showAllHeaders
                                     , allRequestHeaderKeys = allRequestHeaderKeys
                                     , allResponseHeaderKeys = allResponseHeaderKeys
