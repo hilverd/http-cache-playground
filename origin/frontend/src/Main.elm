@@ -1829,15 +1829,10 @@ viewSleepForSeconds enabled stepIndex seconds =
 
 viewExamples : Bool -> List ( Html Msg, String ) -> Html Msg
 viewExamples alwaysExpanded examples =
-    if alwaysExpanded then
-        div
-            [ class "mt-6" ]
-            [ h2
-                [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
-                , Html.Attributes.id <| ElementIds.examples
-                ]
-                [ text "Examples" ]
-            , ul
+    let
+        examplesList : Html Msg
+        examplesList =
+            ul
                 [ class "mt-4 space-y-1.5" ]
                 (examples
                     |> List.map
@@ -1851,6 +1846,16 @@ viewExamples alwaysExpanded examples =
                         )
                     |> List.intersperse (span [ class "mx-2.5" ] [ text "·" ])
                 )
+    in
+    if alwaysExpanded then
+        div
+            [ class "mt-6" ]
+            [ h2
+                [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
+                , Html.Attributes.id <| ElementIds.examples
+                ]
+                [ text "Examples" ]
+            , examplesList
             ]
 
     else
@@ -1862,20 +1867,7 @@ viewExamples alwaysExpanded examples =
                     [ class "ml-2 text-lg leading-6 font-medium text-gray-900" ]
                     [ text "Examples" ]
                 ]
-            , ul
-                [ class "mt-4 space-y-1.5" ]
-                (examples
-                    |> List.map
-                        (\( title, link ) ->
-                            a
-                                [ class "text-gray-700 underline"
-                                , href link
-                                , Html.Events.onClick ScrollClientSettingsIntoView
-                                ]
-                                [ title ]
-                        )
-                    |> List.intersperse (span [ class "mx-2.5" ] [ text "·" ])
-                )
+            , examplesList
             ]
 
 
