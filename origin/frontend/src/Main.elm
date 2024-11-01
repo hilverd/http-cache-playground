@@ -2286,7 +2286,9 @@ view model =
                                             interactions
                             in
                             div
-                                [ Extras.HtmlAttribute.showIf model.formWasModifiedSinceScenarioRun <| class "opacity-50" ]
+                                [ Extras.HtmlAttribute.showIf model.formWasModifiedSinceScenarioRun <| class "opacity-50"
+                                , Extras.HtmlAttribute.showIf model.scenarioIsRunning <| class "cursor-progress"
+                                ]
                                 [ Extras.Html.showUnless (Interactions.isEmpty interactionsToShow || ScenarioForm.isExercise model.scenarioForm) <|
                                     Extras.Html.showMaybe
                                         (\id ->
