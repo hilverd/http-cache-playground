@@ -23,6 +23,6 @@ withAdditionalAttributes attributes additionalAttributes children =
 text : Bool -> List (Attribute msg) -> List (Html msg) -> Html msg
 text enabled =
     withAdditionalAttributes
-        [ class "inline-flex items-center space-x-2 font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-400"
+        [ class "inline-flex items-center space-x-2 font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-400 disabled:hover:cursor-not-allowed"
         , Html.Attributes.disabled <| not enabled
         ]
