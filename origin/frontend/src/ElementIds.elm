@@ -1,4 +1,9 @@
-module ElementIds exposing (clientSettings, getRequestHeaderKey, getRequestHeaderValue, originCacheControlCustomDirectives, originCacheControlMaxAge, originCacheControlNoStore, originCacheControlPrivate, originCacheControlSMaxAge, originCacheControlStaleWhileRevalidate, originCustomHeaderKey, originCustomHeaderValue)
+module ElementIds exposing (clientSettings, examples, getRequestHeaderKey, getRequestHeaderValue, originCacheControlCustomDirectives, originCacheControlMaxAge, originCacheControlNoStore, originCacheControlPrivate, originCacheControlSMaxAge, originCacheControlStaleWhileRevalidate, originCustomHeaderKey, originCustomHeaderValue)
+
+
+examples : String
+examples =
+    "examples"
 
 
 getRequestHeaderKey : Int -> Int -> String

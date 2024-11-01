@@ -22,3 +22,12 @@ app.ports.scrollToClientSettings.subscribe(() => {
         });
     }, 0);
 });
+
+app.ports.scrollToExamples.subscribe(() => {
+    setTimeout(() => {
+        window.scrollTo({
+            top: document.getElementById('examples').offsetTop - 16,
+            behavior: 'smooth'
+        });
+    }, 0);
+});

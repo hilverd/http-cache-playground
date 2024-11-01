@@ -105,6 +105,9 @@ port scrollToBottomOfSequenceDiagram : () -> Cmd msg
 port scrollToClientSettings : () -> Cmd msg
 
 
+port scrollToExamples : () -> Cmd msg
+
+
 
 -- UPDATE
 
@@ -190,6 +193,7 @@ type Msg
     | SubmitExerciseForm
     | LeaveExercise
     | ScrollClientSettingsIntoView
+    | ScrollExamplesIntoView
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -693,6 +697,9 @@ update msg model =
 
         ScrollClientSettingsIntoView ->
             ( model, scrollToClientSettings () )
+
+        ScrollExamplesIntoView ->
+            ( model, scrollToExamples () )
 
 
 updateScenarioForm : (ScenarioForm -> ScenarioForm) -> List (Cmd Msg) -> Model -> ( Model, Cmd Msg )
@@ -1757,7 +1764,9 @@ viewExamples alwaysExpanded examples =
         div
             [ class "mt-6" ]
             [ h2
-                [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" ]
+                [ class "text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
+                , Html.Attributes.id <| ElementIds.examples
+                ]
                 [ text "Examples" ]
             , ul
                 [ class "mt-4 space-y-1.5" ]
@@ -2218,7 +2227,13 @@ view model =
                   <|
                     div
                         [ class "mt-8 max-w-prose" ]
-                        [ text "⚠ Cannot run this scenario on this demo website. Please either try one of the examples at the top of this page, or "
+                        [ text "⚠ Cannot run this scenario on this demo website. Please either try one of the "
+                        , span
+                            [ class "cursor-pointer underline"
+                            , Html.Events.onClick ScrollExamplesIntoView
+                            ]
+                            [ text "examples" ]
+                        , text " at the top of this page, or "
                         , a
                             [ class "underline"
                             , href "https://github.com/hilverd/web-cache-playground?tab=readme-ov-file#getting-started"
