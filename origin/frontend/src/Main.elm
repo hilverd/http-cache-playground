@@ -1827,8 +1827,8 @@ viewSleepForSeconds enabled stepIndex seconds =
         ]
 
 
-viewExamples : Bool -> List ( Html Msg, String ) -> Html Msg
-viewExamples alwaysExpanded examples =
+viewExamples : Bool -> String -> List ( Html Msg, String ) -> Html Msg
+viewExamples alwaysExpanded currentRelativeUrlForScenarioForm examples =
     let
         examplesList : Html Msg
         examplesList =
@@ -1838,7 +1838,8 @@ viewExamples alwaysExpanded examples =
                     |> List.map
                         (\( title, link ) ->
                             a
-                                [ class "text-gray-700 underline"
+                                [ class "text-gray-700 rounded-md"
+                                , Extras.HtmlAttribute.showIf (currentRelativeUrlForScenarioForm == link) <| class "outline-offset-4 outline-2 outline-dashed outline-yellow-500"
                                 , href link
                                 , Html.Events.onClick ScrollClientSettingsIntoView
                                 ]
@@ -1893,7 +1894,7 @@ viewScenarioForm model =
             _ ->
                 Extras.Html.nothing
         , Extras.Html.showUnless doingAnExercise <|
-            viewExamples Config.demoMode ScenarioForm.exampleLinksByTitle
+            viewExamples Config.demoMode (ScenarioForm.toRelativeUrl model.scenarioForm) ScenarioForm.exampleLinksByTitle
         , Extras.Html.showIf doingAnExercise <| viewOriginSettingsForExercise model
         , Extras.Html.showUnless doingAnExercise <|
             div
