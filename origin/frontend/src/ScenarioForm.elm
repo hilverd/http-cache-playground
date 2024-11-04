@@ -1542,10 +1542,266 @@ exampleStaleResponsesAreRevalidatedByDefault =
         )
 
 
+exampleCacheVariations : ScenarioForm
+exampleCacheVariations =
+    create
+        { originWait2SecondsBeforeResponding_ = False
+        , originReturn304ForConditionalRequests_ = False
+        }
+        [ MakeGetRequest ([ { key = "Accept-Language", value = "en-US" } ] |> Array.fromList)
+        , SleepForOneSecond
+        , MakeGetRequest ([ { key = "Accept-Language", value = "zh-CN" } ] |> Array.fromList)
+        , MakeGetRequest ([ { key = "Accept-Language", value = "en-US" } ] |> Array.fromList)
+        ]
+        [ CacheControlResponseDirectives.empty
+            |> CacheControlResponseDirectives.updateSMaxAge (Just 5)
+            |> CacheControl
+        , Custom { key = "Vary", value = "Accept-Encoding, Accept-Language" }
+        ]
+        (Example
+            { title = "Cache variations"
+            , interactionsJson = """
+[
+    {
+        "tag": "ClientToVarnish",
+        "args": [
+            0,
+            {
+                "method": "GET",
+                "path": "/ids/141bbc07-be84-4432-9492-0d1c39f20276",
+                "headers": [
+                    [
+                        "Accept-Language",
+                        "en-US"
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "tag": "VarnishToOrigin",
+        "args": [
+            {
+                "path": "/ids/141bbc07-be84-4432-9492-0d1c39f20276",
+                "headers": [
+                    [
+                        "accept",
+                        "application/json, text/plain, */*"
+                    ],
+                    [
+                        "accept-language",
+                        "en-US"
+                    ],
+                    [
+                        "user-agent",
+                        "axios/1.7.7"
+                    ],
+                    [
+                        "host",
+                        "varnish"
+                    ],
+                    [
+                        "accept-encoding",
+                        "gzip"
+                    ],
+                    [
+                        "x-varnish",
+                        "98329"
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "tag": "OriginToVarnish",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [
+                    [
+                        "cache-control",
+                        "s-maxage=5"
+                    ],
+                    [
+                        "vary",
+                        "Accept-Encoding, Accept-Language"
+                    ]
+                ],
+                "body": "1730753836"
+            }
+        ]
+    },
+    {
+        "tag": "VarnishToClient",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [
+                    [
+                        "cache-control",
+                        "s-maxage=5"
+                    ],
+                    [
+                        "content-length",
+                        "10"
+                    ],
+                    [
+                        "content-type",
+                        "text/html; charset=utf-8"
+                    ]
+                ],
+                "body": "1730753836"
+            }
+        ]
+    },
+    {
+        "tag": "ClientSleepingForSeconds",
+        "args": [
+            1,
+            1
+        ]
+    },
+    {
+        "tag": "ClientToVarnish",
+        "args": [
+            2,
+            {
+                "method": "GET",
+                "path": "/ids/141bbc07-be84-4432-9492-0d1c39f20276",
+                "headers": [
+                    [
+                        "Accept-Language",
+                        "zh-CN"
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "tag": "VarnishToOrigin",
+        "args": [
+            {
+                "path": "/ids/141bbc07-be84-4432-9492-0d1c39f20276",
+                "headers": [
+                    [
+                        "accept",
+                        "application/json, text/plain, */*"
+                    ],
+                    [
+                        "accept-language",
+                        "zh-CN"
+                    ],
+                    [
+                        "user-agent",
+                        "axios/1.7.7"
+                    ],
+                    [
+                        "host",
+                        "varnish"
+                    ],
+                    [
+                        "accept-encoding",
+                        "gzip"
+                    ],
+                    [
+                        "x-varnish",
+                        "163852"
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "tag": "OriginToVarnish",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [
+                    [
+                        "cache-control",
+                        "s-maxage=5"
+                    ],
+                    [
+                        "vary",
+                        "Accept-Encoding, Accept-Language"
+                    ]
+                ],
+                "body": "1730753837"
+            }
+        ]
+    },
+    {
+        "tag": "VarnishToClient",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [
+                    [
+                        "cache-control",
+                        "s-maxage=5"
+                    ],
+                    [
+                        "content-length",
+                        "10"
+                    ],
+                    [
+                        "content-type",
+                        "text/html; charset=utf-8"
+                    ]
+                ],
+                "body": "1730753837"
+            }
+        ]
+    },
+    {
+        "tag": "ClientToVarnish",
+        "args": [
+            3,
+            {
+                "method": "GET",
+                "path": "/ids/141bbc07-be84-4432-9492-0d1c39f20276",
+                "headers": [
+                    [
+                        "Accept-Language",
+                        "en-US"
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "tag": "VarnishToClient",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [
+                    [
+                        "cache-control",
+                        "s-maxage=5"
+                    ],
+                    [
+                        "content-length",
+                        "10"
+                    ],
+                    [
+                        "content-type",
+                        "text/html; charset=utf-8"
+                    ]
+                ],
+                "body": "1730753836"
+            }
+        ]
+    }
+]"""
+            }
+        )
+
+
 examples : List ScenarioForm
 examples =
     [ example200CacheableByDefault
     , exampleStaleResponsesAreRevalidatedByDefault
+    , exampleCacheVariations
     ]
 
 
