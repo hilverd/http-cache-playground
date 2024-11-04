@@ -2380,36 +2380,32 @@ view model =
                                 , Extras.HtmlAttribute.showIf (scenarioIsRunning model) <| class "cursor-progress"
                                 ]
                                 [ Extras.Html.showUnless (Interactions.isEmpty interactionsToShow || ScenarioForm.isExercise model.scenarioForm) <|
-                                    Extras.Html.showMaybe
-                                        (\_ ->
-                                            div
-                                                []
-                                                [ div
-                                                    [ class "mt-8" ]
-                                                    [ div
-                                                        [ Html.Attributes.class "form-control w-fit"
+                                    div
+                                        []
+                                        [ div
+                                            [ class "mt-8" ]
+                                            [ div
+                                                [ Html.Attributes.class "form-control w-fit"
+                                                ]
+                                                [ label
+                                                    [ Html.Attributes.class "label cursor-pointer"
+                                                    ]
+                                                    [ input
+                                                        [ Html.Attributes.type_ "checkbox"
+                                                        , Html.Attributes.class "toggle"
+                                                        , Html.Attributes.checked model.showAllHeaders
+                                                        , Html.Attributes.id "toggle-show-all-headers"
+                                                        , Html.Events.onClick ToggleShowAllHeaders
                                                         ]
-                                                        [ label
-                                                            [ Html.Attributes.class "label cursor-pointer"
-                                                            ]
-                                                            [ input
-                                                                [ Html.Attributes.type_ "checkbox"
-                                                                , Html.Attributes.class "toggle"
-                                                                , Html.Attributes.checked model.showAllHeaders
-                                                                , Html.Attributes.id "toggle-show-all-headers"
-                                                                , Html.Events.onClick ToggleShowAllHeaders
-                                                                ]
-                                                                []
-                                                            , span
-                                                                [ Html.Attributes.class "label-text text-base ml-3"
-                                                                ]
-                                                                [ text "Show all headers" ]
-                                                            ]
+                                                        []
+                                                    , span
+                                                        [ Html.Attributes.class "label-text text-base ml-3"
                                                         ]
+                                                        [ text "Show all headers" ]
                                                     ]
                                                 ]
-                                        )
-                                        model.id
+                                            ]
+                                        ]
                                 , Interactions.view
                                     { scenarioIsRunning = scenarioIsRunning model
                                     , showAllHeaders = model.showAllHeaders
