@@ -2237,7 +2237,7 @@ view model =
                         ScenarioForm.exampleInteractionsByRelativeUrl
                     )
     in
-    { title = pageTitle "Web Cache Playground"
+    { title = pageTitle "HTTP Cache Playground"
     , body =
         [ div
             [ class "min-h-full pt-4 pb-10 sm:pt-6 md:pt-10" ]
@@ -2251,7 +2251,7 @@ view model =
                             [ class "min-w-0 flex-1" ]
                             [ h1
                                 [ class "text-3xl font-bold leading-tight tracking-tight text-gray-900" ]
-                                [ text "Web Cache Playground" ]
+                                [ text "HTTP Cache Playground" ]
                             , p
                                 [ class "mt-2 max-w-4xl text-gray-500" ]
                                 [ text "Explore how "
@@ -2276,14 +2276,14 @@ view model =
                         , div
                             [ class "mt-4 flex sm:ml-4 sm:mt-0" ]
                             [ a
-                                [ href "https://github.com/hilverd/web-cache-playground"
+                                [ href "https://github.com/hilverd/http-cache-playground"
                                 , Html.Attributes.target "_blank"
                                 , Html.Attributes.rel "noopener noreferrer"
                                 , class "mb-6 sm:mb-0 block text-slate-400 dark:text-slate-200 hover:text-slate-500 dark:hover:text-slate-400"
                                 ]
                                 [ span
                                     [ class "sr-only" ]
-                                    [ text "Web Cache Playground on GitHub" ]
+                                    [ text "HTTP Cache Playground on GitHub" ]
                                 , Icons.gitHubLogo
                                     [ Svg.Attributes.class "h-6 w-6" ]
                                 ]
@@ -2310,7 +2310,7 @@ view model =
                         , text " at the top of this page, or "
                         , a
                             [ class "underline"
-                            , href "https://github.com/hilverd/web-cache-playground?tab=readme-ov-file#getting-started"
+                            , href "https://github.com/hilverd/http-cache-playground?tab=readme-ov-file#getting-started"
                             , Html.Attributes.target "_blank"
                             , Html.Attributes.rel "noopener noreferrer"
                             ]

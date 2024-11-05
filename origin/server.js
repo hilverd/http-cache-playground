@@ -23,7 +23,7 @@ app.use(morgan('combined'));
 // app.use(cors());
 
 const log = bunyan.createLogger({
-    name: 'web-cache-playground',
+    name: 'http-cache-playground',
     stream: process.stdout
 });
 

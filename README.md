@@ -1,12 +1,12 @@
-# Web Cache Playground
+# HTTP Cache Playground
 
 This project lets you explore how [Varnish Cache](https://varnish-cache.org/) reacts to [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching).
 
 ## Getting Started
 
 ```
-git clone https://github.com/hilverd/web-cache-playground.git
-cd web-cache-playground
+git clone https://github.com/hilverd/http-cache-playground.git
+cd http-cache-playground
 docker compose up
 ```
 
