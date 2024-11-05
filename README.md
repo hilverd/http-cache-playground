@@ -2,14 +2,6 @@
 
 This project lets you explore how [Varnish Cache](https://varnish-cache.org/) reacts to [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching).
 
-<details>
-  <summary><strong>Screenshot</strong></summary>
-
-  <p align="center">
-    <img alt="Screenshot of the web user interface" src="https://raw.githubusercontent.com/hilverd/web-cache-playground/refs/heads/main/img/web-cache-playground-screenshot.jpg">
-  </p>
-</details>
-
 ## Getting Started
 
 ```
