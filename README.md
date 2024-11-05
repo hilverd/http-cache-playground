@@ -6,7 +6,7 @@ This project lets you explore how [Varnish Cache](https://varnish-cache.org/) re
   <summary><strong>Screenshot</strong></summary>
 
   <p align="center">
-    <img alt="Screenshot of the web user interface" src="https://raw.githubusercontent.com/hilverd/web-cache-playground/refs/heads/main/img/web-caching-playground-screenshot.jpg">
+    <img alt="Screenshot of the web user interface" src="https://raw.githubusercontent.com/hilverd/web-cache-playground/refs/heads/main/img/web-cache-playground-screenshot.jpg">
   </p>
 </details>
 
