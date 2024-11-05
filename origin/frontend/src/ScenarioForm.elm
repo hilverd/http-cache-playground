@@ -2043,12 +2043,307 @@ exampleAge =
         )
 
 
+exampleConditionalRequestsWorkflow1 : ScenarioForm
+exampleConditionalRequestsWorkflow1 =
+    create
+        { originWait2SecondsBeforeResponding_ = True
+        , originReturn304ForConditionalRequests_ = True
+        }
+        [ MakeGetRequest ([] |> Array.fromList)
+        , SleepForTwoSeconds
+        , MakeGetRequest ([] |> Array.fromList)
+        ]
+        [ CacheControlResponseDirectives.empty
+            |> CacheControlResponseDirectives.updateSMaxAge (Just 1)
+            |> CacheControlResponseDirectives.updateStaleWhileRevalidate (Just 5)
+            |> CacheControl
+        , Custom { key = "ETag", value = "\"some-etag\"" }
+        ]
+        (Example
+            { title = "Workflow for conditional requests (1)"
+            , interactionsJson = """
+[
+    {
+        "tag": "ClientToVarnish",
+        "args": [
+            0,
+            {
+                "method": "GET",
+                "path": "/ids/910c7755-58b1-443c-b618-98bc91ec516a",
+                "headers": []
+            }
+        ]
+    },
+    {
+        "tag": "VarnishToOrigin",
+        "args": [
+            {
+                "path": "/ids/910c7755-58b1-443c-b618-98bc91ec516a",
+                "headers": [
+                    [
+                        "accept",
+                        "application/json, text/plain, */*"
+                    ],
+                    [
+                        "user-agent",
+                        "axios/1.7.7"
+                    ],
+                    [
+                        "host",
+                        "varnish"
+                    ],
+                    [
+                        "x-forwarded-for",
+                        "172.19.0.2"
+                    ],
+                    [
+                        "accept-encoding",
+                        "gzip"
+                    ],
+                    [
+                        "x-varnish",
+                        "131080"
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "tag": "OriginSleepingForSeconds",
+        "args": [
+            2
+        ]
+    },
+    {
+        "tag": "OriginToVarnish",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [
+                    [
+                        "access-control-allow-origin",
+                        "*"
+                    ],
+                    [
+                        "cache-control",
+                        "s-maxage=1,stale-while-revalidate=5"
+                    ],
+                    [
+                        "etag",
+                        "\\"some-etag\\""
+                    ]
+                ],
+                "body": "1730802663"
+            }
+        ]
+    },
+    {
+        "tag": "VarnishToClient",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [
+                    [
+                        "accept-ranges",
+                        "bytes"
+                    ],
+                    [
+                        "access-control-allow-origin",
+                        "*"
+                    ],
+                    [
+                        "age",
+                        "0"
+                    ],
+                    [
+                        "cache-control",
+                        "s-maxage=1,stale-while-revalidate=5"
+                    ],
+                    [
+                        "connection",
+                        "keep-alive"
+                    ],
+                    [
+                        "content-length",
+                        "10"
+                    ],
+                    [
+                        "content-type",
+                        "text/html; charset=utf-8"
+                    ],
+                    [
+                        "date",
+                        "Tue, 05 Nov 2024 10:31:05 GMT"
+                    ],
+                    [
+                        "etag",
+                        "\\"some-etag\\""
+                    ],
+                    [
+                        "via",
+                        "1.1 varnish (Varnish/6.0), 1.1 varnish (Varnish/6.0)"
+                    ],
+                    [
+                        "x-varnish",
+                        "131079, 65548"
+                    ]
+                ],
+                "body": "1730802663"
+            }
+        ]
+    },
+    {
+        "tag": "ClientSleepingForSeconds",
+        "args": [
+            1,
+            2
+        ]
+    },
+    {
+        "tag": "ClientToVarnish",
+        "args": [
+            2,
+            {
+                "method": "GET",
+                "path": "/ids/910c7755-58b1-443c-b618-98bc91ec516a",
+                "headers": []
+            }
+        ]
+    },
+    {
+        "tag": "VarnishToOrigin",
+        "args": [
+            {
+                "path": "/ids/910c7755-58b1-443c-b618-98bc91ec516a",
+                "headers": [
+                    [
+                        "accept",
+                        "application/json, text/plain, */*"
+                    ],
+                    [
+                        "user-agent",
+                        "axios/1.7.7"
+                    ],
+                    [
+                        "host",
+                        "varnish"
+                    ],
+                    [
+                        "x-forwarded-for",
+                        "172.19.0.2"
+                    ],
+                    [
+                        "accept-encoding",
+                        "gzip"
+                    ],
+                    [
+                        "if-none-match",
+                        "\\"some-etag\\""
+                    ],
+                    [
+                        "x-varnish",
+                        "32832"
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "tag": "OriginSleepingForSeconds",
+        "args": [
+            2
+        ]
+    },
+    {
+        "tag": "VarnishToClient",
+        "args": [
+            {
+                "statusCode": 200,
+                "headers": [
+                    [
+                        "accept-ranges",
+                        "bytes"
+                    ],
+                    [
+                        "access-control-allow-origin",
+                        "*"
+                    ],
+                    [
+                        "age",
+                        "2"
+                    ],
+                    [
+                        "cache-control",
+                        "s-maxage=1,stale-while-revalidate=5"
+                    ],
+                    [
+                        "connection",
+                        "keep-alive"
+                    ],
+                    [
+                        "content-length",
+                        "10"
+                    ],
+                    [
+                        "content-type",
+                        "text/html; charset=utf-8"
+                    ],
+                    [
+                        "date",
+                        "Tue, 05 Nov 2024 10:31:05 GMT"
+                    ],
+                    [
+                        "etag",
+                        "\\"some-etag\\""
+                    ],
+                    [
+                        "via",
+                        "1.1 varnish (Varnish/6.0), 1.1 varnish (Varnish/6.0)"
+                    ],
+                    [
+                        "x-varnish",
+                        "131079, 196613 65549"
+                    ]
+                ],
+                "body": "1730802663"
+            }
+        ]
+    },
+    {
+        "tag": "OriginToVarnish",
+        "args": [
+            {
+                "statusCode": 304,
+                "headers": [
+                    [
+                        "access-control-allow-origin",
+                        "*"
+                    ],
+                    [
+                        "cache-control",
+                        "s-maxage=1,stale-while-revalidate=5"
+                    ],
+                    [
+                        "etag",
+                        "\\"some-etag\\""
+                    ]
+                ],
+                "body": ""
+            }
+        ]
+    }
+]"""
+            }
+        )
+
+
 examples : List ScenarioForm
 examples =
     [ example200CacheableByDefault
     , exampleStaleResponsesAreRevalidatedByDefault
     , exampleCacheVariations
     , exampleAge
+    , exampleConditionalRequestsWorkflow1
     ]
 
 
