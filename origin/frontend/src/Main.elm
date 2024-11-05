@@ -1912,11 +1912,14 @@ viewScenarioForm model =
                             |> Array.isEmpty
                         )
                       <|
-                        p
-                            [ class "mt-4 text-red-800" ]
-                            [ text "[Create a "
-                            , strong [ class "font-medium" ] [ em [] [ text "scenario" ] ]
-                            , text " by adding one or more steps.]"
+                        div
+                            []
+                            [ p
+                                [ class "mt-4 text-gray-900 italic" ]
+                                [ text "Empty scenario" ]
+                            , p
+                                [ class "text-gray-600" ]
+                                [ text "Get started by adding one or more steps." ]
                             ]
                     , ul
                         [ Html.Attributes.attribute "role" "list"
@@ -1934,6 +1937,10 @@ viewScenarioForm model =
                         []
                         [ button
                             [ class "btn mr-4 mb-4"
+                            , Extras.HtmlAttribute.showIf
+                                (model.scenarioForm |> ScenarioForm.clientActions |> Array.isEmpty)
+                              <|
+                                class "btn-primary text-white"
                             , Html.Attributes.disabled <|
                                 ((scenarioIsRunning model
                                     || ScenarioForm.hasTenClientActions model.scenarioForm
