@@ -1838,7 +1838,7 @@ viewExamples alwaysExpanded currentRelativeUrlForScenarioForm examples =
                     |> List.map
                         (\( title, link ) ->
                             a
-                                [ class "text-gray-700 rounded-md hover:underline"
+                                [ class "text-gray-700 rounded-md hover:underline inline-block"
                                 , Extras.HtmlAttribute.showIf (currentRelativeUrlForScenarioForm == link) <| class "outline-offset-4 outline-2 outline-dashed outline-yellow-500"
                                 , href link
                                 , Html.Events.onClick ScrollClientSettingsIntoView
