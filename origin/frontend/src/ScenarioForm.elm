@@ -2060,7 +2060,7 @@ exampleConditionalRequestsWorkflow1 =
         , Custom { key = "ETag", value = "\"some-etag\"" }
         ]
         (Example
-            { title = "Workflow for conditional requests (1)"
+            { title = "Conditional requests (1)"
             , interactionsJson = """
 [
     {
