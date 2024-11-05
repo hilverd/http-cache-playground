@@ -16,3 +16,4 @@ services:
     restart: on-failure
     build: ./origin
     container_name: origin
+    init: true

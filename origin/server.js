@@ -285,4 +285,12 @@ function addResponseHeadersBasedOnQueryParameters(req, res, body) {
 // Clean up interactions every minute
 setInterval(cleanupInteractions, 60 * 1000);
 
-app.listen(port, () => log.info('Listening on port ' + port));
+const server = app.listen(port, () => log.info('Listening on port ' + port));
+
+process.on('SIGTERM', () => {
+    log.info('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+        log.info('Server closed');
+        process.exit(0);
+    });
+});

@@ -23,4 +23,4 @@ RUN cd frontend && \
     npm run build && \
     mv dist ..
 
-CMD ["npm", "start"]
+CMD ["node", "server.js"]

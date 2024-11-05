@@ -16,3 +16,4 @@ services:
     image: hilverd/http-cache-playground:0.1.0
     restart: on-failure
     container_name: origin
+    init: true
