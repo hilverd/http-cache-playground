@@ -2249,28 +2249,36 @@ view model =
                         [ class "sm:flex sm:items-start sm:justify-between" ]
                         [ div
                             [ class "min-w-0 flex-1" ]
-                            [ h1
-                                [ class "text-3xl font-bold leading-tight tracking-tight text-gray-900" ]
-                                [ text "HTTP Cache Playground" ]
-                            , p
-                                [ class "mt-2 max-w-4xl text-gray-500" ]
-                                [ text "Explore how "
-                                , a
-                                    [ class "hover:underline"
-                                    , href "https://varnish-cache.org/"
-                                    , Html.Attributes.target "_blank"
-                                    , Html.Attributes.rel "noopener noreferrer"
+                            [ div
+                                [ class "sm:flex sm:items-center sm:space-x-4" ]
+                                [ Icons.logo
+                                    [ Svg.Attributes.class "h-16 w-16 sm:h-20 sm:w-20 mb-3 sm:mb-0 text-gray-700" ]
+                                , div
+                                    []
+                                    [ h1
+                                        [ class "text-3xl font-bold leading-tight tracking-tight text-gray-900" ]
+                                        [ text "HTTP Cache Playground" ]
+                                    , p
+                                        [ class "mt-2 max-w-4xl text-gray-500" ]
+                                        [ text "Explore how "
+                                        , a
+                                            [ class "hover:underline"
+                                            , href "https://varnish-cache.org/"
+                                            , Html.Attributes.target "_blank"
+                                            , Html.Attributes.rel "noopener noreferrer"
+                                            ]
+                                            [ text "Varnish Cache" ]
+                                        , text " reacts to "
+                                        , a
+                                            [ class "hover:underline"
+                                            , href "https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching"
+                                            , Html.Attributes.target "_blank"
+                                            , Html.Attributes.rel "noopener noreferrer"
+                                            ]
+                                            [ text "HTTP headers" ]
+                                        , text "."
+                                        ]
                                     ]
-                                    [ text "Varnish Cache" ]
-                                , text " reacts to "
-                                , a
-                                    [ class "hover:underline"
-                                    , href "https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching"
-                                    , Html.Attributes.target "_blank"
-                                    , Html.Attributes.rel "noopener noreferrer"
-                                    ]
-                                    [ text "HTTP headers" ]
-                                , text "."
                                 ]
                             ]
                         , div
