@@ -21,6 +21,7 @@ COPY frontend/ ./frontend/
 
 RUN cd frontend && \
     npm run build && \
+    cp -r favicons dist && \
     mv dist ..
 
 CMD ["node", "server.js"]
