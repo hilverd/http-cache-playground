@@ -2250,7 +2250,7 @@ view model =
                         [ div
                             [ class "min-w-0 flex-1" ]
                             [ div
-                                [ class "sm:flex sm:items-center sm:space-x-4" ]
+                                [ class "sm:flex sm:items-center sm:space-x-6" ]
                                 [ Icons.logo
                                     [ Svg.Attributes.class "h-16 w-16 sm:h-20 sm:w-20 mb-3 sm:mb-0 text-gray-700" ]
                                 , div
