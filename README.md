@@ -1,3 +1,12 @@
+<p align="center">
+  <a href="https://github.com/hilverd/http-cache-playground" target="_blank" rel="noopener noreferrer">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="img/logo-white.svg">
+      <img width="180" alt="A merry-go-round with a hard disk drive at the bottom" src="img/logo.svg">
+    </picture>
+  </a>
+</p>
+
 # HTTP Cache Playground
 
 This project lets you explore how [Varnish Cache](https://varnish-cache.org/) reacts to [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching).
