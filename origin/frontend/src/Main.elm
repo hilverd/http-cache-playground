@@ -2324,7 +2324,7 @@ view model =
                             ]
                             [ text "run the application locally"
                             ]
-                        , text "."
+                        , text " against a Docker-based Varnish instance."
                         ]
                 , Extras.Html.showUnless
                     (model.sequenceDiagramVisibility == FinalInteractionsConcealedForExercise || model.sequenceDiagramVisibility == FinalInteractionsRevealedForExercise)
