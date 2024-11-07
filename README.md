@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/hilverd/http-cache-playground" target="_blank" rel="noopener noreferrer">
+  <a href="https://cacheplayground.org/" target="_blank" rel="noopener noreferrer">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="img/logo-white.svg">
       <img width="180" alt="A merry-go-round with a hard disk drive at the bottom" src="img/logo.svg">
