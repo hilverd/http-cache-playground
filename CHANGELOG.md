@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 ### Removed
 
+## [0.2.1] - 2024-11-07
+
+### Changed
+
+- Improve wording and layout.
+- Tweak favicons.
+
 ## [0.2.0] - 2024-11-06
 
 ### Added
@@ -49,7 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release.
 
-[Unreleased]: https://github.com/hilverd/http-cache-playground/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/hilverd/http-cache-playground/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/hilverd/http-cache-playground/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/hilverd/http-cache-playground/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/hilverd/http-cache-playground/compare/v0.0.3...v0.1.0
 [0.0.3]: https://github.com/hilverd/http-cache-playground/compare/v0.0.2...v0.0.3
