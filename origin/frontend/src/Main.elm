@@ -2274,7 +2274,7 @@ view model =
                         [ div
                             [ class "min-w-0 flex-1" ]
                             [ div
-                                [ class "flex sm:items-center space-x-6" ]
+                                [ class "flex items-center space-x-6" ]
                                 [ a
                                     [ href "/" ]
                                     [ Icons.logo
@@ -2290,7 +2290,7 @@ view model =
                                 ]
                             ]
                         , div
-                            [ class "mt-4 flex ml-4 mt-0" ]
+                            [ class "flex ml-4" ]
                             [ a
                                 [ href "https://github.com/hilverd/http-cache-playground"
                                 , Html.Attributes.target "_blank"
