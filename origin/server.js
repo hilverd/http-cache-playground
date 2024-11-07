@@ -19,8 +19,8 @@ app.set('etag', false); // Disable automatic ETag generation
 app.use(morgan('combined'));
 
 // Uncomment these for development
-// const cors = require('cors');
-// app.use(cors());
+const cors = require('cors');
+app.use(cors());
 
 const log = bunyan.createLogger({
     name: 'http-cache-playground',
