@@ -2186,6 +2186,30 @@ viewOriginSettingsForExercise model =
             ]
 
 
+viewSubheading : List (Html.Attribute Msg) -> Html Msg
+viewSubheading extraAttributes =
+    p
+        (class "mt-3 sm:mt-2 max-w-4xl text-gray-500" :: extraAttributes)
+        [ text "Explore how "
+        , a
+            [ class "hover:underline"
+            , href "https://varnish-cache.org/"
+            , Html.Attributes.target "_blank"
+            , Html.Attributes.rel "noopener noreferrer"
+            ]
+            [ text "Varnish Cache" ]
+        , text " reacts to "
+        , a
+            [ class "hover:underline"
+            , href "https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching"
+            , Html.Attributes.target "_blank"
+            , Html.Attributes.rel "noopener noreferrer"
+            ]
+            [ text "HTTP headers" ]
+        , text "."
+        ]
+
+
 view : Model -> Document Msg
 view model =
     let
@@ -2246,11 +2270,11 @@ view model =
                 [ div
                     [ class "mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8" ]
                     [ div
-                        [ class "sm:flex sm:items-start sm:justify-between" ]
+                        [ class "flex items-start justify-between" ]
                         [ div
                             [ class "min-w-0 flex-1" ]
                             [ div
-                                [ class "sm:flex sm:items-center sm:space-x-6" ]
+                                [ class "flex sm:items-center space-x-6" ]
                                 [ a
                                     [ href "/" ]
                                     [ Icons.logo
@@ -2261,31 +2285,12 @@ view model =
                                     [ h1
                                         [ class "text-3xl font-bold leading-tight tracking-tight text-gray-900" ]
                                         [ text "HTTP Cache Playground" ]
-                                    , p
-                                        [ class "mt-2 max-w-4xl text-gray-500" ]
-                                        [ text "Explore how "
-                                        , a
-                                            [ class "hover:underline"
-                                            , href "https://varnish-cache.org/"
-                                            , Html.Attributes.target "_blank"
-                                            , Html.Attributes.rel "noopener noreferrer"
-                                            ]
-                                            [ text "Varnish Cache" ]
-                                        , text " reacts to "
-                                        , a
-                                            [ class "hover:underline"
-                                            , href "https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching"
-                                            , Html.Attributes.target "_blank"
-                                            , Html.Attributes.rel "noopener noreferrer"
-                                            ]
-                                            [ text "HTTP headers" ]
-                                        , text "."
-                                        ]
+                                    , viewSubheading [ class "hidden sm:block" ]
                                     ]
                                 ]
                             ]
                         , div
-                            [ class "mt-4 flex sm:ml-4 sm:mt-0" ]
+                            [ class "mt-4 flex ml-4 mt-0" ]
                             [ a
                                 [ href "https://github.com/hilverd/http-cache-playground"
                                 , Html.Attributes.target "_blank"
@@ -2300,6 +2305,7 @@ view model =
                                 ]
                             ]
                         ]
+                    , viewSubheading [ class "sm:hidden" ]
                     ]
                 ]
             , main_
