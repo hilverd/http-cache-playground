@@ -1832,20 +1832,20 @@ viewExamples alwaysExpanded currentRelativeUrlForScenarioForm examples =
     let
         examplesList : Html Msg
         examplesList =
-            ul
+            div
                 [ class "mt-4 space-y-1.5" ]
                 (examples
                     |> List.map
                         (\( title, link ) ->
                             a
-                                [ class "text-gray-700 rounded-md hover:underline inline-block"
+                                [ class "text-gray-700 rounded-md hover:underline sm:inline-block block"
                                 , Extras.HtmlAttribute.showIf (currentRelativeUrlForScenarioForm == link) <| class "outline-offset-4 outline-2 outline-dashed outline-yellow-500"
                                 , href link
                                 , Html.Events.onClick ScrollClientSettingsIntoView
                                 ]
                                 [ title ]
                         )
-                    |> List.intersperse (span [ class "mx-2.5" ] [ text "·" ])
+                    |> List.intersperse (span [ class "mx-2.5 hidden sm:inline" ] [ text "·" ])
                 )
     in
     if alwaysExpanded then
@@ -1879,7 +1879,21 @@ viewScenarioForm model =
             ScenarioForm.isExercise model.scenarioForm
     in
     div []
-        [ case ScenarioForm.mode model.scenarioForm of
+        [ Extras.Html.showIf Config.demoMode <|
+            div
+                [ class "mt-8 text-gray-700 border rounded-md p-2 bg-slate-100" ]
+                [ text "This is a demo version of the app. You can only run the example scenarios below. For anything else, please "
+                , a
+                    [ class "underline"
+                    , href "https://github.com/hilverd/http-cache-playground?tab=readme-ov-file#getting-started"
+                    , Html.Attributes.target "_blank"
+                    , Html.Attributes.rel "noopener noreferrer"
+                    ]
+                    [ text "run the application locally"
+                    ]
+                , text " against a Docker-based Varnish instance."
+                ]
+        , case ScenarioForm.mode model.scenarioForm of
             ScenarioForm.Exercise { title } ->
                 div
                     [ class "mt-8" ]

@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- Add a warning message at the top if the app is running in demo mode.
+
 ### Changed
 ### Fixed
 ### Removed
