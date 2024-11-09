@@ -1,6 +1,6 @@
 {
     "name": "origin",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "main": "server.js",
     "private": true,
     "scripts": {

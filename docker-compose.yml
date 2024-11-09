@@ -13,7 +13,7 @@ services:
     depends_on:
       - "origin"
   origin:
-    image: hilverd/http-cache-playground:0.2.2
+    image: hilverd/http-cache-playground:0.2.3
     restart: on-failure
     container_name: origin
     init: true
